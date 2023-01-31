@@ -1,6 +1,8 @@
 #!/bin/bash
 # WARNING: REQUIRES /bin/bash
-#
+
+set -e
+
 # "Get Fleek Network" is an attempt to make our software more accessible.
 # By providing scripts to automate the installation process of our software,
 # we believe that it can help improve the onboarding experience of our users.
@@ -32,3 +34,48 @@
 # - Do a health check to confirm the Fleek Network Node is running
 #
 # Found an issue? Report it here: https://github.com/fleek-network/get.fleek.network
+
+hasCommand() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+requestAuthorizationAndExec() {
+    read -r -p "🤖 $1 [y/n]? " answer
+
+    answerToLc=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
+
+    if [ "$answerToLc" != "y" ]; then
+      printf "\n\n🚩 %s.\n\n" "$2"
+
+      exit 1;
+    fi
+
+    printf "\n"
+
+    $3
+}
+
+showOkMessage() {
+    printf "✅ %s\n\n" "$1"  
+}
+
+installGit() {
+  echo "TODO: install git"
+}
+
+checkIfGitInstalled() {
+  if ! hasCommand gitz; then
+    printf "😅 Oops! Git is required and was not found!\n"
+
+    requestAuthorizationAndExec \
+      "We can start the installation process for you, are you happy to proceed" \
+      "You need to have git installed to clone the Fleek Network Ursa repository." \
+      installGit
+
+    exit 1
+  fi
+
+  showOkMessage "Git is installed! [skip]"
+}
+
+checkIfGitInstalled
