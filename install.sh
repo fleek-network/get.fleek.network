@@ -69,6 +69,11 @@ showErrorMessage() {
     printf "🚩 %s\n\n" "$1"
 }
 
+windowUsersWarning() {
+    printf "😅 Windows is not supported, we recommend to install the Ubuntu distro on \
+    Windows Subsystem Linux (WSL). Read our docs to learn more https://docs.fleek.network\n\n"
+}
+
 shouldHaveHomebrewInstalled() {
   if ! hasCommand brew; then
     printf "😅 Oops! Homebrew package manager for MacOS is recommended and was not found!\n"
@@ -108,7 +113,7 @@ installGit() {
 
     exit 1
   else
-    showErrorMessage "Oops! Your operating system is not supported yet, to install on your own read our guides at https://docs.fleek.network"
+    showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
 
     exit 1
   fi
@@ -126,6 +131,12 @@ identifyOS() {
   esac
 
   osToLc=$(toLowerCase "$os")
+
+  if [ "$osToLc" == "cygwin" ] || [ "$osToLc" == "mingw" ]; then
+    printf "\n"
+
+    windowUsersWarning
+  fi
 
   echo "$osToLc"
 }
