@@ -45,7 +45,9 @@ requestAuthorizationAndExec() {
     answerToLc=$(toLowerCase "$answer")
 
     if [ "$answerToLc" != "y" ]; then
-      printf "\n\n🚩 %s.\n\n" "$2"
+      printf "\n\n"
+
+      showErrorMessage "$2"
 
       exit 1;
     fi
@@ -63,8 +65,39 @@ showOkMessage() {
     printf "✅ %s\n\n" "$1"  
 }
 
+showErrorMessage() {
+    printf "🚩 %s\n\n" "$1"
+}
+
 installGit() {
-  echo "TODO: install git"
+  os=$(identifyOS)
+
+  if [ "$os" == "mac" ]; then
+    echo "is macos"
+  elif [ "$os" == "linux" ]; then
+    echo "TODO: provide support for Linux distros"
+    exit 1
+  else
+    showErrorMessage "Oops! Your operating system is not supported yet, to install on your own read our guides at https://docs.fleek.network"
+
+    exit 1
+  fi
+}
+
+identifyOS() {
+  unameOut="$(uname -s)"
+
+  case "${unameOut}" in
+      Linux*)     os=Linux;;
+      Darwin*)    os=Mac;;
+      CYGWIN*)    os=Cygwin;;
+      MINGW*)     os=MinGw;;
+      *)          os="UNKNOWN:${unameOut}"
+  esac
+
+  osToLc=$(toLowerCase "$os")
+
+  echo "$osToLc"
 }
 
 checkIfGitInstalled() {
