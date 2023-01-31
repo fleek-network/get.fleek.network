@@ -64,7 +64,7 @@ installGit() {
 }
 
 checkIfGitInstalled() {
-  if ! hasCommand gitz; then
+  if ! hasCommand git; then
     printf "😅 Oops! Git is required and was not found!\n"
 
     requestAuthorizationAndExec \
@@ -75,7 +75,7 @@ checkIfGitInstalled() {
     exit 1
   fi
 
-  showOkMessage "Git is installed! [skip]"
+  showOkMessage "Git is installed! [skipping]"
 }
 
 checkIfGitInstalled
