@@ -69,13 +69,43 @@ showErrorMessage() {
     printf "🚩 %s\n\n" "$1"
 }
 
+shouldHaveHomebrewInstalled() {
+  if ! hasCommand brew; then
+    printf "😅 Oops! Homebrew package manager for MacOS is recommended and was not found!\n"
+
+    requestAuthorizationAndExec \
+      "We can start the installation process for you, are you happy to proceed" \
+      "You need to have Homebrew package manager installed on MacOS, as we recommend it to install applications such as Git. You can install it on your own by visiting the Git website https://git-scm.com/ before proceeding..." \
+      installHomebrew
+
+    exit 1
+  fi
+
+  showOkMessage "Homebrew package manager is installed! [skipping]"
+}
+
+installHomebrew() {
+  os=$(identifyOS)
+
+  if [ "$os" != "mac" ]; then
+    showErrorMessage "Oops! For some odd reason this function was called from the wrong context, as it should only be called for MacOS!"    
+
+    exit 1
+  fi  
+
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+}
+
 installGit() {
   os=$(identifyOS)
 
   if [ "$os" == "mac" ]; then
-    echo "is macos"
+    shouldHaveHomebrewInstalled
+
+    brew install git
   elif [ "$os" == "linux" ]; then
     echo "TODO: provide support for Linux distros"
+
     exit 1
   else
     showErrorMessage "Oops! Your operating system is not supported yet, to install on your own read our guides at https://docs.fleek.network"
@@ -100,6 +130,11 @@ identifyOS() {
   echo "$osToLc"
 }
 
+checkSystemHasRecommendedResources() {
+  # TODO: Check if system has recommended resources (disk space and memory)
+  showOkMessage "Your system has enough resources (disk space and memory)"
+}
+
 checkIfGitInstalled() {
   if ! hasCommand git; then
     printf "😅 Oops! Git is required and was not found!\n"
@@ -115,4 +150,83 @@ checkIfGitInstalled() {
   showOkMessage "Git is installed! [skipping]"
 }
 
+gitHealthCheck() {
+    if ! hasCommand git; then
+      showErrorMessage "Oops! For some odd reason, git doesn't seem to be installed!"
+
+      exit 1
+    fi
+}
+
+installDocker() {
+  os=$(identifyOS)
+
+  if [ "$os" == "mac" ]; then
+    shouldHaveHomebrewInstalled
+
+    brew install docker
+  elif [ "$os" == "linux" ]; then
+    echo "TODO: provide support for Linux distros"
+
+    exit 1
+  else
+    showErrorMessage "Oops! Your operating system is not supported yet, to install on your own read our guides at https://docs.fleek.network"
+
+    exit 1
+  fi
+}
+
+checkIfDockerInstalled() {
+  if ! hasCommand docker; then
+    printf "😅 Oops! Docker is required and was not found!\n"
+
+    requestAuthorizationAndExec \
+      "We can start the installation process for you, are you happy to proceed" \
+      "You need to have Docker installed to run the Fleek Network Ursa repository container stack!" \
+      installDocker
+
+    exit 1
+  fi
+
+  if ! hasCommand docker-compose; then
+    printf "😅 Oops! Docker compose is required and was not found!\n"
+
+    requestAuthorizationAndExec \
+      "We can start the installation process for you, are you happy to proceed" \
+      "You need to have Docker compose installed to run the Fleek Network Ursa repository container stack!" \
+      installDocker
+
+    exit 1
+  fi
+
+  showOkMessage "Docker is installed! [skipping]"
+}
+
+dockerHealthCheck() {
+    if ! hasCommand docker-compose; then
+      showErrorMessage "Oops! For some odd reason, docker-compose doesn't seem to be installed!"
+
+      exit 1
+    fi
+
+    expectedMessage="Hello from Docker"
+    res=$(docker run -i --log-driver=none -a stdout hello-world)
+
+    if ! echo "$res" | grep "$expectedMessage" &> /dev/null; then
+      showErrorMessage "The docker daemon should create a container for the hello-world image and output a message, but failed! Check if you are connected to the internet, docker is installed correctly, or the docker hub might be down, etc."
+
+      exit 1
+    fi
+
+    showOkMessage "Docker health-check passed! [skipping]"
+}
+
+# Check if system has recommended resources (disk space and memory)
+checkSystemHasRecommendedResources
+
+# We start by verifying if git is installed, if not request to install
 checkIfGitInstalled
+gitHealthCheck
+
+# Verify if Docker is installed, if not install it
+checkIfDockerInstalled
