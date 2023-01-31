@@ -18,6 +18,10 @@ curl https://get.fleek.network | bash
 
 WIP: provide Docker image, and container instructions with bind mount for the "get fleek network" script.
 
+## ✏️ Documentation
+
+Our documentation is available at https://docs.fleek.network/ where you can find guides, and references to help you! We do our best to provide you with the best onboarding experience, but as we keep developing there are a lot of changes and some troubleshooting might be required, and thus important to use our documentation and guides.
+
 ## 🙏 Contribution guideline
 
 Create branches from the `main` branch and name it in accordance to **conventional commits** [here](https://www.conventionalcommits.org/en/v1.0.0/), or follow the examples bellow:
