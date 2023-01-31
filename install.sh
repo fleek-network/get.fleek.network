@@ -213,7 +213,9 @@ dockerHealthCheck() {
     res=$(docker run -i --log-driver=none -a stdout hello-world)
 
     if ! echo "$res" | grep "$expectedMessage" &> /dev/null; then
-      showErrorMessage "The docker daemon should create a container for the hello-world image and output a message, but failed! Check if you are connected to the internet, docker is installed correctly, or the docker hub might be down, etc."
+      showErrorMessage "Oops! The docker daemon should create a container for the hello-world image \
+      and output a message, but failed! Check if you are connected to the internet, docker is installed \
+      correctly, or the docker hub might be down, etc."
 
       exit 1
     fi
