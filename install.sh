@@ -42,7 +42,7 @@ hasCommand() {
 requestAuthorizationAndExec() {
     read -r -p "🤖 $1 [y/n]? " answer
 
-    answerToLc=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
+    answerToLc=$(toLowerCase "$answer")
 
     if [ "$answerToLc" != "y" ]; then
       printf "\n\n🚩 %s.\n\n" "$2"
@@ -53,6 +53,10 @@ requestAuthorizationAndExec() {
     printf "\n"
 
     $3
+}
+
+toLowerCase() {
+  echo "$1" | tr '[:upper:]' '[:lower:]'
 }
 
 showOkMessage() {
