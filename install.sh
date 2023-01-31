@@ -70,7 +70,7 @@ showErrorMessage() {
 }
 
 windowUsersWarning() {
-    printf "😅 Windows is not supported, we recommend to install the Ubuntu distro on \
+    printf "⚠️ Windows is not supported, we recommend to install the Ubuntu distro on \
     Windows Subsystem Linux (WSL). Read our docs to learn more https://docs.fleek.network\n\n"
 }
 
