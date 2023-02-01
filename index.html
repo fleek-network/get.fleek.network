@@ -73,7 +73,11 @@ showErrorMessage() {
     printf "🚩 %s\n\n" "$1" >&2
 }
 
-windowUsersWarning() {
+showHintMessage() {
+    printf "💡 %s\n\n" "$1"  
+}
+
+windowsUsersWarning() {
     printf "⚠️ Windows is not supported, we recommend to install the Ubuntu distro on \
     Windows Subsystem Linux (WSL). Read our docs to learn more https://docs.fleek.network\n\n"
 }
@@ -139,7 +143,9 @@ identifyOS() {
   if [ "$osToLc" == "cygwin" ] || [ "$osToLc" == "mingw" ]; then
     printf "\n"
 
-    windowUsersWarning
+    windowsUsersWarning
+
+    exit 1
   fi
 
   echo "$osToLc"
@@ -198,7 +204,7 @@ checkIfDockerInstalled() {
     requestAuthorizationAndExec \
       "We can start the installation process for you, are you happy to proceed" \
       "You need to have Docker installed to run the Fleek Network Ursa repository container stack!" \
-      installDocker
+      installDocker "$1"
 
     exit 1
   fi
@@ -281,7 +287,7 @@ runDockerStack() {
   answerToLc=$(toLowerCase "$answer")
 
   if [ "$answerToLc" = "n" ]; then
-    showOkMessage "When you wish to start the Fleek Network Node, open the directory $1 \
+    showHintMessage "When you wish to start the Fleek Network Node, open the directory $1 \
     and run the command \"docker-compose -f docker/full-node/docker-compose.yml up\". If you'd like \
     to learn more about how to run and maintain the Node, visit our guides at https://docs.fleek.network"
 
@@ -303,15 +309,18 @@ setupSSLTLS() {
  echo "TODO: Optional, check if user would like to setup SSL/TLS"
 }
 
+# Identity the OS
+os=$(identifyOS)
+
 # Check if system has recommended resources (disk space and memory)
-checkSystemHasRecommendedResources
+checkSystemHasRecommendedResources "$os"
 
 # We start by verifying if git is installed, if not request to install
-checkIfGitInstalled
+checkIfGitInstalled "$os"
 gitHealthCheck
 
 # Verify if Docker is installed, if not install it
-checkIfDockerInstalled
+checkIfDockerInstalled "$os"
 
 # Request a pathname where to store the Ursa repository, otherwise provide a default
 ursaPath=$(requestPathnameForUrsaRepository)
