@@ -124,15 +124,16 @@ installGit() {
     distro=$(identifyDistro)
 
     if [ "$distro" == "ubuntu" ] || [ "$distro" == "debian" ]; then
-      apt-get install git
+      sudo apt-get install git
     elif [ "$os" == "alpine" ]; then
-      apk add git
+      sudo apk add git
     elif [ "$os" == "arch" ]; then
-      pacman -S git
+      sudo pacman -S git
     else
       showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
-    fi
 
+      exit 1
+    fi
   else
     showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
 
@@ -213,9 +214,35 @@ installDocker() {
 
     brew install docker
   elif [ "$os" == "linux" ]; then
-    echo "TODO: provide support for Linux distros"
+    distro=$(identifyDistro)
 
-    exit 1
+    if [ "$distro" == "ubuntu" ] || [ "$distro" == "debian" ]; then
+      sudo apt-get update
+      sudo apt-get install \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release
+
+      sudo mkdir -p /etc/apt/keyrings
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+      echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+        $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+      sudo apt-get update
+
+      sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+    elif [ "$os" == "alpine" ]; then
+      sudo apk add --update docker openrc
+    elif [ "$os" == "arch" ]; then
+      sudo pacman -S docker
+    else
+      showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
+
+      exit 1
+    fi
   else
     showErrorMessage "Oops! Your operating system is not supported yet, to install on your own read our guides at https://docs.fleek.network"
 
