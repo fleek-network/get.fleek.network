@@ -1,0 +1,32 @@
+name: Deploy assisted installer
+
+on:
+  push:
+    branches:
+      - main
+      - chore/deploy-assisted-installer
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build
+        run: |
+          mkdir build
+          cp install.sh ./build/index.html
+          chmod 755 ./build/index.html
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          # https://github.com/actions/checkout/issues/13#issuecomment-724415212
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
