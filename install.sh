@@ -100,6 +100,8 @@ shouldHaveHomebrewInstalled() {
 installHomebrew() {
   os=$(identifyOS)
 
+  # TODO: Show message and prompt,that the user have to have permissions to install
+
   if [ "$os" != "mac" ]; then
     showErrorMessage "Oops! For some odd reason this function was called from the wrong context, as it should only be called for MacOS!"    
 
@@ -112,14 +114,25 @@ installHomebrew() {
 installGit() {
   os=$(identifyOS)
 
+  # TODO: Show message and prompt,that the user have to have permissions to install
+
   if [ "$os" == "mac" ]; then
     shouldHaveHomebrewInstalled
 
     brew install git
   elif [ "$os" == "linux" ]; then
-    echo "TODO: provide support for Linux distros"
+    distro=$(identifyDistro)
 
-    exit 1
+    if [ "$distro" == "ubuntu" ] || [ "$distro" == "debian" ]; then
+      apt-get install git
+    elif [ "$os" == "alpine" ]; then
+      apk add git
+    elif [ "$os" == "arch" ]; then
+      pacman -S git
+    else
+      showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
+    fi
+
   else
     showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
 
@@ -149,6 +162,17 @@ identifyOS() {
   fi
 
   echo "$osToLc"
+}
+
+identifyDistro() {
+    if [[ -f /etc/os-release ]]; then
+        source /etc/os-release
+        echo "$ID"
+
+        exit 0
+    fi
+    
+    uname
 }
 
 checkSystemHasRecommendedResources() {
@@ -181,6 +205,8 @@ gitHealthCheck() {
 
 installDocker() {
   os=$(identifyOS)
+
+  # TODO: Show message and prompt,that the user have to have permissions to install
 
   if [ "$os" == "mac" ]; then
     shouldHaveHomebrewInstalled
