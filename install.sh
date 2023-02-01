@@ -31,9 +31,13 @@ set -e
 # - Pull the `ursa` project repository to the preferred target directory via HTTPS
 #   instead of SSH for simplicity
 # - Optionally, assist on setting up and securing domain name via SSL/TLS
+# - Run the Docker stack
 # - Do a health check to confirm the Fleek Network Node is running
 #
 # Found an issue? Report it here: https://github.com/fleek-network/get.fleek.network
+
+# Default
+defaultUrsaHttpsRespository="https://github.com/fleek-network/ursa.git"
 
 hasCommand() {
   command -v "$1" >/dev/null 2>&1
@@ -66,7 +70,7 @@ showOkMessage() {
 }
 
 showErrorMessage() {
-    printf "🚩 %s\n\n" "$1"
+    printf "🚩 %s\n\n" "$1" >&2
 }
 
 windowUsersWarning() {
@@ -234,6 +238,71 @@ dockerHealthCheck() {
     showOkMessage "Docker health-check passed! [skipping]"
 }
 
+requestPathnameForUrsaRepository() {
+    defaultPath="$HOME/www/fleek-network/ursa"
+    selectedPath=$defaultPath
+
+    read -r -p "🤖 The Ursa repository is going to be saved in the recommended path \"$defaultPath\", would you like to change the location [y/n]? " answer
+
+    answerToLc=$(toLowerCase "$answer")
+
+    if [ "$answerToLc" = "y" ]; then
+      read -r -p "🙋‍♀️ What path would you like to store the repository?" selectedPath
+    fi
+
+    if [ -d "$selectedPath" ]; then
+      showErrorMessage "Oops! The $selectedPath already exists, ensure that the directory is cleared before proceeding!"
+
+      exit 1
+    fi
+
+    if ! mkdir -p "$selectedPath"; then
+      showErrorMessage "Oops! Failed to create the directory $selectedPath, make sure you have the right permissions."
+
+      exit 1
+    fi
+
+    echo "$selectedPath"
+}
+
+cloneUrsaRepositoryToPath() {
+  if ! git clone $defaultUrsaHttpsRespository "$1"; then
+    showErrorMessage "Oops! Failed to clone the Ursa repository ($defaultUrsaHttpsRespository)"
+
+    exit 1
+  fi
+
+  showOkMessage "The Ursa repository located at $defaultUrsaHttpsRespository was cloned to $ursaPath! [skipping]"
+}
+
+runDockerStack() {
+  read -r -p "🙋‍♀️ You can now run a Node via Docker, would you like to start it now [y/n]? " answer
+
+  answerToLc=$(toLowerCase "$answer")
+
+  if [ "$answerToLc" = "n" ]; then
+    showOkMessage "When you wish to start the Fleek Network Node, open the directory $1 \
+    and run the command \"docker-compose -f docker/full-node/docker-compose.yml up\". If you'd like \
+    to learn more about how to run and maintain the Node, visit our guides at https://docs.fleek.network"
+
+    exit 0
+  fi
+
+  if ! cd "$1"; then
+    showErrorMessage "Oops! Failed to change directory to $1"
+
+    exit 1
+  fi
+
+  docker-compose -f docker/full-node/docker-compose.yml up
+}
+
+setupSSLTLS() {
+ # TODO: Optional, check if user would like to setup SSL/TLS
+
+ echo "TODO: Optional, check if user would like to setup SSL/TLS"
+}
+
 # Check if system has recommended resources (disk space and memory)
 checkSystemHasRecommendedResources
 
@@ -243,3 +312,17 @@ gitHealthCheck
 
 # Verify if Docker is installed, if not install it
 checkIfDockerInstalled
+
+# Request a pathname where to store the Ursa repository, otherwise provide a default
+ursaPath=$(requestPathnameForUrsaRepository)
+
+# Pull the `ursa` project repository to the preferred target directory via HTTPS
+cloneUrsaRepositoryToPath "$ursaPath"
+
+showOkMessage "The installation process has completed!"
+
+# Optional, check if user would like to setup SSL/TLS
+# setupSSLTLS
+
+# Run the Docker Stack
+runDockerStack "$ursaPath"
