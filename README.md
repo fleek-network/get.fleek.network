@@ -22,6 +22,13 @@ WIP: provide Docker image, and container instructions with bind mount for the "g
 
 Our documentation is available at https://docs.fleek.network/ where you can find guides, and references to help you! We do our best to provide you with the best onboarding experience, but as we keep developing there are a lot of changes and some troubleshooting might be required, and thus important to use our documentation and guides.
 
+## 🧱 Architecture flow
+
+- The domain name `get.fleek.network` should have a CNAME record to the Github pages `fleek-network.github.io`.`
+- A Github action prepares and deploys to Github pages, the latest of the assisted install
+- The cURL request to `get.fleek.network` responds with the assisted install script
+- Uses bash on runtime
+
 ## 🙏 Contribution guideline
 
 Create branches from the `main` branch and name it in accordance to **conventional commits** [here](https://www.conventionalcommits.org/en/v1.0.0/), or follow the examples bellow:
