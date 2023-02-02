@@ -91,7 +91,11 @@ shouldHaveHomebrewInstalled() {
       "You need to have Homebrew package manager installed on MacOS, as we recommend it to install applications such as Git. You can install it on your own by visiting the Git website https://git-scm.com/ before proceeding..." \
       installHomebrew
 
-    exit 1
+    if [[ "$?" = 1 ]]; then
+      showErrorMessage "Oops! Failed to install Homebrew."
+
+      exit 1
+    fi
   fi
 
   showOkMessage "Homebrew package manager is installed! [skipping]"
@@ -190,7 +194,11 @@ checkIfGitInstalled() {
       "You need to have git installed to clone the Fleek Network Ursa repository." \
       installGit
 
-    exit 1
+    if [[ "$?" = 1 ]]; then
+      showErrorMessage "Oops! Failed to install git."
+
+      exit 1
+    fi
   fi
 
   showOkMessage "Git is installed! [skipping]"
@@ -254,26 +262,19 @@ installDocker() {
 }
 
 checkIfDockerInstalled() {
-  if ! hasCommand docker; then
+  if ! hasCommand docker || ! hasCommand docker-compose; then
     printf "😅 Oops! Docker is required and was not found!\n"
 
     requestAuthorizationAndExec \
       "We can start the installation process for you, are you happy to proceed" \
       "You need to have Docker installed to run the Fleek Network Ursa repository container stack!" \
-      installDocker "$1"
-
-    exit 1
-  fi
-
-  if ! hasCommand docker-compose; then
-    printf "😅 Oops! Docker compose is required and was not found!\n"
-
-    requestAuthorizationAndExec \
-      "We can start the installation process for you, are you happy to proceed" \
-      "You need to have Docker compose installed to run the Fleek Network Ursa repository container stack!" \
       installDocker
 
-    exit 1
+    if [[ "$?" = 1 ]]; then
+      showErrorMessage "Oops! Failed to install docker."
+
+      exit 1
+    fi
   fi
 
   showOkMessage "Docker is installed! [skipping]"
@@ -376,6 +377,7 @@ setupSSLTLS() {
 
   # We start by verifying if git is installed, if not request to install
   checkIfGitInstalled "$os"
+
   gitHealthCheck
 
   # Verify if Docker is installed, if not install it
