@@ -244,7 +244,12 @@ installDocker() {
       sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin docker-compose
 
       # https://docs.docker.com/build/buildkit/
-      sudo bash -c 'echo "{ \"features\": { \"buildkit\" : true } }" > /etc/docker/daemon.json'
+      sudo mkdir -p /etc/docker
+      sudo bash -c 'echo "{
+        \"features\": {
+          \"buildkit\" : true
+          }
+        }" > /etc/docker/daemon.json'
     elif [ "$os" == "alpine" ]; then
       sudo apk add --update docker openrc
     elif [ "$os" == "arch" ]; then
