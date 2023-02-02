@@ -376,9 +376,9 @@ verifyDepsOrInstall() {
 }
 
 setupSSLTLS() {
- # TODO: Optional, check if user would like to setup SSL/TLS
-
- echo "TODO: Optional, check if user would like to setup SSL/TLS"
+  printf "%s\n\n" "⚠️ You should secure your Node with SSL/TLS, a domain name is required! \
+    Visit our guides to learn how to secure your \
+    Node https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls 🙏"
 }
 
 (
@@ -410,7 +410,7 @@ setupSSLTLS() {
   showOkMessage "The installation process has completed!"
 
   # Optional, check if user would like to setup SSL/TLS
-  # setupSSLTLS
+  setupSSLTLS
 
   # Run the Docker Stack
   runDockerStack "$ursaPath"
