@@ -315,7 +315,8 @@ requestPathnameForUrsaRepository() {
     answerToLc=$(toLowerCase "$answer")
 
     if [ "$answerToLc" = "y" ]; then
-      read -r -p "🙋‍♀️ What path would you like to store the repository?" selectedPath
+      # Obs: the extra white space at the end is intentional and for user presentation
+      read -r -p "🙋‍♀️ What path would you like to store the repository?  " selectedPath
     fi
 
     if [ -d "$selectedPath" ]; then
