@@ -364,29 +364,35 @@ setupSSLTLS() {
  echo "TODO: Optional, check if user would like to setup SSL/TLS"
 }
 
-# Identity the OS
-os=$(identifyOS)
+(
+  exec < /dev/tty;
 
-# Check if system has recommended resources (disk space and memory)
-checkSystemHasRecommendedResources "$os"
+  # Identity the OS
+  os=$(identifyOS)
 
-# We start by verifying if git is installed, if not request to install
-checkIfGitInstalled "$os"
-gitHealthCheck
+  # Check if system has recommended resources (disk space and memory)
+  checkSystemHasRecommendedResources "$os"
 
-# Verify if Docker is installed, if not install it
-checkIfDockerInstalled "$os"
+  # We start by verifying if git is installed, if not request to install
+  checkIfGitInstalled "$os"
+  gitHealthCheck
 
-# Request a pathname where to store the Ursa repository, otherwise provide a default
-ursaPath=$(requestPathnameForUrsaRepository)
+  # Verify if Docker is installed, if not install it
+  checkIfDockerInstalled "$os"
 
-# Pull the `ursa` project repository to the preferred target directory via HTTPS
-cloneUrsaRepositoryToPath "$ursaPath"
+  # Request a pathname where to store the Ursa repository, otherwise provide a default
+  ursaPath=$(requestPathnameForUrsaRepository)
 
-showOkMessage "The installation process has completed!"
+  # Pull the `ursa` project repository to the preferred target directory via HTTPS
+  cloneUrsaRepositoryToPath "$ursaPath"
 
-# Optional, check if user would like to setup SSL/TLS
-# setupSSLTLS
+  showOkMessage "The installation process has completed!"
 
-# Run the Docker Stack
-runDockerStack "$ursaPath"
+  # Optional, check if user would like to setup SSL/TLS
+  # setupSSLTLS
+
+  # Run the Docker Stack
+  runDockerStack "$ursaPath"
+
+  exit;
+)
