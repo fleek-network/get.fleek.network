@@ -16,7 +16,19 @@ curl https://get.fleek.network | bash
 
 ### 🏠 Local Development
 
-WIP: provide Docker image, and container instructions with bind mount for the "get fleek network" script.
+You may find that by starting a server, serving the static files in the root
+
+```sh
+npx http-server .
+```
+
+Can serve to test in a container, e.g. such as Ubuntu.
+
+```sh
+docker run -it ubuntu /bin/bash
+```
+
+It's partial support, as docker in docker is not available if you're willing to run the whole process. Thus, a VM or VPS might be a better choice during development.
 
 ## ✏️ Documentation
 
