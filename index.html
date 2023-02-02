@@ -375,10 +375,96 @@ verifyDepsOrInstall() {
   fi
 }
 
+verifyUserHasDomain() {
+  read -r -p "🤖 Do you have a domain name and DNS A Record type pointing to your server IP Address? " answer
+
+  answerToLc=$(toLowerCase "$answer")
+
+  if [ "$answerToLc" != "y" ]; then
+    printf "\n\n"
+
+    showErrorMessage "Oops! You need a domain name and have the DNS A Record type pointing to your server IP Address. If you'd like to learn more about it check our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+
+    exit 1;
+  fi
+
+  read -r -p "🤖 What's the domain name? " answer
+
+  userDomainName=$(toLowerCase "$answer")
+
+  if [ "$userDomainName" = "" ]; then
+    printf "\n\n"
+
+    showErrorMessage "Oops! You failed to provide a domain name. If you'd like to learn more read our guide at https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+
+    exit 1;
+  fi
+
+  read -r -p "🤖 What's the server IP Address the domain is pointing to? " answer
+
+  serverIpAddress=$(toLowerCase "$answer")
+
+  # given a name and an ip address, test whether there is a record for name pointing to address
+  if ! dig "$userDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$serverIpAddress"; then
+    showErrorMessage "Oops! The domain name $userDomainName doesn't have a DNS record type A pointing to the ip address $serverIpAddress. Learn how to setup your domain DNS Records by checking our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+
+    exit 1
+  fi
+
+  read -r -p "🤖 What's your email address? " answer
+
+  emailAddress=$(toLowerCase "$answer")
+
+  if [ "$emailAddress" = "" ]; then
+    showErrorMessage "Oops! You have failed to provide an email address"
+
+    exit 1;
+  fi
+
+  echo "$userDomainName;$emailAddress"
+}
+
 setupSSLTLS() {
   printf "%s\n\n" "⚠️ You should secure your Node with SSL/TLS, a domain name is required! \
     Visit our guides to learn how to secure your \
     Node https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls 🙏"
+
+  data=$(verifyUserHasDomain)
+
+  userDomainName=$(echo "$data" | cut -d ";" -f 1)
+  emailAddress=$(echo "$data" | cut -d ";" -f 2)
+
+  if ! sed -E "s/server_name .*;/server_name $userDomainName;/g" ./docker/full-node/data/nginx/app.conf; then
+    showErrorMessage "Oops! Failed to update the server_name directive in the Nginx reverse proxy with your domain name $userDomainName. Help us improve! Report to us in our Discord channel 🙏"
+
+    exit 1
+  fi
+
+  if ! sed -i "s/live\/ursa.earth/live\/$userDomainName/g" docker/full-node/data/nginx/app.conf; then
+    showErrorMessage "Oops! Failed to update the location for the TLS certificates. Help us improve! Report to us in our Discord channel 🙏"
+
+    exit 1
+  fi
+
+  chmod +x docker/full-node/init-letsencrypt.sh
+
+  showOkMessage "Updated file permissions for Lets Encrypt"
+
+  (
+    if ! cd docker/full-node; then
+      showErrorMessage "Oops! Failed to open the directory for the docker configuration files. Help us improve! Report to us in our Discord channel 🙏"
+
+      exit 1
+    fi
+
+    if ! EMAIL="$emailAddress" DOMAINS="$userDomainName" ./init-letsencrypt.sh | grep 'Successfully received certificate'; then
+      showErrorMessage "Oops! Failed to create the SSL/TLS certificates, your domain name hasn't been secured yet. Check our guide to troubleshoot https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+
+      exit 1
+    fi
+
+    showOkMessage "Great! You have now secured your server with SSL/TLS."
+  )
 }
 
 (
