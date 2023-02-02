@@ -363,7 +363,7 @@ runDockerStack() {
     exit 1
   fi
 
-  docker-compose -f docker/full-node/docker-compose.yml up
+  COMPOSE_DOCKER_CLI_BUILD=1 sudo docker-compose -f docker/full-node/docker-compose.yml up
 }
 
 verifyDepsOrInstall() {
