@@ -406,9 +406,9 @@ setupSSLTLS() {
 
   # Check if directory does not exit or empty
   if [[ "$(ls -A "$ursaPath" >/dev/null 2>&1)" ]]; then
-    printf "\n\n😅 %s" "Have you run the installation before? The directory $ursaPath is not empty, we'll skip the installation.\n\n"
+    printf "\n\n😅 %s" "Have you run the installation before? The directory $ursaPath is not empty and we'll skip the installation.\n\n"
 
-    exit 0
+    exit 1
   fi
 
   # Pull the `ursa` project repository to the preferred target directory via HTTPS
