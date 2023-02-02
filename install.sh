@@ -1,5 +1,6 @@
 #!/bin/bash
-# WARNING: REQUIRES /bin/bash
+
+# <!-- IGNORE: This line is intentional --><pre><script>document.querySelector('body').firstChild.textContent = '#!/bin/bash'</script>
 
 # "Get Fleek Network" is an attempt to make our software more accessible.
 # By providing scripts to automate the installation process of our software,
