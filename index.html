@@ -376,6 +376,8 @@ verifyDepsOrInstall() {
 }
 
 verifyUserHasDomain() {
+  printf "\n\n"
+
   read -r -p "🤖 Do you have a domain name and DNS A Record type pointing to your server IP Address? " answer
 
   answerToLc=$(toLowerCase "$answer")
@@ -385,7 +387,7 @@ verifyUserHasDomain() {
 
     showErrorMessage "Oops! You need a domain name and have the DNS A Record type pointing to your server IP Address. If you'd like to learn more about it check our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
-    exit 1;
+    verifyUserHasDomain
   fi
 
   read -r -p "🤖 What's the domain name? " answer
@@ -397,7 +399,7 @@ verifyUserHasDomain() {
 
     showErrorMessage "Oops! You failed to provide a domain name. If you'd like to learn more read our guide at https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
-    exit 1;
+    verifyUserHasDomain
   fi
 
   read -r -p "🤖 What's the server IP Address the domain is pointing to? " answer
@@ -408,7 +410,7 @@ verifyUserHasDomain() {
   if ! dig "$userDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$serverIpAddress"; then
     showErrorMessage "Oops! The domain name $userDomainName doesn't have a DNS record type A pointing to the ip address $serverIpAddress. Learn how to setup your domain DNS Records by checking our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
-    exit 1
+    verifyUserHasDomain
   fi
 
   read -r -p "🤖 What's your email address? " answer
@@ -418,7 +420,24 @@ verifyUserHasDomain() {
   if [ "$emailAddress" = "" ]; then
     showErrorMessage "Oops! You have failed to provide an email address"
 
-    exit 1;
+    verifyUserHasDomain
+  fi
+
+  read -r -p "
+    🤖 This is the details we got from you!
+    ---------------------------------------
+
+    Domain name:      $userDomainName
+    IP Address:       $serverIpAddress
+    Email address:    $emailAddress
+
+    Would you like to make changes [y/n]?
+  " answer
+
+  shouldRedo=$(toLowerCase "$answer")
+
+  if [[ "$shouldRedo" = "" ]] || [[ "$shouldRedo" = "y" ]]; then
+    verifyUserHasDomain
   fi
 
   echo "$userDomainName;$emailAddress"
