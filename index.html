@@ -1,8 +1,6 @@
 #!/bin/bash
 # WARNING: REQUIRES /bin/bash
 
-set -e
-
 # "Get Fleek Network" is an attempt to make our software more accessible.
 # By providing scripts to automate the installation process of our software,
 # we believe that it can help improve the onboarding experience of our users.
@@ -22,6 +20,7 @@ set -e
 #
 # This script will:
 # - Check if the system has enough disk space and memory, otherwise warn the user
+# - Verify is user is in Docker as Docker in Docker not supported
 # - Verify if Git is installed, if not install it
 # - It'll do a quick health check to confirm Git is installed correctly 
 # - Verify if Docker is installed, if not install it
@@ -233,7 +232,10 @@ installDocker() {
 
       sudo apt-get update
 
-      sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+      sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin docker-compose
+
+      # https://docs.docker.com/build/buildkit/
+      sudo bash -c 'echo "{ \"features\": { \"buildkit\" : true } }" > /etc/docker/daemon.json'
     elif [ "$os" == "alpine" ]; then
       sudo apk add --update docker openrc
     elif [ "$os" == "arch" ]; then
