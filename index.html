@@ -244,7 +244,12 @@ installDocker() {
       sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin docker-compose
 
       # https://docs.docker.com/build/buildkit/
-      sudo bash -c 'echo "{ \"features\": { \"buildkit\" : true } }" > /etc/docker/daemon.json'
+      sudo mkdir -p /etc/docker
+      sudo bash -c 'echo "{
+        \"features\": {
+          \"buildkit\" : true
+          }
+        }" > /etc/docker/daemon.json'
     elif [ "$os" == "alpine" ]; then
       sudo apk add --update docker openrc
     elif [ "$os" == "arch" ]; then
@@ -310,7 +315,8 @@ requestPathnameForUrsaRepository() {
     answerToLc=$(toLowerCase "$answer")
 
     if [ "$answerToLc" = "y" ]; then
-      read -r -p "🙋‍♀️ What path would you like to store the repository?" selectedPath
+      # Obs: the extra white space at the end is intentional and for user presentation
+      read -r -p "🙋‍♀️ What path would you like to store the repository?  " selectedPath
     fi
 
     if [ -d "$selectedPath" ]; then
@@ -360,6 +366,15 @@ runDockerStack() {
   docker-compose -f docker/full-node/docker-compose.yml up
 }
 
+verifyDepsOrInstall() {
+  if ! hasCommand "$1"; then
+    apt-get update
+    apt-get install "$1" -y
+
+    showOkMessage "Installed sudo!"
+  fi
+}
+
 setupSSLTLS() {
  # TODO: Optional, check if user would like to setup SSL/TLS
 
@@ -374,6 +389,9 @@ setupSSLTLS() {
 
   # Check if system has recommended resources (disk space and memory)
   checkSystemHasRecommendedResources "$os"
+
+  # Check if has sudo (for testing in Docker mainly)
+  verifyDepsOrInstall sudo
 
   # We start by verifying if git is installed, if not request to install
   checkIfGitInstalled "$os"
