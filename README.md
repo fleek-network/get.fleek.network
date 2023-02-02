@@ -8,6 +8,22 @@
 
 "Get Fleek Network" is an attempt to make our software more accessible. By providing scripts to automate the installation process of our software, we believe that it can help improve the onboarding experience of our users.
 
+### ⚠️ Disclaimer
+
+The practice of "piped installers" has become widespread in recent years, as development teams try to help the users by providing an easy installation process, but that has security risks.
+
+💡 A "pipe installer" is a term used to describe `curl get.example.com/script.sh | bash`, which is a `curl` request that pipes a file that it gets from a remote location into the bash interpreter which is used to allow you to interact with your operating system. You can find these "pipe installers" in [Rust](https://www.rust-lang.org/learn/get-started), [Docker](https://get.docker.com/), etc; although they all are written differently and for different purposes and intent.
+
+We try to reduce this risk by reducing the number of operations by informing and requesting permission from the user, which has to provide consent.
+
+As a user, you are strongly advised to follow our [Introductory Guides](https://docs.fleek.network) instead. Otherwise, run the "pipe installer" at your own risk! 
+
+All things considered, we advise you to read the source code which is publicly available in the [repository](https://github.com/fleek-network/get.fleek.network) to understand the process and make a decision of your own, about whether you find it safe to run the assisted installer or not.
+
+👍 Alternatively, you may find the installation script that is provided as a good reference to follow on your own.
+
+If you have any questions or feedback, find us on [Discord](https://discord.gg/fleekxyz).
+
 ### 🤖 Installation
 
 ```
