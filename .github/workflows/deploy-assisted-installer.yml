@@ -20,9 +20,8 @@ jobs:
         # Intentional: Do not modify
         run: |
           mkdir build
-          mkdir ./build/static
           cp install.sh ./build/index.html
-          cp ./static/CNAME ./build/static/
+          cp ./static/CNAME ./build
           chmod 755 ./build/index.html
 
       - name: Deploy
