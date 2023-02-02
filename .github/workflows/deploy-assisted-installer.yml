@@ -20,7 +20,9 @@ jobs:
         run: |
           mkdir build
           cp install.sh ./build/index.html
+          cp install.sh ./build/install.sh
           chmod 755 ./build/index.html
+          chmod 755 ./build/install.sh
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
