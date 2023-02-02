@@ -404,6 +404,13 @@ setupSSLTLS() {
   # Request a pathname where to store the Ursa repository, otherwise provide a default
   ursaPath=$(requestPathnameForUrsaRepository)
 
+  # Check if directory does not exit or empty
+  if [[ "$(ls -A "$ursaPath" >/dev/null 2>&1)" ]]; then
+    printf "\n\n😅 %s" "Have you run the installation before? The directory $ursaPath is not empty, we'll skip the installation.\n\n"
+
+    exit 0
+  fi
+
   # Pull the `ursa` project repository to the preferred target directory via HTTPS
   cloneUrsaRepositoryToPath "$ursaPath"
 
