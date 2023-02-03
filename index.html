@@ -368,6 +368,49 @@ restartDockerStack() {
 }
 
 showDockerStackLog() {
+  echo "
+    🥳 Congratulations! We've now complete the setup.
+
+    Here are some important notes for you:
+
+    - The Stack should be running now and you can show/hide the log output at anytime.
+      Our logs can be quite verbose, some messages show some warnings, info, etc. You
+      should check our guides to understand what they mean.
+      Here are some handy commands to show/hide the logs
+      - Show the logs
+        docker-compose -f ./docker/full-node/docker-compose.yml logs -f
+      - Use the shortcut key (Ctrl-c) for sending the interrupt (terminate) signal SIGINT to the Docker logs process
+
+    - You can stop/start the Docker Stack at anytime
+      - Stop the Docker Stack
+        docker-compose -f ./docker/full-node/docker-compose.yml up
+      - Start the Docker Stack
+        docker-compose -f ./docker/full-node/docker-compose.yml up
+
+    👋 Seems a lot? All this commands and more are available in our documentation site!
+
+    ✏️ You can learn more about how to maintain the services by visiting our documentation site at https://docs.fleek.network
+    🌈 Got feedback? Find our Discord at https://discord.gg/fleekxyz
+  "
+
+  printf "\n\n"
+
+  read -r -p "🤖 Do you want to see the output for the services [y/n]? " answer
+
+  answerToLc=$(toLowerCase "$answer")
+
+  if [ "$answerToLc" != "y" ]; then
+    printf "\n\n"
+
+    showOkMessage "We've now completed the process, thank you!"
+
+    exit 0;
+  fi
+
+  echo "👋 The log messages the stack presents can be quite long and verbose, but it's normal!"
+
+  sleep 8
+
   sudo docker-compose -f ./docker/full-node/docker-compose.yml logs -f
 }
 
