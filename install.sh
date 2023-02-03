@@ -344,26 +344,36 @@ cloneUrsaRepositoryToPath() {
   showOkMessage "The Ursa repository located at $defaultUrsaHttpsRespository was cloned to $ursaPath! [skipping]"
 }
 
-runDockerStack() {
-  read -r -p "🙋‍♀️ You can now run a Node via Docker, would you like to start it now [y/n]? " answer
+restartDockerStack() {
+  showOkMessage "The stack will restart, please wait..."
 
-  answerToLc=$(toLowerCase "$answer")
+  sleep 10
+  sudo docker-compose -f ./docker/full-node/docker-compose.yml stop
 
-  if [ "$answerToLc" = "n" ]; then
-    showHintMessage "When you wish to start the Fleek Network Node, open the directory $1 \
-    and run the command \"docker-compose -f docker/full-node/docker-compose.yml up\". If you'd like \
-    to learn more about how to run and maintain the Node, visit our guides at https://docs.fleek.network"
+  sleep 10
+  sudo docker-compose -f ./docker/full-node/docker-compose.yml start
+}
 
-    exit 0
-  fi
+showDockerStackLog() {
+  sudo docker-compose -f ./docker/full-node/docker-compose.yml logs -f
+}
 
-  if ! cd "$1"; then
-    showErrorMessage "Oops! Failed to change directory to $1"
+initLetsEncrypt() {
+  if ! cd ./docker/full-node; then
+    showErrorMessage "Oops! Failed to open the directory for the docker configuration files. Help us improve! Report to us in our Discord channel 🙏"
 
     exit 1
   fi
 
-  COMPOSE_DOCKER_CLI_BUILD=1 sudo docker-compose -f docker/full-node/docker-compose.yml up
+  if ! EMAIL="$1" DOMAINS="$2" ./init-letsencrypt.sh | grep 'Successfully received certificate'; then
+    showErrorMessage "Oops! Failed to create the SSL/TLS certificates, your domain name hasn't been secured yet. Check our guide to troubleshoot https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+
+    exit 1
+  fi
+
+  cd ../../
+
+  showOkMessage "Great! You have now secured your server with SSL/TLS."
 }
 
 verifyDepsOrInstall() {
@@ -407,7 +417,7 @@ verifyUserHasDomain() {
   serverIpAddress=$(toLowerCase "$answer")
 
   # given a name and an ip address, test whether there is a record for name pointing to address
-  if ! dig "$userDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$serverIpAddress"; then
+  if ! dig "$userDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$serverIpAddress" >/dev/null 2>&1 ; then
     showErrorMessage "Oops! The domain name $userDomainName doesn't have a DNS record type A pointing to the ip address $serverIpAddress. Learn how to setup your domain DNS Records by checking our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
     verifyUserHasDomain
@@ -431,16 +441,100 @@ verifyUserHasDomain() {
     IP Address:       $serverIpAddress
     Email address:    $emailAddress
 
-    Would you like to make changes [y/n]?
+    Is this correct [y/n]?
   " answer
 
   shouldRedo=$(toLowerCase "$answer")
 
-  if [[ "$shouldRedo" = "" ]] || [[ "$shouldRedo" = "y" ]]; then
+  if [[ "$shouldRedo" != "y" ]]; then
     verifyUserHasDomain
   fi
 
   echo "$userDomainName;$emailAddress"
+}
+
+replaceNginxConfFileForHttp() {
+  echo "
+    proxy_cache_path /cache keys_zone=nodecache:100m levels=1:2 inactive=31536000s max_size=10g use_temp_path=off;
+
+    server {
+        listen 80;
+        listen [::]:80;
+        server_name $1;
+
+        location /.well-known/acme-challenge/ {
+            root /var/www/certbot;
+        }
+
+        location /stub_status {
+          stub_status;
+        }
+
+        proxy_redirect          off;
+        client_max_body_size    10m;
+        client_body_buffer_size 128k;
+        proxy_connect_timeout   90;
+        proxy_send_timeout      90;
+        proxy_read_timeout      90;
+        proxy_buffers           32 128k;
+
+        location / {
+          add_header content-type  application/vnd.ipld.raw;
+          add_header content-type  application/vnd.ipld.car;
+          add_header content-type  application/octet-stream;
+          add_header cache-control public,max-age=31536000,immutable;
+
+          proxy_cache nodecache;
+          proxy_cache_valid 200 31536000s;
+          add_header X-Proxy-Cache \$upstream_cache_status;
+          proxy_cache_methods GET HEAD POST;
+          proxy_cache_key \"\$request_uri|\$request_body\";
+          client_max_body_size 1G;
+
+          proxy_pass http://ursa:4069;
+        }
+    }
+  " > ./docker/full-node/data/nginx/http.conf
+}
+
+replaceNginxConfFileForHttps() {
+  echo "
+    server {
+        listen 443 ssl http2;
+        listen [::]:443 ssl http2;
+        server_name $1;
+
+        server_tokens off;
+
+        # SSL code
+        ssl_certificate /etc/letsencrypt/live/$1/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/$1/privkey.pem;
+
+        include /etc/letsencrypt/options-ssl-nginx.conf;
+        ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+        location /stub_status {
+          stub_status;
+        }
+
+        location / {
+          add_header content-type  application/vnd.ipld.raw;
+          add_header content-type  application/vnd.ipld.car;
+          add_header content-type  application/octet-stream;
+          add_header cache-control public,max-age=31536000,immutable;
+
+          proxy_cache nodecache;
+          proxy_cache_valid 200 31536000s;
+          add_header X-Proxy-Cache \$upstream_cache_status;
+          proxy_cache_methods GET HEAD POST;
+          proxy_cache_key \"\$request_uri|\$request_body\";
+          client_max_body_size 1G;
+
+
+          proxy_pass http://ursa:4069;
+        }
+    }
+  " > ./docker/full-node/data/nginx/https.conf
 }
 
 setupSSLTLS() {
@@ -448,42 +542,47 @@ setupSSLTLS() {
     Visit our guides to learn how to secure your \
     Node https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls 🙏"
 
-  data=$(verifyUserHasDomain)
+  trimData=$(verifyUserHasDomain | xargs)
 
-  userDomainName=$(echo "$data" | cut -d ";" -f 1)
-  emailAddress=$(echo "$data" | cut -d ";" -f 2)
+  userDomainName=$(echo "$trimData" | cut -d ";" -f 1)
+  emailAddress=$(echo "$trimData" | cut -d ";" -f 2)
 
-  if ! sed -E "s/server_name .*;/server_name $userDomainName;/g" ./docker/full-node/data/nginx/app.conf; then
-    showErrorMessage "Oops! Failed to update the server_name directive in the Nginx reverse proxy with your domain name $userDomainName. Help us improve! Report to us in our Discord channel 🙏"
+  echo "[debug] userDomainName ($userDomainName), emailAddress ($emailAddress)"
 
-    exit 1
-  fi
-
-  if ! sed -i "s/live\/ursa.earth/live\/$userDomainName/g" docker/full-node/data/nginx/app.conf; then
-    showErrorMessage "Oops! Failed to update the location for the TLS certificates. Help us improve! Report to us in our Discord channel 🙏"
+  if ! cd "$1"; then
+    showErrorMessage "Oops! This is embarasssing! Failed to change to ursa directory. Help us improve, report it in our discord channel 🙏"
 
     exit 1
   fi
 
-  chmod +x docker/full-node/init-letsencrypt.sh
+  if ! rm ./docker/full-node/data/nginx/app.conf; then
+    showErrorMessage "Oops! Failed to clear the nginx default config. Help us improve, report it in our discord channel 🙏"
 
-  showOkMessage "Updated file permissions for Lets Encrypt"
+    exit 1
+  fi
 
-  (
-    if ! cd docker/full-node; then
-      showErrorMessage "Oops! Failed to open the directory for the docker configuration files. Help us improve! Report to us in our Discord channel 🙏"
+  if ! replaceNginxConfFileForHttp "$userDomainName"; then
+    showErrorMessage "Oops! Failed to update the http server_name directive in the Nginx reverse proxy with your domain name $userDomainName. Help us improve! Report to us in our Discord channel 🙏"
 
-      exit 1
-    fi
+    exit 1
+  fi
 
-    if ! EMAIL="$emailAddress" DOMAINS="$userDomainName" ./init-letsencrypt.sh | grep 'Successfully received certificate'; then
-      showErrorMessage "Oops! Failed to create the SSL/TLS certificates, your domain name hasn't been secured yet. Check our guide to troubleshoot https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+  chmod +x ./docker/full-node/init-letsencrypt.sh
 
-      exit 1
-    fi
+  showOkMessage "Updated file permissions for Lets Encrypt!"
 
-    showOkMessage "Great! You have now secured your server with SSL/TLS."
-  )
+  # start stack in bg, as lets encrypt will need the nginx to validate
+  COMPOSE_DOCKER_CLI_BUILD=1 sudo docker compose -f ./docker/full-node/docker-compose.yml up -d
+
+  if ! initLetsEncrypt "$emailAddress" "$userDomainName"; then
+    exit 1
+  fi
+
+  if ! replaceNginxConfFileForHttps "$userDomainName"; then
+    showErrorMessage "Oops! Failed to update the https server_name directive in the Nginx reverse proxy with your domain name $userDomainName. Help us improve! Report to us in our Discord channel 🙏"
+
+    exit 1
+  fi
 }
 
 (
@@ -522,10 +621,13 @@ setupSSLTLS() {
   showOkMessage "The installation process has completed!"
 
   # Optional, check if user would like to setup SSL/TLS
-  setupSSLTLS
+  setupSSLTLS "$ursaPath"
 
-  # Run the Docker Stack
-  runDockerStack "$ursaPath"
+  # Restart docker
+  restartDockerStack
 
+  # Show the logs
+  showDockerStackLog
+  
   exit;
 )
