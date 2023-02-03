@@ -53,11 +53,12 @@ clear() {
 }
 
 requestAuthorizationAndExec() {
+    # [Enter] should default as "y"
     read -r -p "🤖 $1 [y/n]? " answer
 
     answerToLc=$(toLowerCase "$answer")
 
-    if [ "$answerToLc" != "y" ]; then
+    if [ "$answerToLc" == "n" ]; then
       printf "\n\n"
 
       showErrorMessage "$2"
@@ -126,7 +127,20 @@ EOF
 
   printf "\n\n"
 
-  read -r -p "🤖 Are you happy to proceed with the assisted installer [y/n]? " answer  
+  read -r -p "🤖 Are you happy to continue [y/n]? " answer 
+
+  answerToLc=$(toLowerCase "$answer")
+
+  if [ "$answerToLc" == "n" ]; then
+    echo "
+      🦖 The installation assistant terminates here, as you're required to accept in order to have the
+      assisted installer guide you. If you've changed your mind, try again!
+
+      Otherwise, if you'd like to learn a bit more visit our website at https://fleek.network
+    "
+
+    exit 1;
+  fi
 }
 
 windowsUsersWarning() {
@@ -241,6 +255,8 @@ checkSystemHasRecommendedResources() {
       😬 Oh no! We're afraid that you need at least 8 GB of RAM and 10 GB of available disk space.
     "
 
+    printf "\n"
+
     read -r -p "🤖 Do you want to continue [y/n]? " answer
 
     answerToLc=$(toLowerCase "$answer")
@@ -248,7 +264,6 @@ checkSystemHasRecommendedResources() {
     if [ "$answerToLc" == "n" ]; then
       exit 1;
     fi
-
   else
     showOkMessage "Your system has enough resources (disk space and memory)"
   fi
@@ -379,7 +394,9 @@ requestPathnameForUrsaRepository() {
     defaultPath="$HOME/www/fleek-network/ursa"
     selectedPath=$defaultPath
 
-    read -r -p "🤖 The Ursa repository is going to be saved in the recommended path \"$defaultPath\", is that ok? Type N to change the path [y/n]? " answer
+    read -r -p "
+    🤖 We'll save the Ursa source code in the recommended path \"$defaultPath\", ok?
+    Press ENTER to continue, or N to change the path: " answer
 
     answerToLc=$(toLowerCase "$answer")
 
@@ -414,60 +431,103 @@ cloneUrsaRepositoryToPath() {
 }
 
 restartDockerStack() {
-  showOkMessage "The stack will restart, please wait..."
+  showOkMessage "The Docker Stack is going restart. Be patient, please!"
+
+  printf "\n"
 
   sleep 10
   sudo docker-compose -f ./docker/full-node/docker-compose.yml stop
+  
+  printf "\n"
 
-  showOkMessage "The stack is restarting, please wait..."
+  showOkMessage "The Docker Stack will now going to start. Be patient, please!"
 
   sleep 10
   sudo docker-compose -f ./docker/full-node/docker-compose.yml start
+
+  printf "\n"
+
+  showOkMessage "Great! The Docker Stack has restarted."
+
+  sleep 3
 }
 
 showDockerStackLog() {
   echo "
-    🥳 Congratulations! We've now complete the setup.
+  🥳 Great! We have completed the installation!
 
-    Here are some important notes for you:
+  Here are some important notes for you:
 
-    - The Stack should be running now and you can show/hide the log output at anytime.
-      Our logs can be quite verbose, some messages show some warnings, info, etc. You
-      should check our guides to understand what they mean.
-      Here are some handy commands to show/hide the logs
-      - Show the logs
-        docker-compose -f ./docker/full-node/docker-compose.yml logs -f
-      - Use the shortcut key (Ctrl-c) for sending the interrupt (terminate) signal SIGINT to the Docker logs process
+  The Stack should be running now and you can show or hide the log output at anytime.
 
-    - You can stop/start the Docker Stack at anytime
-      - Stop the Docker Stack
-        docker-compose -f ./docker/full-node/docker-compose.yml up
-      - Start the Docker Stack
-        docker-compose -f ./docker/full-node/docker-compose.yml up
+  Our Stack logs can be quite verbose, as it shows WARNINGS, INFO, ERRORS, etc.
+  It's important to understand what they mean by simply reading our Node Health-check guide
+  https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide
 
-    👋 Seems a lot? All this commands and more are available in our documentation site!
+  Here are some handy commands to show or hide the logs
 
-    ✏️ You can learn more about how to maintain the services by visiting our documentation site at https://docs.fleek.network
-    🌈 Got feedback? Find our Discord at https://discord.gg/fleekxyz
+    - If you have the Stack running and want to show the logs:
+
+      docker-compose -f ./docker/full-node/docker-compose.yml logs -f
+
+    - Terminate by sending the interrupt signal (SIGNIT) to Docker using the hotkey:
+      
+      Ctrl-c
+
+  You can Stop or Start the Docker Stack at anytime.
+  Change the directory to the location where the source code of Ursa is saved.
+
+  For example, if you accepted the installation recommendation that is ~/www/fleek-network/ursa
+
+  Then after, run the following commands, to either Start (up) or Stop (down)
+
+    - Start the Docker Stack
+
+      docker-compose -f ./docker/full-node/docker-compose.yml up
+
+    - Stop the Docker Stack
+
+      docker-compose -f ./docker/full-node/docker-compose.yml down
+
+  👋 Seems a lot? All the commands and much more are available in our documentation site!
+
+  ✏️ Learn how to maintain your Node by visiting our documentation at https://docs.fleek.network
+
+  🌈 Got feedback? Find our Discord at https://discord.gg/fleekxyz
   "
 
   printf "\n\n"
 
-  read -r -p "🤖 Do you want to see the output for the services [y/n]? " answer
+  read -r -p "
+  🙋‍♀️ Want to see the output for the Docker Stack?
+  
+  Press Y or ENTER to confirm. Otherwise, N to make changes!
+  " answer
 
   answerToLc=$(toLowerCase "$answer")
 
-  if [ "$answerToLc" != "y" ]; then
+  if [ "$answerToLc" == "n" ]; then
     printf "\n\n"
 
-    showOkMessage "We've now completed the process, thank you!"
+    showOkMessage "We've now completed the installation process, thank you!"
 
     exit 0;
   fi
 
-  echo "👋 The log messages the stack presents can be quite long and verbose, but it's normal!"
+  clear
 
-  sleep 8
+  echo "
+  👋 Hey! Just a quick hint!
+  
+  The Stack Logs can be quite long and verbose, but it's normal!
+
+  If that keeps you awake at night, or if you find something interesting presented
+  in the Logs, feel free to talk about it in our Discord 🙏
+
+  You'll find that most Log messages can be ignored at this time.
+  "
+
+  read -r -p "Press ENTER to continue" answer
 
   sudo docker-compose -f ./docker/full-node/docker-compose.yml logs -f
 }
@@ -509,21 +569,36 @@ extactDomainName() {
 }
 
 verifyUserHasDomain() {
-  printf "\n\n"
+  echo "
+  You have a Domain name and have updated the DNS A Record type
+  to answer with the server IP address.
+  "
+  
+  printf "\n"
 
-  read -r -p "🤖 Do you have a domain name and DNS A Record type pointing to your server IP Address [y/n]? " answer
+  read -r -p "Is this correct [y/n]? " answer
 
   answerToLc=$(toLowerCase "$answer")
 
-  if [ "$answerToLc" != "y" ]; then
-    printf "\n\n"
+  if [ "$answerToLc" == "n" ]; then
+    printf "\n"
 
-    showErrorMessage "Oops! You need a domain name and have the DNS A Record type pointing to your server IP Address. If you'd like to learn more about it check our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+    showErrorMessage "Oops! You need a domain name and have the DNS A Record type answer with the server IP address. If you'd like to learn more about it check our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
+    sleep 8
+    clear
     verifyUserHasDomain
   fi
 
-  read -r -p "🤖 What's the domain name (just the domain, no need for http://)? " answer
+  printf "\n"
+
+  echo "
+  💡 Provide us your domain name without http:// or https://
+  e.g. www.example.com or my-node.fleek.network
+  "
+  printf "\n"
+
+  read -r -p "🤖 What's the domain name? " answer
 
   userDomainName=$(toLowerCase "$answer")
 
@@ -532,25 +607,37 @@ verifyUserHasDomain() {
   if ! whois "$domainOnly" | grep "$domainOnly" >/dev/null 2>&1; then
     showErrorMessage "Oops! Doesn't seem like a valid domain, might want to try typing the domain again..."
 
-    sleep 3
+    sleep 8
+    clear
     verifyUserHasDomain
   fi
 
   if [ "$userDomainName" = "" ]; then
-    printf "\n\n"
-
     showErrorMessage "Oops! You failed to provide a domain name. If you'd like to learn more read our guide at https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
-    sleep 3
+    sleep 8
+    clear
     verifyUserHasDomain
   fi
 
-  read -r -p "🤖 What's the server IP Address the domain is pointing to? " answer
+  detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "ERROR_IP_ADDRESS_NOT_AVAILABLE")
+
+  echo "
+  💡 Provide us the IP address of the machine
+  where you are installing or running the Node
+  e.g. 142.250.180.14 or 91.198.174.192
+
+  Tip: it seems that this machie IP address is $detectedIpAddress
+  "
+
+  printf "\n"
+
+  read -r -p "🤖 What's the IP address the domain answers with? " answer
 
   serverIpAddress=$(toLowerCase "$answer")
 
   if [[ ! $serverIpAddress =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    showErrorMessage "Oops! Is the IP Address you've provided correct? Try that again..."
+    showErrorMessage "Oops! Is the IP address you've provided correct? Try that again..."
 
     sleep 3
     verifyUserHasDomain
@@ -564,6 +651,17 @@ verifyUserHasDomain() {
     verifyUserHasDomain
   fi
 
+  echo "
+  💡 Provide us with a valid email address that you have access to
+  we'll not contact you, but its required by Let's Encrypt (Certificate Authority)
+  e.g. node_operator@fleek.xyz
+
+  If you'd like to know more about the Let's Encrypt organisation
+  visit their website at https://letsencrypt.org/
+  "
+
+  printf "\n"
+
   read -r -p "🤖 What's your email address? " answer
 
   emailAddress=$(toLowerCase "$answer")
@@ -575,21 +673,23 @@ verifyUserHasDomain() {
     verifyUserHasDomain
   fi
 
+  clear
+
   read -r -p "
-    🤖 Here are the details you have provided,
-    make sure the information is correct.
-    ---------------------------------------
+  🤖 Here are the details you have provided, make sure the information is correct.
 
-    Domain name:      $userDomainName
-    IP Address:       $serverIpAddress
-    Email address:    $emailAddress
+  Domain name:      $userDomainName
+  IP Address:       $serverIpAddress
+  Email address:    $emailAddress
 
-    Is this correct [y/n]?
+  Is this correct [y/n]?
+
+  Press Y or ENTER to confirm. Otherwise, N to make changes!
   " answer
 
   shouldRedo=$(toLowerCase "$answer")
 
-  if [[ "$shouldRedo" != "y" ]]; then
+  if [[ "$shouldRedo" == "n" ]]; then
     verifyUserHasDomain
   fi
 
@@ -682,10 +782,15 @@ replaceNginxConfFileForHttps() {
 
 setupSSLTLS() {
   echo "
-  ⚠️ You should secure your Node with SSL/TLS, for this reason a domain name is required!
+    ⚠️ You're required to have a Domain name point to your server IP address.
 
-  🙏 If interested, visit our guides to learn how to secure your Node
-  https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls
+    Visit your domain name registrar's dashboard,
+    create or update the A record to have the hostname answer with the server IP address.
+
+    This is important to secure your server with SSL/TLS.
+
+    🙏 If you'd like to learn more about this, check our guide \"How to secure a Network Node\"
+    https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls
   "
 
   printf "\n\n"
@@ -776,10 +881,22 @@ setupSSLTLS() {
   # Pull the `ursa` project repository to the preferred target directory via HTTPS
   cloneUrsaRepositoryToPath "$ursaPath"
 
-  showOkMessage "The installation process has completed!"
+  # Await a few seconds to let the user read...
+  sleep 5
+
+  # Clear shell
+  clear
 
   # Optional, check if user would like to setup SSL/TLS
   setupSSLTLS "$ursaPath"
+
+  showOkMessage "The installation process has completed!"
+  
+  # Await a few seconds to let the user read...
+  sleep 5
+
+  # Clear shell
+  clear
 
   # Restart docker
   restartDockerStack
