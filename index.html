@@ -310,17 +310,17 @@ requestPathnameForUrsaRepository() {
     defaultPath="$HOME/www/fleek-network/ursa"
     selectedPath=$defaultPath
 
-    read -r -p "🤖 The Ursa repository is going to be saved in the recommended path \"$defaultPath\", would you like to change the location [y/n]? " answer
+    read -r -p "🤖 The Ursa repository is going to be saved in the recommended path \"$defaultPath\", is that ok? Type N to change the path [y/n]? " answer
 
     answerToLc=$(toLowerCase "$answer")
 
-    if [ "$answerToLc" = "y" ]; then
+    if [ "$answerToLc" = "n" ]; then
       # Obs: the extra white space at the end is intentional and for user presentation
       read -r -p "🙋‍♀️ What path would you like to store the repository?  " selectedPath
     fi
 
     if [ -d "$selectedPath" ]; then
-      showErrorMessage "Oops! The $selectedPath already exists, ensure that the directory is cleared before proceeding!"
+      showErrorMessage "Oops! The $selectedPath already exists, ensure that the directory is cleared before trying again."
 
       exit 1
     fi
@@ -349,6 +349,8 @@ restartDockerStack() {
 
   sleep 10
   sudo docker-compose -f ./docker/full-node/docker-compose.yml stop
+
+  showOkMessage "The stack is restarting, please wait..."
 
   sleep 10
   sudo docker-compose -f ./docker/full-node/docker-compose.yml start
@@ -400,15 +402,23 @@ verifyUserHasDomain() {
     verifyUserHasDomain
   fi
 
-  read -r -p "🤖 What's the domain name? " answer
+  read -r -p "🤖 What's the domain name (just the domain, no need for http://)? " answer
 
   userDomainName=$(toLowerCase "$answer")
+
+  if ! whois "$userDomainName" | grep "$userDomainName"; then
+    showErrorMessage "Oops! Doesn't seem like a valid domain, might want to try typing the domain again..."
+
+    sleep 3
+    verifyUserHasDomain
+  fi
 
   if [ "$userDomainName" = "" ]; then
     printf "\n\n"
 
     showErrorMessage "Oops! You failed to provide a domain name. If you'd like to learn more read our guide at https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
+    sleep 3
     verifyUserHasDomain
   fi
 
@@ -416,10 +426,18 @@ verifyUserHasDomain() {
 
   serverIpAddress=$(toLowerCase "$answer")
 
+  if [[ ! $serverIpAddress =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    showErrorMessage "Oops! Is the IP Address you've provided correct? Try that again..."
+
+    sleep 3
+    verifyUserHasDomain
+  fi
+
   # given a name and an ip address, test whether there is a record for name pointing to address
   if ! dig "$userDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$serverIpAddress" >/dev/null 2>&1 ; then
     showErrorMessage "Oops! The domain name $userDomainName doesn't have a DNS record type A pointing to the ip address $serverIpAddress. Learn how to setup your domain DNS Records by checking our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
+    sleep 3
     verifyUserHasDomain
   fi
 
@@ -427,14 +445,16 @@ verifyUserHasDomain() {
 
   emailAddress=$(toLowerCase "$answer")
 
-  if [ "$emailAddress" = "" ]; then
-    showErrorMessage "Oops! You have failed to provide an email address"
+  if [[ "$emailAddress" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$ ]]; then
+    showErrorMessage "Oops! Is the email address you've provided correct? Try that again..."
 
+    sleep 3
     verifyUserHasDomain
   fi
 
   read -r -p "
-    🤖 This is the details we got from you!
+    🤖 Here are the details you have provided,
+    make sure the information is correct.
     ---------------------------------------
 
     Domain name:      $userDomainName
@@ -546,8 +566,6 @@ setupSSLTLS() {
 
   userDomainName=$(echo "$trimData" | cut -d ";" -f 1)
   emailAddress=$(echo "$trimData" | cut -d ";" -f 2)
-
-  echo "[debug] userDomainName ($userDomainName), emailAddress ($emailAddress)"
 
   if ! cd "$1"; then
     showErrorMessage "Oops! This is embarasssing! Failed to change to ursa directory. Help us improve, report it in our discord channel 🙏"
