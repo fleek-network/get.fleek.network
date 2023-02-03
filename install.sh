@@ -131,7 +131,7 @@ EOF
   If you are happy to have the script assist you in the installaton process of Fleek Network Node,
   run it at your own risk, as there's a certain level of trust that you have to put into \"piped installers\".
   With that considered, we will ask when dependencies are missing and if happy to proceed with
-  the installation by running the commands e.g. git, docker, other dependencies from third-parties, etc.
+  the installation before running the commands, such as, to install git, docker, dependencies from third-parties, etc.
   
   Our script source is open to everybody and can be verified at https://github.com/fleek-network/get.fleek.network
 
