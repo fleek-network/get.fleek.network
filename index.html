@@ -558,9 +558,14 @@ replaceNginxConfFileForHttps() {
 }
 
 setupSSLTLS() {
-  printf "%s\n\n" "⚠️ You should secure your Node with SSL/TLS, a domain name is required! \
-    Visit our guides to learn how to secure your \
-    Node https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls 🙏"
+  echo "
+  ⚠️ You should secure your Node with SSL/TLS, a domain name is required!
+
+  🙏 If interested, visit our guides to learn how to secure your Node
+  https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls
+  "
+
+  printf "\n\n"
 
   trimData=$(verifyUserHasDomain | xargs)
 
