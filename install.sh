@@ -451,7 +451,7 @@ cloneUrsaRepositoryToPath() {
     exit 1
   fi
 
-  showOkMessage "The Ursa repository located at $defaultUrsaHttpsRespository was cloned to $ursaPath! [skipping]"
+  showOkMessage "The Ursa repository located at $defaultUrsaHttpsRespository was cloned to $ursaPath!"
 }
 
 restartDockerStack() {
@@ -479,8 +479,6 @@ restartDockerStack() {
 showDockerStackLog() {
   echo "
   🥳 Great! We have completed the installation!
-
-  Here are some important notes for you:
 
   The Stack should be running now and you can show or hide the log output at anytime.
 
@@ -514,13 +512,12 @@ showDockerStackLog() {
       docker-compose -f ./docker/full-node/docker-compose.yml down
 
   👋 Seems a lot? All the commands and much more are available in our documentation site!
-
   ✏️ Learn how to maintain your Node by visiting our documentation at https://docs.fleek.network
 
   🌈 Got feedback? Find our Discord at https://discord.gg/fleekxyz
   "
 
-  printf "\n\n"
+  printf "\n"
 
   read -r -p "
   🙋‍♀️ Want to see the output for the Docker Stack?
@@ -592,6 +589,8 @@ extactDomainName() {
   echo "$domain"
 }
 
+# TODO: Recursion needs to be tested for each of the fn
+# TODO: ENTER key needs to be tested along Y, post N and recursion
 verifyUserHasDomain() {
   read -r -p "
   Do you have the domain settings ready [y/n]?
@@ -614,13 +613,12 @@ verifyUserHasDomain() {
 
   printf "\n"
 
-  echo "
+  read -r -p "
   💡 Provide us your domain name without http:// or https://
   e.g. www.example.com or my-node.fleek.network
-  "
-  printf "\n"
 
-  read -r -p "🤖 What's the domain name? " answer
+  Tell us, what's the domain name?
+  " answer
 
   userDomainName=$(toLowerCase "$answer")
 
@@ -644,17 +642,16 @@ verifyUserHasDomain() {
 
   detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "ERROR_IP_ADDRESS_NOT_AVAILABLE")
 
-  echo "
-  💡 Provide us the IP address of the machine
-  where you are installing or running the Node
-  e.g. 142.250.180.14 or 91.198.174.192
-
-  Tip: it seems that this machie IP address is $detectedIpAddress
-  "
-
   printf "\n"
 
-  read -r -p "🤖 What's the IP address the domain answers with? " answer
+  read -r -p "
+  💡 Provide us the IP address of the machine where you are installing
+  or running the Node e.g. 142.250.180.14 or 91.198.174.192
+
+  Tip: Seems that this machine IP address is $detectedIpAddress
+
+  Let us know, what's the IP address the domain answers with?
+  " answer
 
   serverIpAddress=$(toLowerCase "$answer")
 
@@ -673,18 +670,17 @@ verifyUserHasDomain() {
     verifyUserHasDomain
   fi
 
-  echo "
-  💡 Provide us with a valid email address that you have access to
-  we'll not contact you, but its required by Let's Encrypt (Certificate Authority)
-  e.g. node_operator@fleek.xyz
+  printf "\n"
+
+  read -r -p "
+  💡 Provide us with a valid email address that you have access to, rest
+  ensured that we'll not contact you, but its required by Let's Encrypt (Certificate Authority)
 
   If you'd like to know more about the Let's Encrypt organisation
   visit their website at https://letsencrypt.org/
-  "
 
-  printf "\n"
-
-  read -r -p "🤖 What's your email address? " answer
+  Tell us, what's your email address?
+  " answer
 
   emailAddress=$(toLowerCase "$answer")
 
@@ -851,6 +847,8 @@ setupSSLTLS() {
   if ! initLetsEncrypt "$emailAddress" "$userDomainName"; then
     exit 1
   fi
+
+  printf "\n"
 
   if ! replaceNginxConfFileForHttps "$userDomainName"; then
     showErrorMessage "Oops! Failed to update the https server_name directive in the Nginx reverse proxy with your domain name $userDomainName. Help us improve! Report to us in our Discord channel 🙏"
