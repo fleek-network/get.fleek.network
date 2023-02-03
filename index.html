@@ -254,14 +254,14 @@ identifyOS() {
 }
 
 identifyDistro() {
-    if [[ -f /etc/os-release ]]; then
-        source /etc/os-release
-        echo "$ID"
+  if [[ -f /etc/os-release ]]; then
+    source /etc/os-release
+    echo "$ID"
 
-        exit 0
-    fi
-    
-    uname
+    exit 0
+  fi
+  
+  uname
 }
 
 checkSystemHasRecommendedResources() {
@@ -283,7 +283,7 @@ checkSystemHasRecommendedResources() {
       exit 1;
     fi
   else
-    showOkMessage "Your system has enough resources (disk space and memory)"
+    showOkMessage "Great! Your system has enough resources (disk space and memory)"
   fi
 }
 
@@ -303,15 +303,15 @@ checkIfGitInstalled() {
     fi
   fi
 
-  showOkMessage "Git is installed! [skipping]"
+  showOkMessage "Nice! Git is installed!"
 }
 
 gitHealthCheck() {
-    if ! hasCommand git; then
-      showErrorMessage "Oops! For some odd reason, git doesn't seem to be installed!"
+  if ! hasCommand git; then
+    showErrorMessage "Oops! For some odd reason, git doesn't seem to be installed!"
 
-      exit 1
-    fi
+    exit 1
+  fi
 }
 
 installDocker() {
@@ -384,58 +384,64 @@ checkIfDockerInstalled() {
     fi
   fi
 
-  showOkMessage "Docker is installed! [skipping]"
+  showOkMessage "Awesome! Docker is installed!"
 }
 
 dockerHealthCheck() {
-    if ! hasCommand docker-compose; then
-      showErrorMessage "Oops! For some odd reason, docker-compose doesn't seem to be installed!"
+  if ! hasCommand docker-compose; then
+    showErrorMessage "Oops! For some odd reason, docker-compose doesn't seem to be installed!"
 
-      exit 1
-    fi
+    exit 1
+  fi
 
-    expectedMessage="Hello from Docker"
-    res=$(docker run -i --log-driver=none -a stdout hello-world)
+  expectedMessage="Hello from Docker"
+  res=$(docker run -i --log-driver=none -a stdout hello-world)
 
-    if ! echo "$res" | grep "$expectedMessage" &> /dev/null; then
-      showErrorMessage "Oops! The docker daemon should create a container for the hello-world image \
-      and output a message, but failed! Check if you are connected to the internet, docker is installed \
-      correctly, or the docker hub might be down, etc."
+  if ! echo "$res" | grep "$expectedMessage" &> /dev/null; then
+    showErrorMessage "Oops! The docker daemon should create a container for the hello-world image \
+    and output a message, but failed! Check if you are connected to the internet, docker is installed \
+    correctly, or the docker hub might be down, etc."
 
-      exit 1
-    fi
+    exit 1
+  fi
 
-    showOkMessage "Docker health-check passed! [skipping]"
+  showOkMessage "Docker health-check passed! [skipping]"
 }
 
 requestPathnameForUrsaRepository() {
-    defaultPath="$HOME/www/fleek-network/ursa"
-    selectedPath=$defaultPath
+  defaultPath="$HOME/www/fleek-network/ursa"
+  selectedPath=$defaultPath
 
-    read -r -p "
-    🤖 We'll save the Ursa source code in the recommended path \"$defaultPath\", ok?
-    Press ENTER to continue, or N to change the path: " answer
+  read -r -p "
+  🤖 We'll save the Ursa source code in the recommended path \"$defaultPath\"
 
-    answerToLc=$(toLowerCase "$answer")
+  Is the location ok?
 
-    if [ "$answerToLc" = "n" ]; then
-      # Obs: the extra white space at the end is intentional and for user presentation
-      read -r -p "🙋‍♀️ What path would you like to store the repository?  " selectedPath
-    fi
+  Press ENTER to continue, or N to change it
+  " answer
 
-    if [ -d "$selectedPath" ]; then
-      showErrorMessage "Oops! The $selectedPath already exists, ensure that the directory is cleared before trying again."
+  answerToLc=$(toLowerCase "$answer")
 
-      exit 1
-    fi
+  if [ "$answerToLc" = "n" ]; then
+    # Obs: the extra white space at the end is intentional and for user presentation
+    read -r -p "🙋‍♀️ What path would you like to store the repository?  " selectedPath
+  fi
 
-    if ! mkdir -p "$selectedPath"; then
-      showErrorMessage "Oops! Failed to create the directory $selectedPath, make sure you have the right permissions."
+  if [ -d "$selectedPath" ]; then
+    showErrorMessage "Oops! The $selectedPath already exists, ensure that the directory is cleared before trying again."
 
-      exit 1
-    fi
+    read -r -p "Press ENTER to retry" answer
 
-    echo "$selectedPath"
+    requestPathnameForUrsaRepository
+  fi
+
+  if ! mkdir -p "$selectedPath"; then
+    showErrorMessage "Oops! Failed to create the directory $selectedPath, make sure you have the right permissions."
+
+    exit 1
+  fi
+
+  echo "$selectedPath"
 }
 
 cloneUrsaRepositoryToPath() {
@@ -800,15 +806,15 @@ replaceNginxConfFileForHttps() {
 
 setupSSLTLS() {
   echo "
-    ⚠️ You're required to have a Domain name point to your server IP address.
+  ⚠️ You're required to have a Domain name point to your server IP address.
 
-    Visit your domain name registrar's dashboard,
-    create or update the A record to have the hostname answer with the server IP address.
+  Visit your domain name registrar's dashboard,
+  create or update the A record to have the hostname answer with the server IP address.
 
-    This is important to secure your server with SSL/TLS.
+  This is important to secure your server with SSL/TLS.
 
-    🙏 If you'd like to learn more about this, check our guide \"How to secure a Network Node\"
-    https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls
+  🙏 If you'd like to learn more about this, check our guide \"How to secure a Network Node\"
+  https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls
   "
 
   printf "\n\n"
