@@ -39,6 +39,9 @@
 # Default
 defaultUrsaHttpsRespository="https://github.com/fleek-network/ursa.git"
 
+# Dependencies
+declare -a dependencies=("sudo" "whois")
+
 hasCommand() {
   command -v "$1" >/dev/null 2>&1
 }
@@ -617,8 +620,11 @@ setupSSLTLS() {
   # Check if system has recommended resources (disk space and memory)
   checkSystemHasRecommendedResources "$os"
 
-  # Check if has sudo (for testing in Docker mainly)
-  verifyDepsOrInstall sudo
+  # Check if has dependencies installed
+  for dep in "${dependencies[@]}"
+  do
+    verifyDepsOrInstall "$dep"
+  done
 
   # We start by verifying if git is installed, if not request to install
   checkIfGitInstalled "$os"
