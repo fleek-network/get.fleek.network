@@ -38,6 +38,8 @@
 
 # Default
 defaultUrsaHttpsRespository="https://github.com/fleek-network/ursa.git"
+defaultMinMemoryBytesRequired=8000000
+defaultMinDiskSpaceBytesRequired=10000000
 
 # Dependencies
 declare -a dependencies=("sudo" "tldextract")
@@ -231,8 +233,25 @@ identifyDistro() {
 }
 
 checkSystemHasRecommendedResources() {
-  # TODO: Check if system has recommended resources (disk space and memory)
-  showOkMessage "Your system has enough resources (disk space and memory)"
+  mem=$(awk '/^MemTotal:/{print $2}' /proc/meminfo);
+  partDiskSpace=$(df --output=avail -B 1 "$PWD" |tail -n 1)
+
+  if [[ ("$mem" -lt "$defaultMinMemoryBytesRequired") ]] || [[ ( "$partDiskSpace" -lt "$defaultMinDiskSpaceBytesRequired" ) ]]; then
+    echo "
+      😬 Oh no! We're afraid that you need at least 8 GB of RAM and 10 GB of available disk space.
+    "
+
+    read -r -p "🤖 Do you want to continue [y/n]? " answer
+
+    answerToLc=$(toLowerCase "$answer")
+
+    if [ "$answerToLc" == "n" ]; then
+      exit 1;
+    fi
+
+  else
+    showOkMessage "Your system has enough resources (disk space and memory)"
+  fi
 }
 
 checkIfGitInstalled() {
