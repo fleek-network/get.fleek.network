@@ -88,6 +88,49 @@ showHintMessage() {
     printf "💡 %s\n\n" "$1"  
 }
 
+showDisclaimer() {
+# Start
+# This text alignment is intentional
+# No need to tab move inside...
+cat << "EOF"
+        _..._
+      .'     '.     _
+    /    .-""-\   _/ \
+  .-|   /:.   |  |   |
+  |  \  |:.   /.-'-./
+  | .-'-;:__.'    =/
+  .'=  *=|URSA _.='
+  /   _.  |    ;
+;-.-'|    \   |
+/   | \    _\  _\
+\__/'._;.  ==' ==\
+        \    \   |
+        /    /   /
+        /-._/-._/
+  Fleek  \   `\  \  Network
+          `-._/._/
+
+EOF
+# End
+
+  echo "
+    🧙‍♀️ The installer is the assisted process illustrated in our guide \"Running a Node in a Docker container\".
+
+    If you are happy to have the script assist you in the installaton process of Fleek Network Node,
+    run it at your own risk, as there's a certain level of trust that you have to put into \"piped installers\".
+    With that considered, we will ask when dependencies are missing and if happy to proceed with
+    the installation by running the commands e.g. git, docker, other dependencies from third-parties, etc.
+    Our script source is open to everybody and can be verified at https://github.com/fleek-network/get.fleek.network
+
+    🦸‍♀️ Advanced users might find better to follow the instructions in our official guides.
+    If that's your preference, then go ahead and check our guides at https://docs.fleek.network
+  "
+
+  printf "\n\n"
+
+  read -r -p "🤖 Are you happy to proceed with the assisted installer [y/n]? " answer  
+}
+
 windowsUsersWarning() {
     printf "⚠️ Windows is not supported, we recommend to install the Ubuntu distro on \
     Windows Subsystem Linux (WSL). Read our docs to learn more https://docs.fleek.network\n\n"
@@ -678,6 +721,9 @@ setupSSLTLS() {
 
   # Identity the OS
   os=$(identifyOS)
+
+  # Show disclaimer
+  showDisclaimer
 
   # Check if system has recommended resources (disk space and memory)
   checkSystemHasRecommendedResources "$os"
