@@ -47,11 +47,7 @@ hasCommand() {
 }
 
 clear() {
-  printf "\033c"
-}
-
-clearSpaceByLine() {
-  printf '\r\n%.0s' {1..20}
+  printf '\e[H\e[2J'
 }
 
 requestAuthorizationAndExec() {
@@ -722,8 +718,14 @@ setupSSLTLS() {
   # Identity the OS
   os=$(identifyOS)
 
+  # Clear shell
+  clear
+
   # Show disclaimer
   showDisclaimer
+
+  # Clear shell
+  clear
 
   # Check if system has recommended resources (disk space and memory)
   checkSystemHasRecommendedResources "$os"
