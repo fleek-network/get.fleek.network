@@ -417,12 +417,12 @@ requestPathnameForUrsaRepository() {
 
   Is the location ok?
 
-  Press ENTER to continue, or N to change it
+  Press Y, or ENTER to continue. Otherwise, N to change it!
   " answer
 
   answerToLc=$(toLowerCase "$answer")
 
-  if [ "$answerToLc" = "n" ]; then
+  if [[ ! "$answerToLc" == "" ]] || [[ "$answerToLc" == "n" ]]; then
     # Obs: the extra white space at the end is intentional and for user presentation
     read -r -p "🙋‍♀️ What path would you like to store the repository?  " selectedPath
   fi
@@ -430,7 +430,7 @@ requestPathnameForUrsaRepository() {
   if [ -d "$selectedPath" ]; then
     showErrorMessage "Oops! The $selectedPath already exists, ensure that the directory is cleared before trying again."
 
-    read -r -p "Press ENTER to retry" answer
+    read -r -p "Press ENTER to retry..." answer
 
     requestPathnameForUrsaRepository
   fi
@@ -551,7 +551,7 @@ showDockerStackLog() {
   You'll find that most Log messages can be ignored at this time.
   "
 
-  read -r -p "Press ENTER to continue" answer
+  read -r -p "Press ENTER to continue..." answer
 
   sudo docker-compose -f ./docker/full-node/docker-compose.yml logs -f
 }
@@ -593,23 +593,21 @@ extactDomainName() {
 }
 
 verifyUserHasDomain() {
-  echo "
-  You have a Domain name and have updated the DNS A Record type
-  to answer with the server IP address.
-  "
+  read -r -p "
+  Do you have the domain settings ready [y/n]?
   
-  printf "\n"
-
-  read -r -p "Is this correct [y/n]? " answer
+  Press Y, or ENTER to confirm.
+  " answer
 
   answerToLc=$(toLowerCase "$answer")
 
-  if [ "$answerToLc" == "n" ]; then
+  if [[ ! "$answerToLc" == "" ]] || [[ "$answerToLc" == 'n' ]]; then
     printf "\n"
 
     showErrorMessage "Oops! You need a domain name and have the DNS A Record type answer with the server IP address. If you'd like to learn more about it check our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
-    sleep 8
+    read -r -p "Press ENTER to continue and try again..." answer
+
     clear
     verifyUserHasDomain
   fi
@@ -808,16 +806,17 @@ setupSSLTLS() {
   echo "
   ⚠️ You're required to have a Domain name point to your server IP address.
 
-  Visit your domain name registrar's dashboard,
-  create or update the A record to have the hostname answer with the server IP address.
+  Visit your domain name registrar's dashboard, or create a new domain,
+  update the A record to have the hostname answer with the server IP address!
 
-  This is important to secure your server with SSL/TLS.
+  Before proceeding, you have to do this step, as we'll verify!
+  Also, this is important to secure the server communications with SSL/TLS.
 
-  🙏 If you'd like to learn more about this, check our guide \"How to secure a Network Node\"
+  🙏 If you'd like to learn more about this, check our guide \"How to secure a Network Node\"  
   https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls
   "
 
-  printf "\n\n"
+  printf "\n"
 
   trimData=$(verifyUserHasDomain | xargs)
 
