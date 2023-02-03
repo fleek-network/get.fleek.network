@@ -38,6 +38,8 @@
 
 # Default
 defaultUrsaHttpsRespository="https://github.com/fleek-network/ursa.git"
+defaultMinMemoryBytesRequired=8000000
+defaultMinDiskSpaceBytesRequired=10000000
 
 # Dependencies
 declare -a dependencies=("sudo" "tldextract")
@@ -47,11 +49,7 @@ hasCommand() {
 }
 
 clear() {
-  printf "\033c"
-}
-
-clearSpaceByLine() {
-  printf '\r\n%.0s' {1..20}
+  printf '\e[H\e[2J'
 }
 
 requestAuthorizationAndExec() {
@@ -86,6 +84,49 @@ showErrorMessage() {
 
 showHintMessage() {
     printf "💡 %s\n\n" "$1"  
+}
+
+showDisclaimer() {
+# Start
+# This text alignment is intentional
+# No need to tab move inside...
+cat << "EOF"
+        _..._
+      .'     '.     _
+    /    .-""-\   _/ \
+  .-|   /:.   |  |   |
+  |  \  |:.   /.-'-./
+  | .-'-;:__.'    =/
+  .'=  *=|URSA _.='
+  /   _.  |    ;
+;-.-'|    \   |
+/   | \    _\  _\
+\__/'._;.  ==' ==\
+        \    \   |
+        /    /   /
+        /-._/-._/
+  Fleek  \   `\  \  Network
+          `-._/._/
+
+EOF
+# End
+
+  echo "
+    🧙‍♀️ The installer is the assisted process illustrated in our guide \"Running a Node in a Docker container\".
+
+    If you are happy to have the script assist you in the installaton process of Fleek Network Node,
+    run it at your own risk, as there's a certain level of trust that you have to put into \"piped installers\".
+    With that considered, we will ask when dependencies are missing and if happy to proceed with
+    the installation by running the commands e.g. git, docker, other dependencies from third-parties, etc.
+    Our script source is open to everybody and can be verified at https://github.com/fleek-network/get.fleek.network
+
+    🦸‍♀️ Advanced users might find better to follow the instructions in our official guides.
+    If that's your preference, then go ahead and check our guides at https://docs.fleek.network
+  "
+
+  printf "\n\n"
+
+  read -r -p "🤖 Are you happy to proceed with the assisted installer [y/n]? " answer  
 }
 
 windowsUsersWarning() {
@@ -192,8 +233,25 @@ identifyDistro() {
 }
 
 checkSystemHasRecommendedResources() {
-  # TODO: Check if system has recommended resources (disk space and memory)
-  showOkMessage "Your system has enough resources (disk space and memory)"
+  mem=$(awk '/^MemTotal:/{print $2}' /proc/meminfo);
+  partDiskSpace=$(df --output=avail -B 1 "$PWD" |tail -n 1)
+
+  if [[ ("$mem" -lt "$defaultMinMemoryBytesRequired") ]] || [[ ( "$partDiskSpace" -lt "$defaultMinDiskSpaceBytesRequired" ) ]]; then
+    echo "
+      😬 Oh no! We're afraid that you need at least 8 GB of RAM and 10 GB of available disk space.
+    "
+
+    read -r -p "🤖 Do you want to continue [y/n]? " answer
+
+    answerToLc=$(toLowerCase "$answer")
+
+    if [ "$answerToLc" == "n" ]; then
+      exit 1;
+    fi
+
+  else
+    showOkMessage "Your system has enough resources (disk space and memory)"
+  fi
 }
 
 checkIfGitInstalled() {
@@ -678,6 +736,15 @@ setupSSLTLS() {
 
   # Identity the OS
   os=$(identifyOS)
+
+  # Clear shell
+  clear
+
+  # Show disclaimer
+  showDisclaimer
+
+  # Clear shell
+  clear
 
   # Check if system has recommended resources (disk space and memory)
   checkSystemHasRecommendedResources "$os"
