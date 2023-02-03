@@ -40,7 +40,7 @@
 defaultUrsaHttpsRespository="https://github.com/fleek-network/ursa.git"
 
 # Dependencies
-declare -a dependencies=("sudo" "whois")
+declare -a dependencies=("sudo" "tldextract")
 
 hasCommand() {
   command -v "$1" >/dev/null 2>&1
@@ -398,6 +398,15 @@ verifyDepsOrInstall() {
   fi
 }
 
+extactDomainName() {
+  name=$(tldextract "$1" | cut -d " " -f 2)
+  tld=$(tldextract "$1" | cut -d " " -f 3)
+
+  domain="$name.$tld"
+
+  echo "$domain"
+}
+
 verifyUserHasDomain() {
   printf "\n\n"
 
@@ -417,7 +426,9 @@ verifyUserHasDomain() {
 
   userDomainName=$(toLowerCase "$answer")
 
-  if ! whois "$userDomainName" | grep "$userDomainName"; then
+  domainOnly=$(extactDomainName "$userDomainName")
+
+  if ! whois "$domainOnly" | grep "$domainOnly" >/dev/null 2>&1; then
     showErrorMessage "Oops! Doesn't seem like a valid domain, might want to try typing the domain again..."
 
     sleep 3
