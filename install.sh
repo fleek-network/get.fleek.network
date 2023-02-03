@@ -46,6 +46,14 @@ hasCommand() {
   command -v "$1" >/dev/null 2>&1
 }
 
+clear() {
+  printf "\033c"
+}
+
+clearSpaceByLine() {
+  printf '\r\n%.0s' {1..20}
+}
+
 requestAuthorizationAndExec() {
     read -r -p "🤖 $1 [y/n]? " answer
 
@@ -386,14 +394,14 @@ verifyDepsOrInstall() {
     apt-get update
     apt-get install "$1" -y
 
-    showOkMessage "Installed sudo!"
+    showOkMessage "Installed $1"
   fi
 }
 
 verifyUserHasDomain() {
   printf "\n\n"
 
-  read -r -p "🤖 Do you have a domain name and DNS A Record type pointing to your server IP Address? " answer
+  read -r -p "🤖 Do you have a domain name and DNS A Record type pointing to your server IP Address [y/n]? " answer
 
   answerToLc=$(toLowerCase "$answer")
 
@@ -562,7 +570,7 @@ replaceNginxConfFileForHttps() {
 
 setupSSLTLS() {
   echo "
-  ⚠️ You should secure your Node with SSL/TLS, a domain name is required!
+  ⚠️ You should secure your Node with SSL/TLS, for this reason a domain name is required!
 
   🙏 If interested, visit our guides to learn how to secure your Node
   https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls
