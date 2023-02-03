@@ -92,6 +92,12 @@ showDisclaimer() {
 # This text alignment is intentional
 # No need to tab move inside...
 cat << "EOF"
+  ★★★★★★★★★
+  ★★★★★★★★★
+  ★★★★★★★★★
+
+  ⚡️ The Fleek Network team presents ⚡️
+
           _..._
         .'     '.     _
       /    .-""-\   _/ \
@@ -106,9 +112,16 @@ cat << "EOF"
           \    \   |
           /    /   /
           /-._/-._/
-    Fleek  \   `\  \  Network
+           \   `\  \
             `-._/._/
 
+  ★ Ursa, a Decentralized Content Delivery Network (DCDN) ★
+
+  ★★★★★★★★★ Website https://fleek.network
+  ★★★★★★★★★ Documentation https://docs.fleek.network
+  ★★★★★★★★★ Git repository https://github.com/fleek-network/ursa
+  ★★★★★★★★★ Ascii art by https://www.asciiart.eu  
+  
 EOF
 # End
 
