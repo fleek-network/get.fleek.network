@@ -92,37 +92,40 @@ showDisclaimer() {
 # This text alignment is intentional
 # No need to tab move inside...
 cat << "EOF"
-        _..._
-      .'     '.     _
-    /    .-""-\   _/ \
-  .-|   /:.   |  |   |
-  |  \  |:.   /.-'-./
-  | .-'-;:__.'    =/
-  .'=  *=|URSA _.='
-  /   _.  |    ;
-;-.-'|    \   |
-/   | \    _\  _\
-\__/'._;.  ==' ==\
-        \    \   |
-        /    /   /
-        /-._/-._/
-  Fleek  \   `\  \  Network
-          `-._/._/
+          _..._
+        .'     '.     _
+      /    .-""-\   _/ \
+    .-|   /:.   |  |   |
+    |  \  |:.   /.-'-./
+    | .-'-;:__.'    =/
+    .'=  *=|URSA _.='
+    /   _.  |    ;
+  ;-.-'|    \   |
+  /   | \    _\  _\
+  \__/'._;.  ==' ==\
+          \    \   |
+          /    /   /
+          /-._/-._/
+    Fleek  \   `\  \  Network
+            `-._/._/
 
 EOF
 # End
 
   echo "
-    🧙‍♀️ The installer is the assisted process illustrated in our guide \"Running a Node in a Docker container\".
+  🧙‍♀️ The installer is the assisted process illustrated in our guide \"Running a Node in a Docker container\".
 
-    If you are happy to have the script assist you in the installaton process of Fleek Network Node,
-    run it at your own risk, as there's a certain level of trust that you have to put into \"piped installers\".
-    With that considered, we will ask when dependencies are missing and if happy to proceed with
-    the installation by running the commands e.g. git, docker, other dependencies from third-parties, etc.
-    Our script source is open to everybody and can be verified at https://github.com/fleek-network/get.fleek.network
+  If you are happy to have the script assist you in the installaton process of Fleek Network Node,
+  run it at your own risk, as there's a certain level of trust that you have to put into \"piped installers\".
+  With that considered, we will ask when dependencies are missing and if happy to proceed with
+  the installation by running the commands e.g. git, docker, other dependencies from third-parties, etc.
+  
+  Our script source is open to everybody and can be verified at https://github.com/fleek-network/get.fleek.network
 
-    🦸‍♀️ Advanced users might find better to follow the instructions in our official guides.
-    If that's your preference, then go ahead and check our guides at https://docs.fleek.network
+  🤓 One more thing, your system Username should have write permissions to install applications.
+
+  🦸‍♀️ Advanced users might find better to follow the instructions in our official guides.
+  If that's your preference, then go ahead and check our guides at https://docs.fleek.network
   "
 
   printf "\n\n"
@@ -133,10 +136,10 @@ EOF
 
   if [ "$answerToLc" == "n" ]; then
     echo "
-      🦖 The installation assistant terminates here, as you're required to accept in order to have the
-      assisted installer guide you. If you've changed your mind, try again!
+    🦖 The installation assistant terminates here, as you're required to accept in order to have the
+    assisted installer guide you. If you've changed your mind, try again!
 
-      Otherwise, if you'd like to learn a bit more visit our website at https://fleek.network
+    Otherwise, if you'd like to learn a bit more visit our website at https://fleek.network
     "
 
     exit 1;
@@ -144,13 +147,18 @@ EOF
 }
 
 windowsUsersWarning() {
-    printf "⚠️ Windows is not supported, we recommend to install the Ubuntu distro on \
-    Windows Subsystem Linux (WSL). Read our docs to learn more https://docs.fleek.network\n\n"
+  echo "
+  ⚠️ Windows is not supported! We recommend enabling Windows Subsystem Linux (WSL) Ubuntu distro.
+
+  If you'd like to learn more visit our documentation site at https://docs.fleek.network
+  "
 }
 
 shouldHaveHomebrewInstalled() {
   if ! hasCommand brew; then
-    printf "😅 Oops! Homebrew package manager for MacOS is recommended and was not found!\n"
+    showErrorMessage "Oops! Homebrew package manager for MacOS is required but not found!"
+
+    printf "\n"
 
     requestAuthorizationAndExec \
       "We can start the installation process for you, are you happy to proceed" \
@@ -164,13 +172,11 @@ shouldHaveHomebrewInstalled() {
     fi
   fi
 
-  showOkMessage "Homebrew package manager is installed! [skipping]"
+  showOkMessage "[Skipping] Homebrew package manager is installed!"
 }
 
 installHomebrew() {
   os=$(identifyOS)
-
-  # TODO: Show message and prompt,that the user have to have permissions to install
 
   if [ "$os" != "mac" ]; then
     showErrorMessage "Oops! For some odd reason this function was called from the wrong context, as it should only be called for MacOS!"    
@@ -183,8 +189,6 @@ installHomebrew() {
 
 installGit() {
   os=$(identifyOS)
-
-  # TODO: Show message and prompt,that the user have to have permissions to install
 
   if [ "$os" == "mac" ]; then
     shouldHaveHomebrewInstalled
