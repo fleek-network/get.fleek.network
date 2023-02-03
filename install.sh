@@ -467,7 +467,7 @@ verifyUserHasDomain() {
 
   emailAddress=$(toLowerCase "$answer")
 
-  if [[ "$emailAddress" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$ ]]; then
+  if [[ ! "$emailAddress" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$ ]]; then
     showErrorMessage "Oops! Is the email address you've provided correct? Try that again..."
 
     sleep 3
