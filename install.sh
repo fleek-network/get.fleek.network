@@ -600,7 +600,7 @@ initLetsEncrypt() {
   if ! EMAIL="$1" DOMAINS="$2" ./init-letsencrypt.sh | grep 'Successfully received certificate'; then
     showErrorMessage "Oops! Failed to create the SSL/TLS certificates, your domain name hasn't been secured yet. Check our guide to troubleshoot https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
-    sudo docker-compose -f ./docker/full-node/docker-compose.yml down
+    sudo docker-compose -f ../../docker/full-node/docker-compose.yml down
 
     exit 1
   fi
