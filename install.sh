@@ -898,6 +898,11 @@ setupSSLTLS() {
   # start stack in bg, as lets encrypt will need the nginx to validate
   COMPOSE_DOCKER_CLI_BUILD=1 sudo docker compose -f ./docker/full-node/docker-compose.yml up -d
 
+  while ! docker top full-node-ursa-1 || ! docker top full-node_nginx_1 >/dev/null 2>&1; do
+    echo "🦄 Awaiting for Ursa and Nginx! Be patient..."
+    sleep 3
+  done
+
   if ! initLetsEncrypt "$emailAddress" "$userDomainName"; then
     exit 1
   fi
