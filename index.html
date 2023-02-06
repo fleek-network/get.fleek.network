@@ -459,7 +459,7 @@ requestPathnameForUrsaRepository() {
 
   answerToLc=$(toLowerCase "$answer")
 
-  if [[ ! "$answerToLc" == "" ]] || [[ "$answerToLc" == "n" ]]; then
+  if [[ ! "$answerToLc" == "" && "$answerToLc" == [nN] || "$answerToLc" == [nN][oO] ]]; then
     # Obs: the extra white space at the end is intentional and for user presentation
     read -r -p "🙋‍♀️ What path would you like to store the repository?  " selectedPath
   fi
@@ -639,7 +639,7 @@ verifyUserHasDomain() {
 
   answerToLc=$(toLowerCase "$answer")
 
-  if [[ ! "$answerToLc" == "" ]] || [[ "$answerToLc" == 'n' ]]; then
+  if [[ ! "$answerToLc" == "" && "$answerToLc" == [nN] || "$answerToLc" == [nN][oO] ]]; then
     printf "\n"
 
     showErrorMessage "Oops! You need a domain name and have the DNS A Record type answer with the server IP address. If you'd like to learn more about it check our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
