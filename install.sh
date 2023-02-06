@@ -42,7 +42,7 @@ defaultMinMemoryBytesRequired=8000000
 defaultMinDiskSpaceBytesRequired=10000000
 
 # Dependencies
-declare -a dependencies=("sudo" "curl" "tldextract")
+declare -a dependencies=("sudo" "curl" "tldextract" "whois")
 
 hasCommand() {
   command -v "$1" >/dev/null 2>&1
