@@ -326,14 +326,13 @@ installDocker() {
   elif [ "$os" == "linux" ]; then
     distro=$(identifyDistro)
 
-    if [ "$distro" == "ubuntu" ] || [ "$distro" == "debian" ]; then
+    if [[ "$distro" == "ubuntu" ]]; then
       sudo apt-get update
       sudo apt-get install \
         ca-certificates \
         curl \
         gnupg \
-        lsb-release \
-        dnsutils # dig
+        lsb-release
 
       sudo mkdir -p /etc/apt/keyrings
       curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
@@ -344,7 +343,12 @@ installDocker() {
 
       sudo apt-get update
 
-      sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin docker-compose
+      sudo apt-get install \
+          docker-ce \
+          docker-ce-cli \
+          containerd.io \
+          docker-compose-plugin \
+          docker-compose
 
       # https://docs.docker.com/build/buildkit/
       sudo mkdir -p /etc/docker
@@ -353,9 +357,41 @@ installDocker() {
           \"buildkit\" : true
           }
         }" > /etc/docker/daemon.json'
-    elif [ "$os" == "alpine" ]; then
+    elif [[ "$os" == "debian" ]]; then
+      sudo apt-get update
+      sudo apt-get install \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release \
+        dnsutils
+
+      sudo mkdir -p /etc/apt/keyrings
+      curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+      echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+        $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+      sudo apt-get update
+
+      sudo apt-get install \
+          docker-ce \
+          docker-ce-cli \
+          containerd.io \
+          docker-compose-plugin \
+          docker-compose
+
+      # https://docs.docker.com/build/buildkit/
+      sudo mkdir -p /etc/docker
+      sudo bash -c 'echo "{
+        \"features\": {
+          \"buildkit\" : true
+          }
+        }" > /etc/docker/daemon.json'
+    elif [[ "$os" == "alpine" ]]; then
       sudo apk add --update docker openrc
-    elif [ "$os" == "arch" ]; then
+    elif [[ "$os" == "arch" ]]; then
       sudo pacman -S docker
     else
       showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
