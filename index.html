@@ -42,7 +42,7 @@ defaultMinMemoryBytesRequired=8000000
 defaultMinDiskSpaceBytesRequired=10000000
 
 # Dependencies
-declare -a dependencies=("sudo" "curl" "tldextract" "whois" "dig")
+declare -a dependencies=("sudo" "curl" "tldextract" "whois")
 
 hasCommand() {
   command -v "$1" >/dev/null 2>&1
@@ -332,7 +332,8 @@ installDocker() {
         ca-certificates \
         curl \
         gnupg \
-        lsb-release
+        lsb-release \
+        dnsutils # dig
 
       sudo mkdir -p /etc/apt/keyrings
       curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
