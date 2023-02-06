@@ -58,7 +58,7 @@ requestAuthorizationAndExec() {
 
     answerToLc=$(toLowerCase "$answer")
 
-    if [ "$answerToLc" == "n" ]; then
+    if [[ "$answerToLc" == "n" ]]; then
       printf "\n\n"
 
       showErrorMessage "$2"
@@ -148,7 +148,7 @@ EOF
 
   answerToLc=$(toLowerCase "$answer")
 
-  if [ "$answerToLc" == "n" ]; then
+  if [[ "$answerToLc" == "n" ]]; then
     echo "
     🦖 The installation assistant terminates here, as you're required to accept in order to have the
     assisted installer guide you. If you've changed your mind, try again!
@@ -192,7 +192,7 @@ shouldHaveHomebrewInstalled() {
 installHomebrew() {
   os=$(identifyOS)
 
-  if [ "$os" != "mac" ]; then
+  if [[ "$os" != "mac" ]]; then
     showErrorMessage "Oops! For some odd reason this function was called from the wrong context, as it should only be called for MacOS!"    
 
     exit 1
@@ -204,18 +204,18 @@ installHomebrew() {
 installGit() {
   os=$(identifyOS)
 
-  if [ "$os" == "mac" ]; then
+  if [[ "$os" == "mac" ]]; then
     shouldHaveHomebrewInstalled
 
     brew install git
-  elif [ "$os" == "linux" ]; then
+  elif [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
 
-    if [ "$distro" == "ubuntu" ] || [ "$distro" == "debian" ]; then
+    if [[ "$distro" == "ubuntu" ]] || [[ "$distro" == "debian" ]]; then
       sudo apt-get install git
-    elif [ "$os" == "alpine" ]; then
+    elif [[ "$os" == "alpine" ]]; then
       sudo apk add git
-    elif [ "$os" == "arch" ]; then
+    elif [[ "$os" == "arch" ]]; then
       sudo pacman -S git
     else
       showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
@@ -242,7 +242,7 @@ identifyOS() {
 
   osToLc=$(toLowerCase "$os")
 
-  if [ "$osToLc" == "cygwin" ] || [ "$osToLc" == "mingw" ]; then
+  if [[ "$osToLc" == "cygwin" ]] || [[ "$osToLc" == "mingw" ]]; then
     printf "\n"
 
     windowsUsersWarning
@@ -279,7 +279,7 @@ checkSystemHasRecommendedResources() {
 
     answerToLc=$(toLowerCase "$answer")
 
-    if [ "$answerToLc" == "n" ]; then
+    if [[ "$answerToLc" == "n" ]]; then
       exit 1;
     fi
   else
@@ -319,11 +319,11 @@ installDocker() {
 
   # TODO: Show message and prompt,that the user have to have permissions to install
 
-  if [ "$os" == "mac" ]; then
+  if [[ "$os" == "mac" ]]; then
     shouldHaveHomebrewInstalled
 
     brew install docker
-  elif [ "$os" == "linux" ]; then
+  elif [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
 
     if [[ "$distro" == "ubuntu" ]]; then
@@ -357,7 +357,7 @@ installDocker() {
           \"buildkit\" : true
           }
         }" > /etc/docker/daemon.json'
-    elif [[ "$os" == "debian" ]]; then
+    elif [[ "$distro" == "debian" ]]; then
       sudo apt-get update
       sudo apt-get install \
         ca-certificates \
@@ -389,9 +389,9 @@ installDocker() {
           \"buildkit\" : true
           }
         }" > /etc/docker/daemon.json'
-    elif [[ "$os" == "alpine" ]]; then
+    elif [[ "$distro" == "alpine" ]]; then
       sudo apk add --update docker openrc
-    elif [[ "$os" == "arch" ]]; then
+    elif [[ "$distro" == "arch" ]]; then
       sudo pacman -S docker
     else
       showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
@@ -464,7 +464,7 @@ requestPathnameForUrsaRepository() {
     read -r -p "🙋‍♀️ What path would you like to store the repository?  " selectedPath
   fi
 
-  if [ -d "$selectedPath" ]; then
+  if [[ -d "$selectedPath" ]]; then
     showErrorMessage "Oops! The $selectedPath already exists, ensure that the directory is cleared before trying again."
 
     read -r -p "Press ENTER to retry..." answer
@@ -564,7 +564,7 @@ showDockerStackLog() {
 
   answerToLc=$(toLowerCase "$answer")
 
-  if [ "$answerToLc" == "n" ]; then
+  if [[ "$answerToLc" == "n" ]]; then
     printf "\n\n"
 
     showOkMessage "We've now completed the installation process, thank you!"
@@ -669,7 +669,7 @@ verifyUserHasDomain() {
     verifyUserHasDomain
   fi
 
-  if [ "$userDomainName" = "" ]; then
+  if [[ "$userDomainName" = "" ]]; then
     showErrorMessage "Oops! You failed to provide a domain name. If you'd like to learn more read our guide at https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
     sleep 8
