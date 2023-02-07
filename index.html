@@ -146,7 +146,7 @@ showDisclaimer() {
   echo
   echo "Our script source is open to everybody and can be verified at https://github.com/fleek-network/get.fleek.network"
   echo
-  echo "🤓 One more thing, your system ${txtPrefixForBold}User ${txtPrefixForNormal}should have ${txtPrefixForBold}write permissions ${txtPrefixForNormal}to ${txtPrefixForBold}install applications."
+  echo "🤓 One more thing, your system ${txtPrefixForBold}User ${txtPrefixForNormal}should have ${txtPrefixForBold}write permissions ${txtPrefixForNormal}to install applications."
   echo "Also, some advanced users might find better to follow the documentation in our official guides, or borrow from the installation script source code."
   echo "If that's your preference, then go ahead and check our guides at https://docs.fleek.network, or our repository https://github.com/fleek-network/get.fleek.network"
 
