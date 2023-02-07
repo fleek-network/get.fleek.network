@@ -52,13 +52,8 @@ clearScr() {
   printf '\e[H\e[2J'
 }
 
-cleanUserInput() {
-  # Only valid characters accepted
-  echo "$1" | sed "s/[^[:alnum:]|[_]-]//g"
-}
-
 requestAuthorizationAndExec() {
-    printf -v prompt "\n🤖 %s [y/n]?" "$1"
+    printf -v prompt "\n🤖 %s (y/n)?" "$1"
     read -r -p "$prompt"$'\n> ' answer
 
     answerToLc=$(toLowerCase "$answer")
@@ -126,26 +121,38 @@ cat << "EOF"
   ★★★★★★★★★ Documentation https://docs.fleek.network
   ★★★★★★★★★ Git repository https://github.com/fleek-network/ursa
   ★★★★★★★★★ Ascii art by https://www.asciiart.eu  
-  
 EOF
 # End
 
-  printf "\r\n🧙‍♀️ The installer is the assisted process illustrated in our guide \"Running a Node in a Docker container\".\n\nIf you are happy to have the script assist you in the installaton process of Fleek Network Node, run it at your own risk, as there's a certain level of trust that you have to put into \"piped installers\". With that considered, we'll ask when dependencies are missing and if happy to proceed with the installation, before running the commands. The commands vary, but it'd happen for installing Git, Docker, or any other required dependencies from third-parties, etc.\n\nOur script source is open to everybody and can be verified at https://github.com/fleek-network/get.fleek.network\n\n🤓 One more thing, your system Username should have write permissions to install applications.\n\n🦸‍♀️ Advanced users might find better to follow the instructions in our official guides.\n\nIf that's your preference, then go ahead and check our guides at https://docs.fleek.network\n"
+  printf "\r\n\n"
+  echo "🧙‍♀️ The installer is the assisted process illustrated in our guide \"Running a Node in a Docker container\"."
+  echo "If you are happy to have the script assist you in the installaton process of Fleek Network Node, there's a certain level of trust that you have to put into \"piped installers\", as it instruct commands at your own risk."
+  echo "With that considered, we'll ask when dependencies are missing and if happy to proceed with the installation, before commands are executed e.g. installing Git, Docker, or any other required or associated dependencies from third-parties, etc."
+  echo
+  echo "Our script source is open to everybody and can be verified at https://github.com/fleek-network/get.fleek.network"
+  echo
+  echo "🤓 One more thing, your system User should have write permissions to install applications."
+  echo "Also, some advanced users might find better to follow the instructions in our official guides."
+  echo "If that's your preference, then go ahead and check our guides at https://docs.fleek.network"
 
-  printf -v prompt "\n\n🤖 Are you happy to continue [y/n]?\n"
+  printf -v prompt "\n\n🤖 Are you happy to continue (y/n)?"
   read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
 
   if [[ "$answerToLc" == "n" ]]; then
-    printf "🦖 The installation assistant terminates here, as you're required to accept in order to have the assisted installer guide you. If you've changed your mind, try again!\n\nOtherwise, if you'd like to learn a bit more visit our website at https://fleek.network\n"
+    echo "🦖 The installation assistant terminates here, as you're required to accept in order to have the assisted installer guide you. If you've changed your mind, try again!"
+    echo
+    echo "Otherwise, if you'd like to learn a bit more visit our website at https://fleek.network"
 
     exit 1;
   fi
 }
 
 windowsUsersWarning() {
-  printf "\r\n⚠️ Windows is not supported! We recommend enabling Windows Subsystem Linux (WSL) Ubuntu distro.\n\nIf you'd like to learn more visit our documentation site at https://docs.fleek.network"
+  echo "⚠️ Windows is not supported! We recommend enabling Windows Subsystem Linux (WSL) Ubuntu distro."
+  echo
+  echo "If you'd like to learn more visit our documentation site at https://docs.fleek.network"
 }
 
 shouldHaveHomebrewInstalled() {
@@ -249,8 +256,9 @@ checkSystemHasRecommendedResources() {
   partDiskSpace=$(df --output=avail -B 1 "$PWD" |tail -n 1)
 
   if [[ ("$mem" -lt "$defaultMinMemoryBytesRequired") ]] || [[ ( "$partDiskSpace" -lt "$defaultMinDiskSpaceBytesRequired" ) ]]; then
-    printf "\n😬 Oh no! We're afraid that you need at least 8 GB of RAM and 10 GB of available disk space.\n"
-    printf -v prompt "\n\n🤖 Do you want to continue [y/n]?\n"
+    echo "😬 Oh no! We're afraid that you need at least 8 GB of RAM and 10 GB of available disk space."
+    echo
+    printf -v prompt "\n\n🤖 Do you want to continue (y/n)?"
     read -r -p "$prompt"$'\n> ' answer
 
     answerToLc=$(toLowerCase "$answer")
@@ -265,7 +273,8 @@ checkSystemHasRecommendedResources() {
 
 checkIfGitInstalled() {
   if ! hasCommand git; then
-    printf "😅 Oops! Git is required and was not found!\n"
+    echo "😅 Oops! Git is required and was not found!"
+    echo
 
     requestAuthorizationAndExec \
       "We can start the installation process for you, are you happy to proceed" \
@@ -425,13 +434,13 @@ requestPathnameForUrsaRepository() {
   defaultPath="$HOME/www/fleek-network/ursa"
   selectedPath=$defaultPath
 
-  printf -v prompt "\n🤖 We'll save the Ursa source code in the recommended path %s\n\nIs the location ok?\n\nPress Y, or ENTER to continue. Otherwise, N to change it!\n" "$defaultPath"
+  printf -v prompt "\n🤖 We'll save the Ursa source code in the recommended path %s\n\nIs the location ok?\n\nPress Y, or ENTER to continue. Otherwise, N to change it!" "$defaultPath"
   read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
 
   if [[ ! "$answerToLc" == "" && "$answerToLc" == [nN] || "$answerToLc" == [nN][oO] ]]; then
-    printf -v prompt "\n🙋‍♀️ What path would you like to store the repository?\n"
+    printf -v prompt "\n🙋‍♀️ What path would you like to store the repository?"
     read -r -p "$prompt"$'\n> ' answer
   fi
 
@@ -481,44 +490,41 @@ restartDockerStack() {
 }
 
 showDockerStackLog() {
-  printf "\r\n🥳 Great! We have completed the installation!
-
-  The Stack should be running now and you can show or hide the log output at anytime.
-
-  Our Stack logs can be quite verbose, as it shows WARNINGS, INFO, ERRORS, etc.
-  It's important to understand what they mean by simply reading our Node Health-check guide
-  https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide
-
-  Here are some handy commands to show or hide the logs
-
-    - If you have the Stack running and want to show the logs:
-
-      docker-compose -f ./docker/full-node/docker-compose.yml logs -f
-
-    - Terminate by sending the interrupt signal (SIGNIT) to Docker using the hotkey:
-      
-      Ctrl-c
-
-  You can Stop or Start the Docker Stack at anytime.
-  Change the directory to the location where the source code of Ursa is saved.
-
-  For example, if you accepted the installation recommendation that is ~/www/fleek-network/ursa
-
-  Then after, run the following commands, to either Start (up) or Stop (down)
-
-    - Start the Docker Stack
-
-      docker-compose -f ./docker/full-node/docker-compose.yml up
-
-    - Stop the Docker Stack
-
-      docker-compose -f ./docker/full-node/docker-compose.yml down
-
-  👋 Seems a lot? All the commands and much more are available in our documentation site!
-  ✏️ Learn how to maintain your Node by visiting our documentation at https://docs.fleek.network
-
-  🌈 Got feedback? Find our Discord at https://discord.gg/fleekxyz
-  " ""
+  echo "🥳 Great! We have completed the installation!"
+  echo
+  echo
+  echo "The Stack should be running now and you can show or hide the log output at anytime."
+  echo
+  echo
+  echo "Our Stack logs can be quite verbose, as it shows WARNINGS, INFO, ERRORS, etc."
+  echo "It's important to understand what they mean by simply reading our Node Health-check guide"
+  echo "https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
+  echo
+  echo "Here are some handy commands to show or hide the logs"
+  echo "  - If you have the Stack running and want to show the logs:"
+  echo
+  echo "    docker-compose -f ./docker/full-node/docker-compose.yml logs -f"
+  echo "  - Terminate by sending the interrupt signal (SIGNIT) to Docker using the hotkey:"
+  echo
+  echo "    Ctrl-c"
+  echo "You can Stop or Start the Docker Stack at anytime."
+  echo "Change the directory to the location where the source code of Ursa is saved."
+  echo "For example, if you accepted the installation recommendation that is ~/www/fleek-network/ursa"
+  echo
+  echo "Then after, run the following commands, to either Start (up) or Stop (down)"
+  echo
+  echo "  - Start the Docker Stack"
+  echo
+  echo "    docker-compose -f ./docker/full-node/docker-compose.yml up"
+  echo "  - Stop the Docker Stack"
+  echo
+  echo "    docker-compose -f ./docker/full-node/docker-compose.yml down"
+  echo
+  echo "👋 Seems a lot? All the commands and much more are available in our documentation site!"
+  echo "✏️ Learn how to maintain your Node by visiting our documentation at https://docs.fleek.network"
+  echo
+  echo "🌈 Got feedback? Find our Discord at https://discord.gg/fleekxyz"
+  echo
 
   printf -v prompt "\n🙋‍♀️ Want to see the output for the Docker Stack?\n\nPress Y or ENTER to confirm. Otherwise, N to make changes!"
   read -r -p "$prompt"$'\n> ' answer
@@ -534,7 +540,16 @@ showDockerStackLog() {
   fi
 
   printf -v prompt "\n👋 Hey! Just a quick hint!\n\nThe Stack Logs can be quite long and verbose, but it's normal!\n\nIf that keeps you awake at night, or if you find something interesting presented\nin the Logs, feel free to talk about it in our Discord 🙏\n\nYou'll find that most Log messages can be ignored at this time."
-  read -r -p "$prompt"$'\n\nPress ENTER to continue... ' answer
+  
+  echo "👋 Hey! Just a quick hint!"
+  echo
+  echo "The Stack Logs can be quite long and verbose, but it's normal!"
+  echo
+  echo "If that keeps you awake at night, or if you find something interesting present in the Logs, feel free to talk about it in our Discord 🙏"
+  echo
+  echo "In any case, you'll find that most Log messages can be ignored at this time."
+
+  read -r -p "Press ENTER to continue... " answer
 
   sudo docker-compose -f ./docker/full-node/docker-compose.yml logs -f
 }
@@ -591,7 +606,7 @@ extactDomainName() {
 # TODO: Recursion needs to be tested for each of the fn
 # TODO: ENTER key needs to be tested along Y, post N and recursion
 verifyUserHasDomain() {
-  printf -v prompt "\nDo you have the domain settings ready [y/n]?\n\nPress Y, or ENTER to confirm."
+  printf -v prompt "\nDo you have the domain settings ready (y/n)?\n\nPress Y, or ENTER to confirm."
   read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
@@ -662,7 +677,7 @@ verifyUserHasDomain() {
     verifyUserHasDomain
   fi
 
-  printf -v prompt "\n🤖 Here are the details you have provided, make sure the information is correct.\n\nDomain name:      %s\nIP Address:      %s\nEmail address:    %s\n\nIs this correct [y/n]?\n\nPress Y or ENTER to confirm. Otherwise, N to make changes!" "$userDomainName" "$serverIpAddress" "$emailAddress"
+  printf -v prompt "\n🤖 Here are the details you have provided, make sure the information is correct.\n\nDomain name:      %s\nIP Address:      %s\nEmail address:    %s\n\nIs this correct (y/n)?\n\nPress Y or ENTER to confirm. Otherwise, N to make changes!" "$userDomainName" "$serverIpAddress" "$emailAddress"
   read -r -p "$prompt"$'\n> ' answer
 
   shouldRedo=$(toLowerCase "$answer")
@@ -771,6 +786,14 @@ setupSSLTLS() {
   https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls
   " ""
 
+  echo "⚠️ You're required to have a Domain name point to your server IP address."
+  echo
+  echo "Visit your domain name registrar's dashboard, or create a new domain, update the A record to have the hostname answer with the server IP address!"
+  echo
+  echo "Before proceeding, you have to do this step, as we'll verify!"
+  echo "Also, this is important to secure the server communications with SSL/TLS."
+  echo
+  echo "🙏 If you'd like to learn more about this, check our guide \"How to secure a Network Node\" https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
   printf "\n"
 
   trimData=$(verifyUserHasDomain | xargs)
@@ -808,7 +831,7 @@ setupSSLTLS() {
 
   # TODO: add health check in the docker compose file
   while ! curl --silent http://127.0.0.1/ping | grep --quiet "pong"; do
-    printf "\n🦄 Awaiting for Ursa and Nginx! Be patient...\n"
+    echo "Awaiting for Ursa and Nginx! Be patient..."
     sleep 3
   done
 
@@ -862,7 +885,9 @@ setupSSLTLS() {
 
   # Check if directory does not exit or empty
   if [[ "$(ls -A "$ursaPath" >/dev/null 2>&1)" ]]; then
-    printf "\n\n😅 %s" "Have you run the installation before? The directory $ursaPath is not empty and we'll skip the installation.\n\n"
+    echo "😅 Have you run the installation before?"
+    echo "The directory $ursaPath is not empty and we'll have to skip the installation, as we don't want to do any overrides."
+    echo "If you are stuck on this, clear the desired location before retrying..."
 
     exit 1
   fi
