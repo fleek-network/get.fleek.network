@@ -557,7 +557,7 @@ showDockerStackLog() {
   echo "★★★★★★★★★"
   echo "★★★★★★★★★"
 
-  printf -v prompt "\n🙋‍♀️ Want to see the output for the Docker Stack? Bear in mind that the Network Node Docker Stackc is running as a background process, displaying the logs is an option.\nType Y or press ENTER to confirm. Otherwise, N to make changes!"
+  printf -v prompt "\n🙋‍♀️ Want to see the output for the Docker Stack? Bear in mind that the Network Node Docker Stack is currently running as a background process, displaying logs messages is optional!\nType Y or press ENTER to confirm. Otherwise, N to make changes!"
   read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
@@ -565,7 +565,7 @@ showDockerStackLog() {
   if [[ "$answerToLc" == [nN] ]]; then
     printf "\r\n"
 
-    showOkMessage "We've now completed the installation process, thank you!"
+    showOkMessage "We've now completed the installation process, thanks for your support!\n\n🤗 Remember to visit our ${txtPrefixForBold}website ${txtPrefixForNormal}https://fleek.network to find documentation, our Discord, Twitter and more!"
 
     exit 0;
   fi
