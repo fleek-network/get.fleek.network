@@ -807,7 +807,8 @@ setupSSLTLS() {
   echo
   echo "Visit your domain name registrar's dashboard, or create a new domain, update the A record to have the hostname answer with the server IP address!"
   echo
-  echo "🫡 Make sure you complete this step before proceeding, as we'll verify it!"
+  # The extra white space between the 🫡 and text is intentional for spacing
+  echo "🫡  Make sure you complete this step before proceeding, as we'll verify it!"
   echo "Also, this is important to secure the server communications with SSL/TLS. Take your time!"
   echo
   echo "🙏 If you'd like to learn more about this, check our guide \"How to secure a Network Node\" https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
