@@ -122,7 +122,7 @@ requestAuthorizationAndExec() {
     exitInstaller
   fi
 
-  printf "\n"
+  printf "\n\n"
 
   $3
 }
