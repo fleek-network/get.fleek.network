@@ -456,7 +456,7 @@ requestPathnameForUrsaRepository() {
   defaultPath="$HOME/www/fleek-network/ursa"
   selectedPath=$defaultPath
 
-  printf -v prompt "\n🤖 We'll save the Ursa source code in the recommended path %s\n\nIs the location ok?\n\Type Y, or press ENTER to continue. Otherwise, N to change it!" "$defaultPath"
+  printf -v prompt "\n🤖 We'll save the Ursa source code in the recommended path %s\n\nIs the location ok?\nType Y, or press ENTER to continue. Otherwise, N to change it!" "$defaultPath"
   read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
@@ -634,7 +634,7 @@ extactDomainName() {
 # TODO: Recursion needs to be tested for each of the fn
 # TODO: ENTER key needs to be tested along Y, post N and recursion
 verifyUserHasDomain() {
-  printf -v prompt "\nDo you have the domain settings ready (y/n)?\n\Type Y, or press ENTER to confirm."
+  printf -v prompt "\nDo you have the domain settings ready (y/n)?\nType Y, or press ENTER to confirm."
   read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
@@ -673,10 +673,10 @@ verifyUserHasDomain() {
 
   detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "ERROR_IP_ADDRESS_NOT_AVAILABLE")
 
-  printf -v prompt "\n💡 Provide us the IP address of the machine where you are installing\nor running the Node e.g. 142.250.180.14 or 91.198.174.192\n\nTip: Seems that this machine IP address is %s\n\nLet us know, what's the IP address the domain answers with (default: %s)?\n\nPress ENTER to accept default, or type the IP Address" "$detectedIpAddress" "$detectedIpAddress"
+  printf -v prompt "\n💡 Provide us the IP address of the machine where you are installing the Node. We've noticed that this machine public IP address is %s (we'll use it as the default)\n\nLet us know, what's the IP address the domain answers with?\n\nPress ENTER to accept default, or type the IP Address" "$detectedIpAddress"
   read -r -p "$prompt"$'\n> ' answer
 
-  answer=${answer:=detectedIpAddress}
+  answer=${answer:="$detectedIpAddress"}
 
   serverIpAddress=$(toLowerCase "$answer")
 
