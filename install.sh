@@ -760,9 +760,23 @@ verifyUserHasDomain() {
     echo "💩 Uh oh! Provide a valid email address, please..."
   done
 
-  # TODO: Make this one more strict only taking Y or N, no ENTER
-  printf -v prompt "\n🤖 Here are the details you have provided, make sure the information is correct.\n\nDomain name:      %s\nIP Address:     %s\nEmail address:      %s\n\nIs this correct (y/n)?\n\nPress Y or ENTER to confirm. Otherwise, N to make changes!" "$userDomainName" "$serverIpAddress" "$emailAddress"
-  read -r -p "$prompt"$'\n> ' answer
+  printf -v prompt "\n🤖 Here are the details you have provided, make sure the information is correct.\n\nDomain name:      %s\nIP Address:     %s\nEmail address:      %s\n\nIs this correct (y/n)?\nType Y or Yes to confirm. Otherwise, N or No to make changes!" "$userDomainName" "$serverIpAddress" "$emailAddress"
+  while read -rp "$prompt"$'\n> ' ans; do
+    case $ans in
+      [yY])
+        return 0
+        ;;
+      [yY][eE][sS])
+        return 0
+        ;;
+      [nN])
+        return 1
+        ;;
+      [nN][oO])
+        return 1
+        ;;
+    esac;
+  done;
 
   shouldRedo=$(toLowerCase "$answer")
 
