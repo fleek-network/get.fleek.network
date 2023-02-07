@@ -48,6 +48,30 @@ declare -a dependencies=("sudo" "curl" "tldextract" "whois")
 txtPrefixForBold=$(tput bold)
 txtPrefixForNormal=$(tput sgr0)
 
+# Confirm validators
+confirmDomainName() {
+  local validate="^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\.)+[a-zA-Z]{2,}$"
+
+  if whois "$1" | grep -Ei '[Uu]nallocated|returned 0 objects' > /dev/null; then
+    return 1
+  fi
+
+  [[ $1 =~ $validate ]]
+}
+
+confirmIpAddress() {
+  local validate="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
+
+  [[ "$1" =~ $validate ]] && ping -c1 -W1 "$1" > /dev/null
+}
+
+confirmEmailAddress() {
+  local validate="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$"
+
+  [[ "$1" =~ $validate ]]
+}
+
+
 resetStyles() {
   echo "${txtPrefixForNormal}"
 }
@@ -127,13 +151,19 @@ requestAuthorizationAndExec() {
   $3
 }
 
+onExitInstallerTodos() {
+  resetStyles
+}
+
 onInterruption() {
   printf "\r\n"
   echo "😬 Ouch! The installation was interrupted and there might be applications or dependencies lying around! E.g., if the installation has already cloned the Ursa repository to your selected path, then you should clear it manually, etc."
   echo
   echo "If you're finding issues and need support, share your experience in our Discord at https://discord.gg/fleekxyz"
 
-  exitInstaller
+  onExitInstallerTodos
+
+  exit 1
 }
 
 toLowerCase() {
@@ -538,11 +568,11 @@ showDockerStackLog() {
   echo
   echo "  - If you have the Stack running and want to show the logs:"
   echo
-  echo "    docker-compose -f ./docker/full-node/docker-compose.yml logs -f"
+  echo "    ${txtPrefixForBold}docker-compose -f ./docker/full-node/docker-compose.yml logs -f${txtPrefixForNormal}"
   echo
   echo "  - Terminate by sending the interrupt signal (SIGNIT) to Docker using the hotkey:"
   echo
-  echo "    Ctrl-c"
+  echo "    ${txtPrefixForBold}Ctrl-c${txtPrefixForNormal}"
   echo
   echo "You can Stop or Start the Docker Stack at anytime, for that change the directory to the location where the source code of Ursa is stored (default is \$HOME/www/fleek-network/ursa)."
   echo "For example, if you accepted the installation recommendation that is ~/www/fleek-network/ursa"
@@ -551,11 +581,11 @@ showDockerStackLog() {
   echo
   echo "  - Start the Docker Stack"
   echo
-  echo "    docker-compose -f ./docker/full-node/docker-compose.yml up"
+  echo "    ${txtPrefixForBold}docker-compose -f ./docker/full-node/docker-compose.yml up${txtPrefixForNormal}"
   echo
   echo "  - Stop the Docker Stack"
   echo
-  echo "    docker-compose -f ./docker/full-node/docker-compose.yml down"
+  echo "    ${txtPrefixForBold}docker-compose -f ./docker/full-node/docker-compose.yml down${txtPrefixForNormal}"
   echo
   echo "🥹 Seems a lot? All the commands and much more are available in our documentation site!"
   # The extra white space between ✏️ and start of text is intentional and used for alignment
@@ -566,17 +596,19 @@ showDockerStackLog() {
   echo "★★★★★★★★★"
   echo "★★★★★★★★★"
 
-  printf -v prompt "\n🙋‍♀️ Want to see the output for the Docker Stack? Bear in mind that the Network Node Docker Stack is currently running as a background process, displaying logs messages is optional!\nType Y or press ENTER to confirm. Otherwise, N to complete!"
+  printf -v prompt "\n🙋‍♀️ Want to see the output for the Docker Stack? Bear in mind that the Network Node Docker Stack is currently running as a background process, displaying logs messages is optional!\nType Y or press ENTER to confirm. Otherwise, type SKIP!"
   read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
 
-  if [[ "$answerToLc" == [nN] ]]; then
+  if [[ "$answerToLc" == [sS][kK][iI][pP] ]]; then
     printf "\r\n"
 
     echo "🚀 We've now completed the installation process, thanks for your support!"
-    echo "🤗 Remember to visit our ${txtPrefixForBold}website ${txtPrefixForNormal}https://fleek.network to find documentation, our Discord, Twitter and more to stay updated!"
+    echo "🤗 Remember to visit our website ${txtPrefixForBold}https://fleek.network${txtPrefixForNormal} to find documentation, our Discord, Twitter and more to stay updated!"
     echo
+
+    onExitInstallerTodos
     
     exit 0;
   fi
@@ -601,7 +633,9 @@ initLetsEncrypt() {
     exitInstaller
   fi
 
-  if ! EMAIL="$1" DOMAINS="$2" ./init-letsencrypt.sh; then
+  hasLetsEncryptCertificates=$(EMAIL="$1" DOMAINS="$2" ./init-letsencrypt.sh)
+
+  if ! "$hasLetsEncryptCertificates"; then
     showErrorMessage "Oops! Failed to create the SSL/TLS certificates, your domain name hasn't been secured yet. Check our guide to troubleshoot https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
     cd ../../
@@ -612,7 +646,11 @@ initLetsEncrypt() {
     answerToLc=$(toLowerCase "$answer")
 
     if [[ "$answerToLc" == "" || "$answerToLc" == [yY] || "$answerToLc" == [yY][eE][sS] ]]; then    
-      initLetsEncrypt "$EMAIL" "$DOMAINS"
+      initLetsEncrypt "$1" "$2"
+
+      read -r -p "Press ENTER to continue and try again..." answer
+
+      exitInstaller
     fi
 
     sudo docker-compose -f ./docker/full-node/docker-compose.yml down
@@ -660,75 +698,83 @@ verifyUserHasDomain() {
     read -r -p "$prompt"$'\n> ' answer
 
     verifyUserHasDomain
+
+    exit 1
   fi
 
+  # Domain name handling (start)
   printf -v prompt "\n💡 Provide us your domain name without http:// or https:// e.g., www.example.com or my-node.fleek.network\n\nTell us, what's the domain name?"
-  read -r -p "$prompt"$'\n> ' answer
+  while read -rp "$prompt"$'\n> ' ans; do
+    if confirmDomainName "$ans"; then
+      userDomainName="$ans"
+      break
+    fi
 
-  userDomainName=$(toLowerCase "$answer")
+    echo "💩 Uh oh! Provide a valid domain name, please..."
+  done
 
-  domainOnly=$(extactDomainName "$userDomainName")
+  # Ip address handling (start)
+  ERROR_IP_ADDRESS_NOT_AVAILABLE="ERROR_IP_ADDRESS_NOT_AVAILABLE"
+  detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "$ERROR_IP_ADDRESS_NOT_AVAILABLE")
 
-  if ! whois "$domainOnly" | grep "$domainOnly" >/dev/null 2>&1; then
-    showErrorMessage "Oops! Doesn't seem like a valid domain, might want to try typing the domain again..."
-
-    sleep 8
-    verifyUserHasDomain
-  fi
-
-  if [[ "$userDomainName" = "" ]]; then
-    showErrorMessage "Oops! You failed to provide a domain name. If you'd like to learn more read our guide at https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
-
-    sleep 8
-    verifyUserHasDomain
-  fi
-
-  detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "ERROR_IP_ADDRESS_NOT_AVAILABLE")
+  # Declare detected ip address as default server ip address
+  serverIpAddress=${answer:="$detectedIpAddress"}
 
   printf -v prompt "\n💡 Provide us the IP address of the machine where you are installing the Node. We've noticed that this machine public IP address is ${txtPrefixForBold}%s ${txtPrefixForNormal}(we'll use it as the default)\n\nLet us know, what's the IP address the domain answers with?\n\nPress ENTER to accept default, or type the IP Address" "$detectedIpAddress"
-  read -r -p "$prompt"$'\n> ' answer
+  while read -rp "$prompt"$'\n> ' ans; do
+    if confirmIpAddress "$ans"; then
+      serverIpAddress="$ans"
+      break
+    elif [[ "$ans" == "" ]]; then
+      break
+    fi
 
-  answer=${answer:="$detectedIpAddress"}
+    echo "💩 Uh oh! Provide a valid ip address, please..."
+  done
 
-  serverIpAddress=$(toLowerCase "$answer")
+  if [[ $serverIpAddress = "$ERROR_IP_ADDRESS_NOT_AVAILABLE" ]]; then
+    showErrorMessage "Oops! This is embarrassing, but we failed to discover the default IP Address ($ERROR_IP_ADDRESS_NOT_AVAILABLE)"
 
-  if [[ ! $serverIpAddress =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    showErrorMessage "Oops! Is the IP address you've provided correct? Try that again..."
-
-    sleep 3
-    verifyUserHasDomain
+    exitInstaller
   fi
 
   # given a name and an ip address, test whether there is a record for name pointing to address
   if ! dig "$userDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$serverIpAddress" >/dev/null 2>&1 ; then
     showErrorMessage "Oops! The domain name $userDomainName doesn't have a DNS record type A pointing to the ip address $serverIpAddress. Learn how to setup your domain DNS Records by checking our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
-    sleep 3
+    read -r -p "Press ENTER to continue and try again..." answer
+
     verifyUserHasDomain
+
+    exit 1
   fi
 
-  printf -v prompt "\n💡 Provide us with a valid email address that you have access to,\nrest ensured that we'll not contact you, but its required by Let's Encrypt (Certificate Authority)\n\nIf you'd like to know more about the Let's Encrypt organisation\nvisit their website at https://letsencrypt.org/\n\nTell us, what's your email address?"
-  read -r -p "$prompt"$'\n> ' answer
+  # Email handling (start)
+  printf -v prompt "💡 Provide us with a valid email address that you have access to,\nrest ensured that we'll not contact you, but its required by Let's Encrypt (Certificate Authority)\n\nIf you'd like to know more about the Let's Encrypt organisation\nvisit their website at https://letsencrypt.org/\n\nTell us, what's your email address?"
+  while read -rp "$prompt"$'\n> ' ans; do
+    if confirmEmailAddress "$ans"; then
+      emailAddress=$(toLowerCase "$ans")
+      break
+    fi
 
-  emailAddress=$(toLowerCase "$answer")
+    echo "💩 Uh oh! Provide a valid email address, please..."
+  done
 
-  if [[ ! "$emailAddress" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$ ]]; then
-    showErrorMessage "Oops! Is the email address you've provided correct? Try that again..."
-
-    sleep 3
-    verifyUserHasDomain
-  fi
-
+  # TODO: Make this one more strict only taking Y or N, no ENTER
   printf -v prompt "\n🤖 Here are the details you have provided, make sure the information is correct.\n\nDomain name:      %s\nIP Address:     %s\nEmail address:      %s\n\nIs this correct (y/n)?\n\nPress Y or ENTER to confirm. Otherwise, N to make changes!" "$userDomainName" "$serverIpAddress" "$emailAddress"
   read -r -p "$prompt"$'\n> ' answer
 
   shouldRedo=$(toLowerCase "$answer")
 
-  if [[ "$shouldRedo" == "n" ]]; then
+  if [[ "$shouldRedo" == [nN] || "$shouldRedo" == [nN][oO] ]]; then
     verifyUserHasDomain
+
+    exit 1
   fi
 
   echo "$userDomainName;$emailAddress"
+
+  exit 0
 }
 
 replaceNginxConfFileForHttp() {
@@ -861,9 +907,18 @@ setupSSLTLS() {
   COMPOSE_DOCKER_CLI_BUILD=1 sudo docker compose -f ./docker/full-node/docker-compose.yml up -d
 
   # TODO: add health check in the docker compose file
+  counter=1
   while ! curl --silent http://127.0.0.1/ping | grep --quiet "pong"; do
+    if [[ counter -gt 10 ]]; then
+      echo "👹 Oops! Number of attempts exceeded the max count..."
+
+      exitInstaller
+    fi
+
     echo "🙏 Awaiting for Ursa and Nginx! Be patient..."
     sleep 3
+    
+    counter=$((counter+1))
   done
 
   if ! initLetsEncrypt "$emailAddress" "$userDomainName"; then
