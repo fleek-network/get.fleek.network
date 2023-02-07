@@ -44,12 +44,54 @@ defaultMinDiskSpaceBytesRequired=10000000
 # Dependencies
 declare -a dependencies=("sudo" "curl" "tldextract" "whois")
 
+# Style utils
+txtPrefixForBold=$(tput bold)
+txtPrefixForNormal=$(tput sgr0)
+
 hasCommand() {
   command -v "$1" >/dev/null 2>&1
 }
 
 clearScr() {
   printf '\e[H\e[2J'
+}
+
+launchAsciiArt() {
+  cat << "ART"
+  ★★★★★★★★★
+  ★★★★★★★★★
+  ★★★★★★★★★
+
+  ⚡️ The Fleek Network team presents ⚡️
+
+          _..._
+        .'     '.     _
+      /    .-""-\   _/ \
+    .-|   /:.   |  |   |
+    |  \  |:.   /.-'-./
+    | .-'-;:__.'    =/
+    .'=  *=|URSA _.='
+    /   _.  |    ;
+   ;-.-'|    \   |
+  /   | \    _\  _\
+  \__/'._;.  ==' ==\
+          \    \   |
+          /    /   /
+          /-._/-._/
+          \   `\  \
+           `-._/._/
+ART
+# 👆 ART (here tag) end positioned to the most left intentionally
+
+  echo
+  echo "  ⭐️ Ursa, a Decentralized Content Delivery Network (DCDN) ⭐️"
+  echo
+  echo "  ★★★★★★★★★ 👩🏾‍💻 ${txtPrefixForBold}Website ${txtPrefixForNormal}https://fleek.network"
+  echo "  ★★★★★★★★★ 📚 ${txtPrefixForBold}Documentation ${txtPrefixForNormal}https://docs.fleek.network"
+  echo "  ★★★★★★★★★ 💾 ${txtPrefixForBold}Git repository ${txtPrefixForNormal}https://github.com/fleek-network/ursa"
+  echo "  ★★★★★★★★★ 🤖 ${txtPrefixForBold}Discord ${txtPrefixForNormal}https://discord.gg/fleekxyz"
+  echo "  ★★★★★★★★★ 🐤 ${txtPrefixForBold}Twitter ${txtPrefixForNormal}https://twitter.com/fleek_net"
+  echo "  ★★★★★★★★★ 🎨 ${txtPrefixForBold}Ascii art by ${txtPrefixForNormal}https://www.asciiart.eu"
 }
 
 requestAuthorizationAndExec() {
@@ -88,46 +130,11 @@ showHintMessage() {
 }
 
 showDisclaimer() {
-# Start
-# This text alignment is intentional
-# No need to tab move inside...
-cat << "EOF"
-  ★★★★★★★★★
-  ★★★★★★★★★
-  ★★★★★★★★★
-
-  ⚡️ The Fleek Network team presents ⚡️
-
-          _..._
-        .'     '.     _
-      /    .-""-\   _/ \
-    .-|   /:.   |  |   |
-    |  \  |:.   /.-'-./
-    | .-'-;:__.'    =/
-    .'=  *=|URSA _.='
-    /   _.  |    ;
-  ;-.-'|    \   |
-  /   | \    _\  _\
-  \__/'._;.  ==' ==\
-          \    \   |
-          /    /   /
-          /-._/-._/
-           \   `\  \
-            `-._/._/
-
-  ★ Ursa, a Decentralized Content Delivery Network (DCDN) ★
-
-  ★★★★★★★★★ 👩🏾‍💻 Website https://fleek.network
-  ★★★★★★★★★ 📚 Documentation https://docs.fleek.network
-  ★★★★★★★★★ 💾 Git repository https://github.com/fleek-network/ursa
-  ★★★★★★★★★ 🤖 Discord https://discord.gg/fleekxyz
-  ★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net
-  ★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu  
-EOF
-# End
+  # Display artwork
+  launchAsciiArt
 
   printf "\r\n\n"
-  echo "🧙‍♀️ The installer is the assisted process illustrated in our guide \"Running a Node in a Docker container\"."
+  echo "🧙‍♀️ The installer is the assisted process illustrated in our guide ${txtPrefixForBold}Running a Node in a Docker container${txtPrefixForNormal}."
   echo "If you are happy to have the script assist you in the installaton process of Fleek Network Node, there's a certain level of trust that you have to put into \"piped installers\", as it instruct commands at your own risk."
   echo "With that considered, we'll ask when dependencies are missing and if happy to proceed with the installation, before commands are executed e.g. installing Git, Docker, or any other required or associated dependencies from third-parties, etc."
   echo
@@ -152,7 +159,7 @@ EOF
 }
 
 windowsUsersWarning() {
-  echo "⚠️ Windows is not supported! We recommend enabling Windows Subsystem Linux (WSL) Ubuntu distro."
+  echo "⚠️ Windows is not supported! We recommend enabling ${txtPrefixForBold}Windows Subsystem Linux (WSL)${txtPrefixForNormal} Ubuntu distro."
   echo
   echo "If you'd like to learn more visit our documentation site at https://docs.fleek.network"
 }
@@ -496,7 +503,7 @@ showDockerStackLog() {
   echo "★★★★★★★★★"
   echo "★★★★★★★★★"
   echo
-  echo "🥳 Great! We have completed the installation!"
+  echo "🥳 Great! We have ${txtPrefixForBold}completed${txtPrefixForNormal} the installation!"
   echo
   echo "The Stack should be running now and you can show or hide the log output at anytime."
   echo
@@ -514,7 +521,7 @@ showDockerStackLog() {
   echo
   echo "    Ctrl-c"
   echo
-  echo "You can Stop or Start the Docker Stack at anytime, for that change the directory to the location where the source code of Ursa is saved."
+  echo "You can Stop or Start the Docker Stack at anytime, for that change the directory to the location where the source code of Ursa is stored (default is \$HOME/www/fleek-network/ursa)."
   echo "For example, if you accepted the installation recommendation that is ~/www/fleek-network/ursa"
   echo
   echo "Then after, run the following commands, to either Start (up) or Stop (down)"
@@ -530,7 +537,7 @@ showDockerStackLog() {
   echo "👋 Seems a lot? All the commands and much more are available in our documentation site!"
   # The extra white space between ✏️ and start of text is intentional and used for alignment
   echo "🤓 Learn how to maintain your Node by visiting our documentation at https://docs.fleek.network"
-  echo "🌈 Got feedback? Find our Discord at https://discord.gg/fleekxyz and Twitter at https://twitter.com/fleek_net"
+  echo "🌈 Got feedback? Find our ${txtPrefixForBold}Discord ${txtPrefixForNormal}at https://discord.gg/fleekxyz and ${txtPrefixForBold}Twitter ${txtPrefixForNormal}at https://twitter.com/fleek_net"
   echo
   echo "★★★★★★★★★"
   echo "★★★★★★★★★"
@@ -548,16 +555,14 @@ showDockerStackLog() {
 
     exit 0;
   fi
-
-  printf -v prompt "\n👋 Hey! Just a quick hint!\n\nThe Stack Logs can be quite long and verbose, but it's normal!\n\nIf that keeps you awake at night, or if you find something interesting presented\nin the Logs, feel free to talk about it in our Discord 🙏\n\nYou'll find that most Log messages can be ignored at this time."
   
   echo "👋 Hey! Just a quick hint!"
   echo
-  echo "The Stack Logs can be quite long and verbose, but it's normal!"
+  echo "The Stack Logs can be quite long and verbose, but ${txtPrefixForBold}it's normal!"
   echo
   echo "If that keeps you awake at night, or if you find something interesting present in the Logs, feel free to talk about it in our Discord 🙏"
   echo
-  echo "In any case, you'll find that most Log messages can be ignored at this time."
+  echo "In any case, you'll find that most Log messages ${txtPrefixForBold}can be ignored ${txtPrefixForNormal}at this time."
 
   read -r -p "Press ENTER to continue... " answer
 
@@ -798,7 +803,7 @@ setupSSLTLS() {
   https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls
   " ""
 
-  echo "⚠️ You're required to have a Domain name point to your server IP address."
+  echo "⚠️ You're ${txtPrefixForBold}required ${txtPrefixForNormal}to have a Domain name point to your server IP address."
   echo
   echo "Visit your domain name registrar's dashboard, or create a new domain, update the A record to have the hostname answer with the server IP address!"
   echo
@@ -900,9 +905,10 @@ setupSSLTLS() {
 
   # Check if directory does not exit or empty
   if [[ "$(ls -A "$ursaPath" >/dev/null 2>&1)" ]]; then
-    echo "😅 Have you run the installation before?"
+    echo "😅 Gosh! Have you run the installation before?!"
     echo "The directory $ursaPath is not empty and we'll have to skip the installation, as we don't want to do any overrides."
-    echo "If you are stuck on this, clear the desired location before retrying..."
+    echo "If you are stuck on this, clear the desired location before retrying"
+    echo "e.g. if you chose to install in the default \$HOME/www/fleek-network/ursa clear it, as the assisted installer does not do deletes."
 
     exit 1
   fi
