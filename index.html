@@ -566,7 +566,7 @@ showDockerStackLog() {
   echo "★★★★★★★★★"
   echo "★★★★★★★★★"
 
-  printf -v prompt "\n🙋‍♀️ Want to see the output for the Docker Stack? Bear in mind that the Network Node Docker Stack is currently running as a background process, displaying logs messages is optional!\nType Y or press ENTER to confirm. Otherwise, N to make changes!"
+  printf -v prompt "\n🙋‍♀️ Want to see the output for the Docker Stack? Bear in mind that the Network Node Docker Stack is currently running as a background process, displaying logs messages is optional!\nType Y or press ENTER to confirm. Otherwise, N to complete!"
   read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
