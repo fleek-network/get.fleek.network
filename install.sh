@@ -140,14 +140,15 @@ showDisclaimer() {
 
   printf "\r\n\n"
   echo "🧙‍♀️ The installer is the assisted process illustrated in our guide ${txtPrefixForBold}Running a Node in a Docker container${txtPrefixForNormal}."
-  echo "If you are happy to have the script assist you in the installaton process of Fleek Network Node, there's a certain level of trust that you have to put into \"piped installers\", as it instruct commands at your own risk."
+  echo
+  echo "If you are happy to have the script assist you in the installaton, there's a certain level of trust that you have to consider, as it instruct commands in your behalf."
   echo "With that considered, we'll ask when dependencies are missing and if happy to proceed with the installation, before commands are executed e.g. installing Git, Docker, or any other required or associated dependencies from third-parties, etc."
   echo
   echo "Our script source is open to everybody and can be verified at https://github.com/fleek-network/get.fleek.network"
   echo
-  echo "🤓 One more thing, your system User should have write permissions to install applications."
-  echo "Also, some advanced users might find better to follow the instructions in our official guides."
-  echo "If that's your preference, then go ahead and check our guides at https://docs.fleek.network"
+  echo "🤓 One more thing, your system ${txtPrefixForBold}User ${txtPrefixForNormal}should have ${txtPrefixForBold}write permissions ${txtPrefixForNormal}to ${txtPrefixForBold}install applications."
+  echo "Also, some advanced users might find better to follow the documentation in our official guides, or borrow from the installation script source code."
+  echo "If that's your preference, then go ahead and check our guides at https://docs.fleek.network, or our repository https://github.com/fleek-network/get.fleek.network"
 
   printf -v prompt "\n\n🤖 Are you happy to continue (y/n)?"
   read -r -p "$prompt"$'\n> ' answer
