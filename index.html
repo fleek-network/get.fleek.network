@@ -27,7 +27,7 @@
 # - Verify if Docker is installed, if not install it
 # - It'll do a quick health check to confirm Docker is installed correctly
 # - Request a pathname where to store the Ursa repository, otherwise providing a default,
-#   e.g. `/var/www/fleek-network/ursa`
+#   e.g., `/var/www/fleek-network/ursa`
 # - Pull the `ursa` project repository to the preferred target directory via HTTPS
 #   instead of SSH for simplicity
 # - Optionally, assist on setting up and securing domain name via SSL/TLS
@@ -454,7 +454,7 @@ requestPathnameForUrsaRepository() {
   defaultPath="$HOME/www/fleek-network/ursa"
   selectedPath=$defaultPath
 
-  printf -v prompt "\n🤖 We'll save the Ursa source code in the recommended path ${txtPrefixForBold}%s${txtPrefixForNormal}. If you don't have a reason to change the location, stick to the default, keep it easy! \n\nAre you happy to proceed?\n\nType Y, or press ENTER to continue. Otherwise, N to change it!" "$defaultPath"
+  printf -v prompt "\n🤖 We'll save the Ursa source code in the recommended path ${txtPrefixForBold}%s${txtPrefixForNormal}. If you don't have a reason to change the location, stick to the default, keep it easy! \n\nAre you happy to proceed?\nType Y, or press ENTER to continue. Otherwise, N to change it!" "$defaultPath"
   read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
@@ -489,6 +489,8 @@ cloneUrsaRepositoryToPath() {
   fi
 
   showOkMessage "The Ursa repository located at $defaultUrsaHttpsRespository was cloned to $ursaPath!"
+
+  printf "\r\n"
 }
 
 restartDockerStack() {
@@ -649,7 +651,7 @@ verifyUserHasDomain() {
     verifyUserHasDomain
   fi
 
-  printf -v prompt "\n💡 Provide us your domain name without http:// or https:// e.g. www.example.com or my-node.fleek.network\n\nTell us, what's the domain name?"
+  printf -v prompt "\n💡 Provide us your domain name without http:// or https:// e.g., www.example.com or my-node.fleek.network\n\nTell us, what's the domain name?"
   read -r -p "$prompt"$'\n> ' answer
 
   userDomainName=$(toLowerCase "$answer")
@@ -672,7 +674,7 @@ verifyUserHasDomain() {
 
   detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "ERROR_IP_ADDRESS_NOT_AVAILABLE")
 
-  printf -v prompt "\n💡 Provide us the IP address of the machine where you are installing the Node. We've noticed that this machine public IP address is %s (we'll use it as the default)\n\nLet us know, what's the IP address the domain answers with?\n\nPress ENTER to accept default, or type the IP Address" "$detectedIpAddress"
+  printf -v prompt "\n💡 Provide us the IP address of the machine where you are installing the Node. We've noticed that this machine public IP address is ${txtPrefixForBold}%s ${txtPrefixForNormal}(we'll use it as the default)\n\nLet us know, what's the IP address the domain answers with?\n\nPress ENTER to accept default, or type the IP Address" "$detectedIpAddress"
   read -r -p "$prompt"$'\n> ' answer
 
   answer=${answer:="$detectedIpAddress"}
@@ -811,7 +813,7 @@ setupSSLTLS() {
   echo "🫡  Make sure you complete this step before proceeding, as we'll verify it!"
   echo "Also, this is important to secure the server communications with SSL/TLS. Take your time!"
   echo
-  echo "🙏 If you'd like to learn more about this, check our guide \"How to secure a Network Node\" https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+  echo "🙏 If you'd like to learn more about this, check our guide ${txtPrefixForBold}How to secure${txtPrefixForNormal} a Network Node https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
   printf "\n"
 
   trimData=$(verifyUserHasDomain | xargs)
@@ -900,7 +902,7 @@ setupSSLTLS() {
     echo "😅 Gosh! Have you run the installation before?!"
     echo "The directory $ursaPath is not empty and we'll have to skip the installation, as we don't want to do any overrides."
     echo "If you are stuck on this, clear the desired location before retrying"
-    echo "e.g. if you chose to install in the default \$HOME/www/fleek-network/ursa clear it, as the assisted installer does not do deletes."
+    echo "e.g., if you chose to install in the default \$HOME/www/fleek-network/ursa clear it, as the assisted installer does not do deletes."
 
     exitInstaller
   fi
