@@ -117,10 +117,12 @@ cat << "EOF"
 
   ★ Ursa, a Decentralized Content Delivery Network (DCDN) ★
 
-  ★★★★★★★★★ Website https://fleek.network
-  ★★★★★★★★★ Documentation https://docs.fleek.network
-  ★★★★★★★★★ Git repository https://github.com/fleek-network/ursa
-  ★★★★★★★★★ Ascii art by https://www.asciiart.eu  
+  ★★★★★★★★★ 👩🏾‍💻 Website https://fleek.network
+  ★★★★★★★★★ 📚 Documentation https://docs.fleek.network
+  ★★★★★★★★★ 💾 Git repository https://github.com/fleek-network/ursa
+  ★★★★★★★★★ 🤖 Discord https://discord.gg/fleekxyz
+  ★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net
+  ★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu  
 EOF
 # End
 
@@ -434,7 +436,7 @@ requestPathnameForUrsaRepository() {
   defaultPath="$HOME/www/fleek-network/ursa"
   selectedPath=$defaultPath
 
-  printf -v prompt "\n🤖 We'll save the Ursa source code in the recommended path %s\n\nIs the location ok?\n\nPress Y, or ENTER to continue. Otherwise, N to change it!" "$defaultPath"
+  printf -v prompt "\n🤖 We'll save the Ursa source code in the recommended path %s\n\nIs the location ok?\n\Type Y, or press ENTER to continue. Otherwise, N to change it!" "$defaultPath"
   read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
@@ -490,25 +492,29 @@ restartDockerStack() {
 }
 
 showDockerStackLog() {
+  echo "★★★★★★★★★"
+  echo "★★★★★★★★★"
+  echo "★★★★★★★★★"
+  echo
   echo "🥳 Great! We have completed the installation!"
   echo
-  echo
   echo "The Stack should be running now and you can show or hide the log output at anytime."
-  echo
   echo
   echo "Our Stack logs can be quite verbose, as it shows WARNINGS, INFO, ERRORS, etc."
   echo "It's important to understand what they mean by simply reading our Node Health-check guide"
   echo "https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
   echo
   echo "Here are some handy commands to show or hide the logs"
+  echo
   echo "  - If you have the Stack running and want to show the logs:"
   echo
   echo "    docker-compose -f ./docker/full-node/docker-compose.yml logs -f"
+  echo
   echo "  - Terminate by sending the interrupt signal (SIGNIT) to Docker using the hotkey:"
   echo
   echo "    Ctrl-c"
-  echo "You can Stop or Start the Docker Stack at anytime."
-  echo "Change the directory to the location where the source code of Ursa is saved."
+  echo
+  echo "You can Stop or Start the Docker Stack at anytime, for that change the directory to the location where the source code of Ursa is saved."
   echo "For example, if you accepted the installation recommendation that is ~/www/fleek-network/ursa"
   echo
   echo "Then after, run the following commands, to either Start (up) or Stop (down)"
@@ -516,17 +522,21 @@ showDockerStackLog() {
   echo "  - Start the Docker Stack"
   echo
   echo "    docker-compose -f ./docker/full-node/docker-compose.yml up"
+  echo
   echo "  - Stop the Docker Stack"
   echo
   echo "    docker-compose -f ./docker/full-node/docker-compose.yml down"
   echo
   echo "👋 Seems a lot? All the commands and much more are available in our documentation site!"
-  echo "✏️ Learn how to maintain your Node by visiting our documentation at https://docs.fleek.network"
+  # The extra white space between ✏️ and start of text is intentional and used for alignment
+  echo "🤓 Learn how to maintain your Node by visiting our documentation at https://docs.fleek.network"
+  echo "🌈 Got feedback? Find our Discord at https://discord.gg/fleekxyz and Twitter at https://twitter.com/fleek_net"
   echo
-  echo "🌈 Got feedback? Find our Discord at https://discord.gg/fleekxyz"
-  echo
+  echo "★★★★★★★★★"
+  echo "★★★★★★★★★"
+  echo "★★★★★★★★★"
 
-  printf -v prompt "\n🙋‍♀️ Want to see the output for the Docker Stack?\n\nPress Y or ENTER to confirm. Otherwise, N to make changes!"
+  printf -v prompt "\n🙋‍♀️ Want to see the output for the Docker Stack?\n\Type Y or press ENTER to confirm. Otherwise, N to make changes!"
   read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
@@ -566,7 +576,7 @@ initLetsEncrypt() {
 
     cd ../../
 
-    printf -v prompt "\n💡 We recommend to try again, as some temporary issues might have occurred.\n\n🙋‍♀️ Would you like to retry securing the domain?\n\nPress Y, or ENTER to continue. Otherwise N, to quit!"
+    printf -v prompt "\n💡 We recommend to try again, as some temporary issues might have occurred.\n\n🙋‍♀️ Would you like to retry securing the domain?\n\Type Y, or press ENTER to continue. Otherwise N, to quit!"
     read -r -p "$prompt"$'\n> ' answer
 
     answerToLc=$(toLowerCase "$answer")
@@ -606,7 +616,7 @@ extactDomainName() {
 # TODO: Recursion needs to be tested for each of the fn
 # TODO: ENTER key needs to be tested along Y, post N and recursion
 verifyUserHasDomain() {
-  printf -v prompt "\nDo you have the domain settings ready (y/n)?\n\nPress Y, or ENTER to confirm."
+  printf -v prompt "\nDo you have the domain settings ready (y/n)?\n\Type Y, or press ENTER to confirm."
   read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
@@ -645,8 +655,10 @@ verifyUserHasDomain() {
 
   detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "ERROR_IP_ADDRESS_NOT_AVAILABLE")
 
-  printf -v prompt "\n💡 Provide us the IP address of the machine where you are installing\nor running the Node e.g. 142.250.180.14 or 91.198.174.192\n\nTip: Seems that this machine IP address is %s\n\nLet us know, what's the IP address the domain answers with?" "$detectedIpAddress"
+  printf -v prompt "\n💡 Provide us the IP address of the machine where you are installing\nor running the Node e.g. 142.250.180.14 or 91.198.174.192\n\nTip: Seems that this machine IP address is %s\n\nLet us know, what's the IP address the domain answers with (default: %s)?\n\nPress ENTER to accept default, or type the IP Address" "$detectedIpAddress" "$detectedIpAddress"
   read -r -p "$prompt"$'\n> ' answer
+
+  answer=${answer:=detectedIpAddress}
 
   serverIpAddress=$(toLowerCase "$answer")
 
@@ -825,6 +837,9 @@ setupSSLTLS() {
   chmod +x ./docker/full-node/init-letsencrypt.sh
 
   showOkMessage "Updated file permissions for Lets Encrypt!"
+
+  # Intentional, used to provide space after msg
+  echo
 
   # start stack in bg, as lets encrypt will need the nginx to validate
   COMPOSE_DOCKER_CLI_BUILD=1 sudo docker compose -f ./docker/full-node/docker-compose.yml up -d
