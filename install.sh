@@ -139,7 +139,7 @@ showDisclaimer() {
   launchAsciiArt
 
   printf "\r\n\n"
-  echo "🧙‍♀️ The installer is the assisted process illustrated in our guide ${txtPrefixForBold}Running a Node in a Docker container${txtPrefixForNormal}."
+  echo "🧙‍♀️ The assisted installer follows the steps in our guide ${txtPrefixForBold}Running a Node in a Docker container${txtPrefixForNormal}."
   echo
   echo "If you are happy to have the script assist you in the installaton, there's a certain level of trust that you have to consider, as it instruct commands in your behalf."
   echo "With that considered, we'll ask when dependencies are missing and if happy to proceed with the installation, before commands are executed e.g. installing Git, Docker, or any other required or associated dependencies from third-parties, etc."
