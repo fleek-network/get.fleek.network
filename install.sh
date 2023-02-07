@@ -548,7 +548,7 @@ showDockerStackLog() {
   echo
   echo "    docker-compose -f ./docker/full-node/docker-compose.yml down"
   echo
-  echo "👋 Seems a lot? All the commands and much more are available in our documentation site!"
+  echo "🥹 Seems a lot? All the commands and much more are available in our documentation site!"
   # The extra white space between ✏️ and start of text is intentional and used for alignment
   echo "🤓 Learn how to maintain your Node by visiting our documentation at https://docs.fleek.network"
   echo "🌈 Got feedback? Find our ${txtPrefixForBold}Discord ${txtPrefixForNormal}at https://discord.gg/fleekxyz and ${txtPrefixForBold}Twitter ${txtPrefixForNormal}at https://twitter.com/fleek_net"
@@ -917,12 +917,18 @@ setupSSLTLS() {
   setupSSLTLS "$ursaPath"
 
   showOkMessage "The installation process has completed!"
+
+  # Add some space after the "complete" message
+  printf "\r\n"
   
   # Await a few seconds to let the user read...
   sleep 5
 
   # Restart docker
   restartDockerStack
+
+  # Add some space after the "docker stack restart" message
+  printf "\r\n"
 
   # Show the logs
   showDockerStackLog
