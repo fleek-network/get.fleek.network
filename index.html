@@ -454,7 +454,7 @@ requestPathnameForUrsaRepository() {
   defaultPath="$HOME/www/fleek-network/ursa"
   selectedPath=$defaultPath
 
-  printf -v prompt "\n🤖 We'll save the Ursa source code in the recommended path ${txtPrefixForBold}%s${txtPrefixForNormal}\n\nIs the location ok?\nType Y, or press ENTER to continue. Otherwise, N to change it!" "$defaultPath"
+  printf -v prompt "\n🤖 We'll save the Ursa source code in the recommended path ${txtPrefixForBold}%s${txtPrefixForNormal}. If you don't have a reason to change the location, stick to the default, keep it easy! \n\nAre you happy to proceed?\n\nType Y, or press ENTER to continue. Otherwise, N to change it!" "$defaultPath"
   read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
