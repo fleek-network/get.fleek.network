@@ -632,10 +632,19 @@ initLetsEncrypt() {
 
     exitInstaller
   fi
+  
+  # TODO(init-letsencrypt.sh): Rewrite the "init-letsencrypt.sh"
+  # as the exit code when if [[ ! cmd ]] doesnt capture failure for some reason
+  # e.g.m when certificate registration more then 5 same domain
+  # e.g., Unable to register an account with ACME server. Error returned by the 
+  # ACME server: Error creating new account :: too many registrations for this IP: 
+  # see https://letsencrypt.org/docs/too-many-registrations-for-this-ip/
+  # Results in hasLetsEncryptStatus equal 0
+  # EMAIL="$1" DOMAINS="$2" ./init-letsencrypt.sh
+  # hasLetsEncryptStatus=$?
+  # echo "hasLetsEncryptStatus ($hasLetsEncryptStatus)"
 
-  hasLetsEncryptCertificates=$(EMAIL="$1" DOMAINS="$2" ./init-letsencrypt.sh)
-
-  if ! "$hasLetsEncryptCertificates"; then
+  if ! EMAIL="$1" DOMAINS="$2" ./init-letsencrypt.sh; then
     showErrorMessage "Oops! Failed to create the SSL/TLS certificates, your domain name hasn't been secured yet. Check our guide to troubleshoot https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
     cd ../../
@@ -764,16 +773,18 @@ verifyUserHasDomain() {
   while read -rp "$prompt"$'\n> ' ans; do
     case $ans in
       [yY])
-        return 0
+        break
         ;;
       [yY][eE][sS])
-        return 0
+        break
         ;;
       [nN])
-        return 1
+        verifyUserHasDomain
+        break
         ;;
       [nN][oO])
-        return 1
+        verifyUserHasDomain
+        break
         ;;
     esac;
   done;
@@ -921,19 +932,21 @@ setupSSLTLS() {
   COMPOSE_DOCKER_CLI_BUILD=1 sudo docker compose -f ./docker/full-node/docker-compose.yml up -d
 
   # TODO: add health check in the docker compose file
-  counter=1
-  while ! curl --silent http://127.0.0.1/ping | grep --quiet "pong"; do
-    if [[ counter -gt 10 ]]; then
-      echo "👹 Oops! Number of attempts exceeded the max count..."
+  # counter=1
+  # maxCount=10
+  # while ! curl --silent http://127.0.0.1/ping | grep --quiet "pong"; do
+  #   if [[ counter -gt $maxCount ]]; then
+  #     echo "👹 Oops! Number of attempts exceeded the max count..."
 
-      exitInstaller
-    fi
+  #     exitInstaller
+  #   fi
 
-    echo "🙏 Awaiting for Ursa and Nginx! Be patient..."
-    sleep 3
+  #   echo "🙏 Awaiting for Ursa and Nginx! Be patient..."
+
+  #   sleep 10
     
-    counter=$((counter+1))
-  done
+  #   counter=$((counter+1))
+  # done
 
   if ! initLetsEncrypt "$emailAddress" "$userDomainName"; then
     exitInstaller
