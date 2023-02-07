@@ -127,6 +127,15 @@ requestAuthorizationAndExec() {
   $3
 }
 
+onInterruption() {
+  printf "\r\n"
+  echo "😬 Ouch! The installation was interrupted and there might be applications or dependencies lying around! E.g., if the installation has already cloned the Ursa repository to your selected path, then you should clear it manually, etc."
+  echo
+  echo "If you're finding issues and need support, share your experience in our Discord at https://discord.gg/fleekxyz"
+
+  exitInstaller
+}
+
 toLowerCase() {
   echo "$1" | tr '[:upper:]' '[:lower:]'
 }
@@ -869,7 +878,11 @@ setupSSLTLS() {
 }
 
 (
+  # stdin to keyboard
   exec < /dev/tty;
+
+  # SIGINT listener
+  trap onInterruption INT
 
   # Identity the OS
   os=$(identifyOS)
