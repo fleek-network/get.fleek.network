@@ -48,6 +48,15 @@ declare -a dependencies=("sudo" "curl" "tldextract" "whois")
 txtPrefixForBold=$(tput bold)
 txtPrefixForNormal=$(tput sgr0)
 
+resetStyles() {
+  echo "${txtPrefixForNormal}"
+}
+
+exitInstaller() {
+  resetStyles
+  exit 1;
+}
+
 hasCommand() {
   command -v "$1" >/dev/null 2>&1
 }
@@ -110,7 +119,7 @@ requestAuthorizationAndExec() {
 
     showErrorMessage "$2"
 
-    exit 1;
+    exitInstaller
   fi
 
   printf "\n"
@@ -160,7 +169,7 @@ showDisclaimer() {
     echo
     echo "Otherwise, if you'd like to learn a bit more visit our website at https://fleek.network"
 
-    exit 1;
+    exitInstaller
   fi
 }
 
@@ -184,7 +193,7 @@ shouldHaveHomebrewInstalled() {
     if [[ "$?" = 1 ]]; then
       showErrorMessage "Oops! Failed to install Homebrew."
 
-      exit 1
+      exitInstaller
     fi
   fi
 
@@ -197,7 +206,7 @@ installHomebrew() {
   if [[ "$os" != "mac" ]]; then
     showErrorMessage "Oops! For some odd reason this function was called from the wrong context, as it should only be called for MacOS!"    
 
-    exit 1
+    exitInstaller
   fi  
 
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -222,12 +231,12 @@ installGit() {
     else
       showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
 
-      exit 1
+      exitInstaller
     fi
   else
     showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
 
-    exit 1
+    exitInstaller
   fi
 }
 
@@ -249,7 +258,7 @@ identifyOS() {
 
     windowsUsersWarning
 
-    exit 1
+    exitInstaller
   fi
 
   echo "$osToLc"
@@ -279,7 +288,7 @@ checkSystemHasRecommendedResources() {
     answerToLc=$(toLowerCase "$answer")
 
     if [[ "$answerToLc" == "n" ]]; then
-      exit 1;
+      exitInstaller
     fi
   else
     showOkMessage "Great! Your system has enough resources (disk space and memory)"
@@ -299,7 +308,7 @@ checkIfGitInstalled() {
     if [[ "$?" = 1 ]]; then
       showErrorMessage "Oops! Failed to install git."
 
-      exit 1
+      exitInstaller
     fi
   fi
 
@@ -310,7 +319,7 @@ gitHealthCheck() {
   if ! hasCommand git; then
     showErrorMessage "Oops! For some odd reason, git doesn't seem to be installed!"
 
-    exit 1
+    exitInstaller
   fi
 }
 
@@ -394,12 +403,12 @@ installDocker() {
     else
       showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
 
-      exit 1
+      exitInstaller
     fi
   else
     showErrorMessage "Oops! Your operating system is not supported yet, to install on your own read our guides at https://docs.fleek.network"
 
-    exit 1
+    exitInstaller
   fi
 }
 
@@ -415,7 +424,7 @@ checkIfDockerInstalled() {
     if [[ "$?" = 1 ]]; then
       showErrorMessage "Oops! Failed to install docker."
 
-      exit 1
+      exitInstaller
     fi
   fi
 
@@ -426,7 +435,7 @@ dockerHealthCheck() {
   if ! hasCommand docker-compose; then
     showErrorMessage "Oops! For some odd reason, docker-compose doesn't seem to be installed!"
 
-    exit 1
+    exitInstaller
   fi
 
   expectedMessage="Hello from Docker"
@@ -437,7 +446,7 @@ dockerHealthCheck() {
     and output a message, but failed! Check if you are connected to the internet, docker is installed \
     correctly, or the docker hub might be down, etc."
 
-    exit 1
+    exitInstaller
   fi
 
   showOkMessage "Docker health-check passed! [skipping]"
@@ -468,7 +477,7 @@ requestPathnameForUrsaRepository() {
   if ! mkdir -p "$selectedPath"; then
     showErrorMessage "Oops! Failed to create the directory $selectedPath, make sure you have the right permissions."
 
-    exit 1
+    exitInstaller
   fi
 
   echo "$selectedPath"
@@ -478,7 +487,7 @@ cloneUrsaRepositoryToPath() {
   if ! git clone $defaultUrsaHttpsRespository "$1"; then
     showErrorMessage "Oops! Failed to clone the Ursa repository ($defaultUrsaHttpsRespository)"
 
-    exit 1
+    exitInstaller
   fi
 
   showOkMessage "The Ursa repository located at $defaultUrsaHttpsRespository was cloned to $ursaPath!"
@@ -577,7 +586,7 @@ initLetsEncrypt() {
   if ! cd ./docker/full-node; then
     showErrorMessage "Oops! Failed to open the directory for the docker configuration files. Help us improve! Report to us in our Discord channel 🙏"
 
-    exit 1
+    exitInstaller
   fi
 
   if ! EMAIL="$1" DOMAINS="$2" ./init-letsencrypt.sh; then
@@ -596,7 +605,7 @@ initLetsEncrypt() {
 
     sudo docker-compose -f ./docker/full-node/docker-compose.yml down
 
-    exit 1
+    exitInstaller
   fi
 
   cd ../../
@@ -813,19 +822,19 @@ setupSSLTLS() {
   if ! cd "$1"; then
     showErrorMessage "Oops! This is embarasssing! Failed to change to ursa directory. Help us improve, report it in our discord channel 🙏"
 
-    exit 1
+    exitInstaller
   fi
 
   if ! rm ./docker/full-node/data/nginx/app.conf; then
     showErrorMessage "Oops! Failed to clear the nginx default config. Help us improve, report it in our discord channel 🙏"
 
-    exit 1
+    exitInstaller
   fi
 
   if ! replaceNginxConfFileForHttp "$userDomainName"; then
     showErrorMessage "Oops! Failed to update the http server_name directive in the Nginx reverse proxy with your domain name $userDomainName. Help us improve! Report to us in our Discord channel 🙏"
 
-    exit 1
+    exitInstaller
   fi
 
   chmod +x ./docker/full-node/init-letsencrypt.sh
@@ -845,7 +854,7 @@ setupSSLTLS() {
   done
 
   if ! initLetsEncrypt "$emailAddress" "$userDomainName"; then
-    exit 1
+    exitInstaller
   fi
 
   printf "\n"
@@ -853,7 +862,7 @@ setupSSLTLS() {
   if ! replaceNginxConfFileForHttps "$userDomainName"; then
     showErrorMessage "Oops! Failed to update the https server_name directive in the Nginx reverse proxy with your domain name $userDomainName. Help us improve! Report to us in our Discord channel 🙏"
 
-    exit 1
+    exitInstaller
   fi
 }
 
@@ -893,7 +902,7 @@ setupSSLTLS() {
     echo "If you are stuck on this, clear the desired location before retrying"
     echo "e.g. if you chose to install in the default \$HOME/www/fleek-network/ursa clear it, as the assisted installer does not do deletes."
 
-    exit 1
+    exitInstaller
   fi
 
   # Pull the `ursa` project repository to the preferred target directory via HTTPS
@@ -916,5 +925,6 @@ setupSSLTLS() {
   # Show the logs
   showDockerStackLog
   
+  resetStyles
   exit;
 )
