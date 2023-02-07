@@ -150,13 +150,11 @@ showDisclaimer() {
   printf "\r\n\n"
   echo "🧙‍♀️ The assisted installer follows the steps in our guide ${txtPrefixForBold}Running a Node in a Docker container${txtPrefixForNormal}."
   echo
-  echo "If you are happy to have the script assist you in the installaton, there's a certain level of trust that you have to consider, as it instruct commands in your behalf."
-  echo "With that considered, we'll ask when dependencies are missing and if happy to proceed with the installation, before commands are executed e.g. installing Git, Docker, or any other required or associated dependencies from third-parties, etc."
+  echo "If you are happy to have the script assist you in the installaton, there's a certain level of trust that you have to consider, as it instruct commands in your behalf. With that considered, we'll ask when dependencies are missing and if happy to proceed with the installation, before commands are executed e.g. installing Git, Docker, or any other required or associated dependencies from third-parties, etc."
   echo
   echo "Our script source is open to everybody and can be verified at https://github.com/fleek-network/get.fleek.network"
   echo
-  echo "🤓 One more thing, your system ${txtPrefixForBold}User ${txtPrefixForNormal}should have ${txtPrefixForBold}write permissions ${txtPrefixForNormal}to install applications."
-  echo "Also, some advanced users might find better to follow the documentation in our official guides, or borrow from the installation script source code."
+  echo "🤓 One more thing, your system ${txtPrefixForBold}User ${txtPrefixForNormal}should have ${txtPrefixForBold}write permissions ${txtPrefixForNormal}to install applications. Also, some advanced users might find better to follow the documentation in our official guides, or borrow from the installation script source code."
   echo "If that's your preference, then go ahead and check our guides at https://docs.fleek.network, or our repository https://github.com/fleek-network/get.fleek.network"
 
   printf -v prompt "\n\n🤖 Are you happy to continue (y/n)?"
@@ -456,7 +454,7 @@ requestPathnameForUrsaRepository() {
   defaultPath="$HOME/www/fleek-network/ursa"
   selectedPath=$defaultPath
 
-  printf -v prompt "\n🤖 We'll save the Ursa source code in the recommended path %s\n\nIs the location ok?\nType Y, or press ENTER to continue. Otherwise, N to change it!" "$defaultPath"
+  printf -v prompt "\n🤖 We'll save the Ursa source code in the recommended path ${txtPrefixForBold}%s${txtPrefixForNormal}\n\nIs the location ok?\nType Y, or press ENTER to continue. Otherwise, N to change it!" "$defaultPath"
   read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
@@ -494,7 +492,8 @@ cloneUrsaRepositoryToPath() {
 }
 
 restartDockerStack() {
-  showOkMessage "The Docker Stack is going restart. Be patient, please!"
+  echo "🤖 The Docker Stack is going to restart. Be patient, please!"
+  echo
 
   # TODO: Use health check instead
   sleep 10
@@ -556,7 +555,7 @@ showDockerStackLog() {
   echo "★★★★★★★★★"
   echo "★★★★★★★★★"
 
-  printf -v prompt "\n🙋‍♀️ Want to see the output for the Docker Stack?\n\Type Y or press ENTER to confirm. Otherwise, N to make changes!"
+  printf -v prompt "\n🙋‍♀️ Want to see the output for the Docker Stack? Bear in mind that the Network Node Docker Stackc is running as a background process, displaying the logs is an option.\nType Y or press ENTER to confirm. Otherwise, N to make changes!"
   read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
@@ -594,7 +593,7 @@ initLetsEncrypt() {
 
     cd ../../
 
-    printf -v prompt "\n💡 We recommend to try again, as some temporary issues might have occurred.\n\n🙋‍♀️ Would you like to retry securing the domain?\n\Type Y, or press ENTER to continue. Otherwise N, to quit!"
+    printf -v prompt "\n💡 We recommend to try again, as some temporary issues might have occurred.\n\n🙋‍♀️ Would you like to retry securing the domain?\nType Y, or press ENTER to continue. Otherwise N, to quit!"
     read -r -p "$prompt"$'\n> ' answer
 
     answerToLc=$(toLowerCase "$answer")
@@ -707,7 +706,7 @@ verifyUserHasDomain() {
     verifyUserHasDomain
   fi
 
-  printf -v prompt "\n🤖 Here are the details you have provided, make sure the information is correct.\n\nDomain name:      %s\nIP Address:      %s\nEmail address:    %s\n\nIs this correct (y/n)?\n\nPress Y or ENTER to confirm. Otherwise, N to make changes!" "$userDomainName" "$serverIpAddress" "$emailAddress"
+  printf -v prompt "\n🤖 Here are the details you have provided, make sure the information is correct.\n\nDomain name:      %s\nIP Address:     %s\nEmail address:      %s\n\nIs this correct (y/n)?\n\nPress Y or ENTER to confirm. Otherwise, N to make changes!" "$userDomainName" "$serverIpAddress" "$emailAddress"
   read -r -p "$prompt"$'\n> ' answer
 
   shouldRedo=$(toLowerCase "$answer")
@@ -808,8 +807,8 @@ setupSSLTLS() {
   echo
   echo "Visit your domain name registrar's dashboard, or create a new domain, update the A record to have the hostname answer with the server IP address!"
   echo
-  echo "Before proceeding, you have to do this step, as we'll verify!"
-  echo "Also, this is important to secure the server communications with SSL/TLS."
+  echo "🫡 Make sure you complete this step before proceeding, as we'll verify it!"
+  echo "Also, this is important to secure the server communications with SSL/TLS. Take your time!"
   echo
   echo "🙏 If you'd like to learn more about this, check our guide \"How to secure a Network Node\" https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
   printf "\n"
@@ -839,7 +838,7 @@ setupSSLTLS() {
 
   chmod +x ./docker/full-node/init-letsencrypt.sh
 
-  showOkMessage "Updated file permissions (set +x) for Lets Encrypt!"
+  showOkMessage "Updated the file permissions for Lets Encrypt initialisation script (set +x)!"
 
   # Intentional, used to provide space after msg
   echo
