@@ -574,8 +574,10 @@ showDockerStackLog() {
   if [[ "$answerToLc" == [nN] ]]; then
     printf "\r\n"
 
-    showOkMessage "We've now completed the installation process, thanks for your support!\n\n🤗 Remember to visit our ${txtPrefixForBold}website ${txtPrefixForNormal}https://fleek.network to find documentation, our Discord, Twitter and more!"
-
+    echo "🚀 We've now completed the installation process, thanks for your support!"
+    echo "🤗 Remember to visit our ${txtPrefixForBold}website ${txtPrefixForNormal}https://fleek.network to find documentation, our Discord, Twitter and more to stay updated!"
+    echo
+    
     exit 0;
   fi
   
