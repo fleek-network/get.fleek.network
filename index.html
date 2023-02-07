@@ -48,17 +48,22 @@ hasCommand() {
   command -v "$1" >/dev/null 2>&1
 }
 
-clear() {
+clearScr() {
   printf '\e[H\e[2J'
 }
 
+cleanUserInput() {
+  # Only valid characters accepted
+  echo "$1" | sed "s/[^[:alnum:]|[_]-]//g"
+}
+
 requestAuthorizationAndExec() {
-    # [Enter] should default as "y"
-    read -r -p "🤖 $1 [y/n]? " answer
+    printf -v prompt "\n🤖 %s [y/n]?" "$1"
+    read -r -p "$prompt"$'\n> ' answer
 
     answerToLc=$(toLowerCase "$answer")
 
-    if [[ "$answerToLc" == "n" ]]; then
+    if [[ "$answerToLc" == [nN] || "$answerToLc" == [nN][oO] ]]; then
       printf "\n\n"
 
       showErrorMessage "$2"
@@ -76,15 +81,15 @@ toLowerCase() {
 }
 
 showOkMessage() {
-    printf "✅ %s\n\n" "$1"  
+    printf "\r\n✅ %s\n" "$1"  
 }
 
 showErrorMessage() {
-    printf "🚩 %s\n\n" "$1" >&2
+    printf "\r\n🚩 %s\n" "$1" >&2
 }
 
 showHintMessage() {
-    printf "💡 %s\n\n" "$1"  
+    printf "\r\n💡 %s\n" "$1"  
 }
 
 showDisclaimer() {
@@ -125,54 +130,29 @@ cat << "EOF"
 EOF
 # End
 
-  echo "
-  🧙‍♀️ The installer is the assisted process illustrated in our guide \"Running a Node in a Docker container\".
+  printf "\r\n🧙‍♀️ The installer is the assisted process illustrated in our guide \"Running a Node in a Docker container\".\n\nIf you are happy to have the script assist you in the installaton process of Fleek Network Node, run it at your own risk, as there's a certain level of trust that you have to put into \"piped installers\". With that considered, we'll ask when dependencies are missing and if happy to proceed with the installation, before running the commands. The commands vary, but it'd happen for installing Git, Docker, or any other required dependencies from third-parties, etc.\n\nOur script source is open to everybody and can be verified at https://github.com/fleek-network/get.fleek.network\n\n🤓 One more thing, your system Username should have write permissions to install applications.\n\n🦸‍♀️ Advanced users might find better to follow the instructions in our official guides.\n\nIf that's your preference, then go ahead and check our guides at https://docs.fleek.network\n"
 
-  If you are happy to have the script assist you in the installaton process of Fleek Network Node,
-  run it at your own risk, as there's a certain level of trust that you have to put into \"piped installers\".
-  With that considered, we'll ask when dependencies are missing and if happy to proceed with the installation,
-  before running the commands. The commands vary, but it'd happen for installing Git, Docker, or any other 
-  required dependencies from third-parties, etc.
-  
-  Our script source is open to everybody and can be verified at https://github.com/fleek-network/get.fleek.network
-
-  🤓 One more thing, your system Username should have write permissions to install applications.
-
-  🦸‍♀️ Advanced users might find better to follow the instructions in our official guides.
-  If that's your preference, then go ahead and check our guides at https://docs.fleek.network
-  "
-
-  printf "\n\n"
-
-  read -r -p "🤖 Are you happy to continue [y/n]? " answer 
+  printf -v prompt "\n\n🤖 Are you happy to continue [y/n]?\n"
+  read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
 
   if [[ "$answerToLc" == "n" ]]; then
-    echo "
-    🦖 The installation assistant terminates here, as you're required to accept in order to have the
-    assisted installer guide you. If you've changed your mind, try again!
-
-    Otherwise, if you'd like to learn a bit more visit our website at https://fleek.network
-    "
+    printf "🦖 The installation assistant terminates here, as you're required to accept in order to have the assisted installer guide you. If you've changed your mind, try again!\n\nOtherwise, if you'd like to learn a bit more visit our website at https://fleek.network\n"
 
     exit 1;
   fi
 }
 
 windowsUsersWarning() {
-  echo "
-  ⚠️ Windows is not supported! We recommend enabling Windows Subsystem Linux (WSL) Ubuntu distro.
-
-  If you'd like to learn more visit our documentation site at https://docs.fleek.network
-  "
+  printf "\r\n⚠️ Windows is not supported! We recommend enabling Windows Subsystem Linux (WSL) Ubuntu distro.\n\nIf you'd like to learn more visit our documentation site at https://docs.fleek.network"
 }
 
 shouldHaveHomebrewInstalled() {
   if ! hasCommand brew; then
     showErrorMessage "Oops! Homebrew package manager for MacOS is required but not found!"
 
-    printf "\n"
+    printf "\r\n"
 
     requestAuthorizationAndExec \
       "We can start the installation process for you, are you happy to proceed" \
@@ -269,13 +249,9 @@ checkSystemHasRecommendedResources() {
   partDiskSpace=$(df --output=avail -B 1 "$PWD" |tail -n 1)
 
   if [[ ("$mem" -lt "$defaultMinMemoryBytesRequired") ]] || [[ ( "$partDiskSpace" -lt "$defaultMinDiskSpaceBytesRequired" ) ]]; then
-    echo "
-      😬 Oh no! We're afraid that you need at least 8 GB of RAM and 10 GB of available disk space.
-    "
-
-    printf "\n"
-
-    read -r -p "🤖 Do you want to continue [y/n]? " answer
+    printf "\n😬 Oh no! We're afraid that you need at least 8 GB of RAM and 10 GB of available disk space.\n"
+    printf -v prompt "\n\n🤖 Do you want to continue [y/n]?\n"
+    read -r -p "$prompt"$'\n> ' answer
 
     answerToLc=$(toLowerCase "$answer")
 
@@ -449,19 +425,14 @@ requestPathnameForUrsaRepository() {
   defaultPath="$HOME/www/fleek-network/ursa"
   selectedPath=$defaultPath
 
-  read -r -p "
-  🤖 We'll save the Ursa source code in the recommended path \"$defaultPath\"
-
-  Is the location ok?
-
-  Press Y, or ENTER to continue. Otherwise, N to change it!
-  " answer
+  printf -v prompt "\n🤖 We'll save the Ursa source code in the recommended path %s\n\nIs the location ok?\n\nPress Y, or ENTER to continue. Otherwise, N to change it!\n" "$defaultPath"
+  read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
 
   if [[ ! "$answerToLc" == "" && "$answerToLc" == [nN] || "$answerToLc" == [nN][oO] ]]; then
-    # Obs: the extra white space at the end is intentional and for user presentation
-    read -r -p "🙋‍♀️ What path would you like to store the repository?  " selectedPath
+    printf -v prompt "\n🙋‍♀️ What path would you like to store the repository?\n"
+    read -r -p "$prompt"$'\n> ' answer
   fi
 
   if [[ -d "$selectedPath" ]]; then
@@ -494,19 +465,15 @@ cloneUrsaRepositoryToPath() {
 restartDockerStack() {
   showOkMessage "The Docker Stack is going restart. Be patient, please!"
 
-  printf "\n"
-
+  # TODO: Use health check instead
   sleep 10
   sudo docker-compose -f ./docker/full-node/docker-compose.yml stop
-  
-  printf "\n"
 
   showOkMessage "The Docker Stack will now going to start. Be patient, please!"
 
+  # TODO: Use health check instead
   sleep 10
-  sudo docker-compose -f ./docker/full-node/docker-compose.yml start
-
-  printf "\n"
+  sudo docker-compose -f ./docker/full-node/docker-compose.yml up -d
 
   showOkMessage "Great! The Docker Stack has restarted."
 
@@ -514,8 +481,7 @@ restartDockerStack() {
 }
 
 showDockerStackLog() {
-  echo "
-  🥳 Great! We have completed the installation!
+  printf "\r\n🥳 Great! We have completed the installation!
 
   The Stack should be running now and you can show or hide the log output at anytime.
 
@@ -552,40 +518,23 @@ showDockerStackLog() {
   ✏️ Learn how to maintain your Node by visiting our documentation at https://docs.fleek.network
 
   🌈 Got feedback? Find our Discord at https://discord.gg/fleekxyz
-  "
+  " ""
 
-  printf "\n"
-
-  read -r -p "
-  🙋‍♀️ Want to see the output for the Docker Stack?
-  
-  Press Y or ENTER to confirm. Otherwise, N to make changes!
-  " answer
+  printf -v prompt "\n🙋‍♀️ Want to see the output for the Docker Stack?\n\nPress Y or ENTER to confirm. Otherwise, N to make changes!"
+  read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
 
-  if [[ "$answerToLc" == "n" ]]; then
-    printf "\n\n"
+  if [[ "$answerToLc" == [nN] ]]; then
+    printf "\r\n"
 
     showOkMessage "We've now completed the installation process, thank you!"
 
     exit 0;
   fi
 
-  clear
-
-  echo "
-  👋 Hey! Just a quick hint!
-  
-  The Stack Logs can be quite long and verbose, but it's normal!
-
-  If that keeps you awake at night, or if you find something interesting presented
-  in the Logs, feel free to talk about it in our Discord 🙏
-
-  You'll find that most Log messages can be ignored at this time.
-  "
-
-  read -r -p "Press ENTER to continue..." answer
+  printf -v prompt "\n👋 Hey! Just a quick hint!\n\nThe Stack Logs can be quite long and verbose, but it's normal!\n\nIf that keeps you awake at night, or if you find something interesting presented\nin the Logs, feel free to talk about it in our Discord 🙏\n\nYou'll find that most Log messages can be ignored at this time."
+  read -r -p "$prompt"$'\n\nPress ENTER to continue... ' answer
 
   sudo docker-compose -f ./docker/full-node/docker-compose.yml logs -f
 }
@@ -597,25 +546,21 @@ initLetsEncrypt() {
     exit 1
   fi
 
-  if ! EMAIL="$1" DOMAINS="$2" ./init-letsencrypt.sh | grep 'Successfully received certificate'; then
+  if ! EMAIL="$1" DOMAINS="$2" ./init-letsencrypt.sh; then
     showErrorMessage "Oops! Failed to create the SSL/TLS certificates, your domain name hasn't been secured yet. Check our guide to troubleshoot https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
-    read -r -p "
-    💡 We recommend to try again, as some temporary issues might have occurred.
-    
-    🙋‍♀️ Would you like to retry securing the domain?
-    
-    Press Y, or ENTER to continue. Otherwise N, to quit!
+    cd ../../
 
-    " answer
+    printf -v prompt "\n💡 We recommend to try again, as some temporary issues might have occurred.\n\n🙋‍♀️ Would you like to retry securing the domain?\n\nPress Y, or ENTER to continue. Otherwise N, to quit!"
+    read -r -p "$prompt"$'\n> ' answer
 
     answerToLc=$(toLowerCase "$answer")
 
-    if [[ "$answerToLc" == "" || "$answerToLc" == [yY] || "$answerToLc" == [yY][eE][sS] ]]; then
+    if [[ "$answerToLc" == "" || "$answerToLc" == [yY] || "$answerToLc" == [yY][eE][sS] ]]; then    
       initLetsEncrypt "$EMAIL" "$DOMAINS"
     fi
 
-    sudo docker-compose -f ../../docker/full-node/docker-compose.yml down
+    sudo docker-compose -f ./docker/full-node/docker-compose.yml down
 
     exit 1
   fi
@@ -646,11 +591,8 @@ extactDomainName() {
 # TODO: Recursion needs to be tested for each of the fn
 # TODO: ENTER key needs to be tested along Y, post N and recursion
 verifyUserHasDomain() {
-  read -r -p "
-  Do you have the domain settings ready [y/n]?
-  
-  Press Y, or ENTER to confirm.
-  " answer
+  printf -v prompt "\nDo you have the domain settings ready [y/n]?\n\nPress Y, or ENTER to confirm."
+  read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
 
@@ -659,20 +601,14 @@ verifyUserHasDomain() {
 
     showErrorMessage "Oops! You need a domain name and have the DNS A Record type answer with the server IP address. If you'd like to learn more about it check our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
-    read -r -p "Press ENTER to continue and try again..." answer
+    printf -v prompt "\nPress ENTER to continue and try again..."
+    read -r -p "$prompt"$'\n> ' answer
 
-    clear
     verifyUserHasDomain
   fi
 
-  printf "\n"
-
-  read -r -p "
-  💡 Provide us your domain name without http:// or https://
-  e.g. www.example.com or my-node.fleek.network
-
-  Tell us, what's the domain name?
-  " answer
+  printf -v prompt "\n💡 Provide us your domain name without http:// or https:// e.g. www.example.com or my-node.fleek.network\n\nTell us, what's the domain name?"
+  read -r -p "$prompt"$'\n> ' answer
 
   userDomainName=$(toLowerCase "$answer")
 
@@ -682,7 +618,6 @@ verifyUserHasDomain() {
     showErrorMessage "Oops! Doesn't seem like a valid domain, might want to try typing the domain again..."
 
     sleep 8
-    clear
     verifyUserHasDomain
   fi
 
@@ -690,22 +625,13 @@ verifyUserHasDomain() {
     showErrorMessage "Oops! You failed to provide a domain name. If you'd like to learn more read our guide at https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
     sleep 8
-    clear
     verifyUserHasDomain
   fi
 
   detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "ERROR_IP_ADDRESS_NOT_AVAILABLE")
 
-  printf "\n"
-
-  read -r -p "
-  💡 Provide us the IP address of the machine where you are installing
-  or running the Node e.g. 142.250.180.14 or 91.198.174.192
-
-  Tip: Seems that this machine IP address is $detectedIpAddress
-
-  Let us know, what's the IP address the domain answers with?
-  " answer
+  printf -v prompt "\n💡 Provide us the IP address of the machine where you are installing\nor running the Node e.g. 142.250.180.14 or 91.198.174.192\n\nTip: Seems that this machine IP address is %s\n\nLet us know, what's the IP address the domain answers with?" "$detectedIpAddress"
+  read -r -p "$prompt"$'\n> ' answer
 
   serverIpAddress=$(toLowerCase "$answer")
 
@@ -724,17 +650,8 @@ verifyUserHasDomain() {
     verifyUserHasDomain
   fi
 
-  printf "\n"
-
-  read -r -p "
-  💡 Provide us with a valid email address that you have access to, rest
-  ensured that we'll not contact you, but its required by Let's Encrypt (Certificate Authority)
-
-  If you'd like to know more about the Let's Encrypt organisation
-  visit their website at https://letsencrypt.org/
-
-  Tell us, what's your email address?
-  " answer
+  printf -v prompt "\n💡 Provide us with a valid email address that you have access to,\nrest ensured that we'll not contact you, but its required by Let's Encrypt (Certificate Authority)\n\nIf you'd like to know more about the Let's Encrypt organisation\nvisit their website at https://letsencrypt.org/\n\nTell us, what's your email address?"
+  read -r -p "$prompt"$'\n> ' answer
 
   emailAddress=$(toLowerCase "$answer")
 
@@ -745,19 +662,8 @@ verifyUserHasDomain() {
     verifyUserHasDomain
   fi
 
-  clear
-
-  read -r -p "
-  🤖 Here are the details you have provided, make sure the information is correct.
-
-  Domain name:      $userDomainName
-  IP Address:       $serverIpAddress
-  Email address:    $emailAddress
-
-  Is this correct [y/n]?
-
-  Press Y or ENTER to confirm. Otherwise, N to make changes!
-  " answer
+  printf -v prompt "\n🤖 Here are the details you have provided, make sure the information is correct.\n\nDomain name:      %s\nIP Address:      %s\nEmail address:    %s\n\nIs this correct [y/n]?\n\nPress Y or ENTER to confirm. Otherwise, N to make changes!" "$userDomainName" "$serverIpAddress" "$emailAddress"
+  read -r -p "$prompt"$'\n> ' answer
 
   shouldRedo=$(toLowerCase "$answer")
 
@@ -853,8 +759,7 @@ replaceNginxConfFileForHttps() {
 }
 
 setupSSLTLS() {
-  echo "
-  ⚠️ You're required to have a Domain name point to your server IP address.
+  printf "\r\n⚠️ You're required to have a Domain name point to your server IP address.
 
   Visit your domain name registrar's dashboard, or create a new domain,
   update the A record to have the hostname answer with the server IP address!
@@ -864,7 +769,7 @@ setupSSLTLS() {
 
   🙏 If you'd like to learn more about this, check our guide \"How to secure a Network Node\"  
   https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls
-  "
+  " ""
 
   printf "\n"
 
@@ -872,6 +777,9 @@ setupSSLTLS() {
 
   userDomainName=$(echo "$trimData" | cut -d ";" -f 1)
   emailAddress=$(echo "$trimData" | cut -d ";" -f 2)
+
+  # userDomainName=$(cleanUserInput "$userDomainName")
+  # emailAddress=$(cleanUserInput "$emailAddress")
 
   if ! cd "$1"; then
     showErrorMessage "Oops! This is embarasssing! Failed to change to ursa directory. Help us improve, report it in our discord channel 🙏"
@@ -898,8 +806,9 @@ setupSSLTLS() {
   # start stack in bg, as lets encrypt will need the nginx to validate
   COMPOSE_DOCKER_CLI_BUILD=1 sudo docker compose -f ./docker/full-node/docker-compose.yml up -d
 
-  while ! docker top full-node-ursa-1 || ! docker top full-node_nginx_1 >/dev/null 2>&1; do
-    echo "🦄 Awaiting for Ursa and Nginx! Be patient..."
+  # TODO: add health check in the docker compose file
+  while ! curl --silent http://127.0.0.1/ping | grep --quiet "pong"; do
+    printf "\n🦄 Awaiting for Ursa and Nginx! Be patient...\n"
     sleep 3
   done
 
@@ -923,13 +832,13 @@ setupSSLTLS() {
   os=$(identifyOS)
 
   # Clear shell
-  clear
+  # clearScr
 
   # Show disclaimer
   showDisclaimer
 
   # Clear shell
-  clear
+  # clearScr
 
   # Check if system has recommended resources (disk space and memory)
   checkSystemHasRecommendedResources "$os"
@@ -965,7 +874,7 @@ setupSSLTLS() {
   sleep 5
 
   # Clear shell
-  clear
+  # clearScr
 
   # Optional, check if user would like to setup SSL/TLS
   setupSSLTLS "$ursaPath"
@@ -976,7 +885,7 @@ setupSSLTLS() {
   sleep 5
 
   # Clear shell
-  clear
+  # clearScr
 
   # Restart docker
   restartDockerStack
