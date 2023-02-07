@@ -57,60 +57,65 @@ clearScr() {
 }
 
 launchAsciiArt() {
-  cat << "ART"
-  ★★★★★★★★★
-  ★★★★★★★★★
-  ★★★★★★★★★
+  printf "\r\n"
 
-  ⚡️ The Fleek Network team presents ⚡️
+# the cat and ascii art (ART, as `here tag``)
+# is intentionally positioned to the most left
+# do not change
+cat << "ART"
+★★★★★★★★★
+★★★★★★★★★
+★★★★★★★★★
 
-          _..._
-        .'     '.     _
-      /    .-""-\   _/ \
-    .-|   /:.   |  |   |
-    |  \  |:.   /.-'-./
-    | .-'-;:__.'    =/
-    .'=  *=|URSA _.='
-    /   _.  |    ;
-   ;-.-'|    \   |
-  /   | \    _\  _\
-  \__/'._;.  ==' ==\
-          \    \   |
-          /    /   /
-          /-._/-._/
-          \   `\  \
-           `-._/._/
+⚡️ The Fleek Network team presents ⚡️
+
+        _..._
+      .'     '.     _
+    /    .-""-\   _/ \
+  .-|   /:.   |  |   |
+  |  \  |:.   /.-'-./
+  | .-'-;:__.'    =/
+  .'=  *=|URSA _.='
+  /   _.  |    ;
+  ;-.-'|    \   |
+/   | \    _\  _\
+\__/'._;.  ==' ==\
+        \    \   |
+        /    /   /
+        /-._/-._/
+        \   `\  \
+          `-._/._/
 ART
 # 👆 ART (here tag) end positioned to the most left intentionally
 
   echo
-  echo "  ⭐️ Ursa, a Decentralized Content Delivery Network (DCDN) ⭐️"
+  echo "⭐️ Ursa, a Decentralized Content Delivery Network (DCDN) ⭐️"
   echo
-  echo "  ★★★★★★★★★ 👩🏾‍💻 ${txtPrefixForBold}Website ${txtPrefixForNormal}https://fleek.network"
-  echo "  ★★★★★★★★★ 📚 ${txtPrefixForBold}Documentation ${txtPrefixForNormal}https://docs.fleek.network"
-  echo "  ★★★★★★★★★ 💾 ${txtPrefixForBold}Git repository ${txtPrefixForNormal}https://github.com/fleek-network/ursa"
-  echo "  ★★★★★★★★★ 🤖 ${txtPrefixForBold}Discord ${txtPrefixForNormal}https://discord.gg/fleekxyz"
-  echo "  ★★★★★★★★★ 🐤 ${txtPrefixForBold}Twitter ${txtPrefixForNormal}https://twitter.com/fleek_net"
-  echo "  ★★★★★★★★★ 🎨 ${txtPrefixForBold}Ascii art by ${txtPrefixForNormal}https://www.asciiart.eu"
+  echo "★★★★★★★★★ 👩🏾‍💻 ${txtPrefixForBold}Website ${txtPrefixForNormal}https://fleek.network"
+  echo "★★★★★★★★★ 📚 ${txtPrefixForBold}Documentation ${txtPrefixForNormal}https://docs.fleek.network"
+  echo "★★★★★★★★★ 💾 ${txtPrefixForBold}Git repository ${txtPrefixForNormal}https://github.com/fleek-network/ursa"
+  echo "★★★★★★★★★ 🤖 ${txtPrefixForBold}Discord ${txtPrefixForNormal}https://discord.gg/fleekxyz"
+  echo "★★★★★★★★★ 🐤 ${txtPrefixForBold}Twitter ${txtPrefixForNormal}https://twitter.com/fleek_net"
+  echo "★★★★★★★★★ 🎨 ${txtPrefixForBold}Ascii art by ${txtPrefixForNormal}https://www.asciiart.eu"
 }
 
 requestAuthorizationAndExec() {
-    printf -v prompt "\n🤖 %s (y/n)?" "$1"
-    read -r -p "$prompt"$'\n> ' answer
+  printf -v prompt "\n🤖 %s (y/n)?" "$1"
+  read -r -p "$prompt"$'\n> ' answer
 
-    answerToLc=$(toLowerCase "$answer")
+  answerToLc=$(toLowerCase "$answer")
 
-    if [[ "$answerToLc" == [nN] || "$answerToLc" == [nN][oO] ]]; then
-      printf "\n\n"
+  if [[ "$answerToLc" == [nN] || "$answerToLc" == [nN][oO] ]]; then
+    printf "\n\n"
 
-      showErrorMessage "$2"
+    showErrorMessage "$2"
 
-      exit 1;
-    fi
+    exit 1;
+  fi
 
-    printf "\n"
+  printf "\n"
 
-    $3
+  $3
 }
 
 toLowerCase() {
@@ -118,15 +123,15 @@ toLowerCase() {
 }
 
 showOkMessage() {
-    printf "\r\n✅ %s\n" "$1"  
+  printf "\r\n✅ %s\n" "$1"  
 }
 
 showErrorMessage() {
-    printf "\r\n🚩 %s\n" "$1" >&2
+  printf "\r\n🚩 %s\n" "$1" >&2
 }
 
 showHintMessage() {
-    printf "\r\n💡 %s\n" "$1"  
+  printf "\r\n💡 %s\n" "$1"  
 }
 
 showDisclaimer() {
@@ -310,8 +315,6 @@ gitHealthCheck() {
 
 installDocker() {
   os=$(identifyOS)
-
-  # TODO: Show message and prompt,that the user have to have permissions to install
 
   if [[ "$os" == "mac" ]]; then
     shouldHaveHomebrewInstalled
@@ -791,18 +794,6 @@ replaceNginxConfFileForHttps() {
 }
 
 setupSSLTLS() {
-  printf "\r\n⚠️ You're required to have a Domain name point to your server IP address.
-
-  Visit your domain name registrar's dashboard, or create a new domain,
-  update the A record to have the hostname answer with the server IP address!
-
-  Before proceeding, you have to do this step, as we'll verify!
-  Also, this is important to secure the server communications with SSL/TLS.
-
-  🙏 If you'd like to learn more about this, check our guide \"How to secure a Network Node\"  
-  https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls
-  " ""
-
   echo "⚠️ You're ${txtPrefixForBold}required ${txtPrefixForNormal}to have a Domain name point to your server IP address."
   echo
   echo "Visit your domain name registrar's dashboard, or create a new domain, update the A record to have the hostname answer with the server IP address!"
@@ -817,9 +808,6 @@ setupSSLTLS() {
 
   userDomainName=$(echo "$trimData" | cut -d ";" -f 1)
   emailAddress=$(echo "$trimData" | cut -d ";" -f 2)
-
-  # userDomainName=$(cleanUserInput "$userDomainName")
-  # emailAddress=$(cleanUserInput "$emailAddress")
 
   if ! cd "$1"; then
     showErrorMessage "Oops! This is embarasssing! Failed to change to ursa directory. Help us improve, report it in our discord channel 🙏"
@@ -841,7 +829,7 @@ setupSSLTLS() {
 
   chmod +x ./docker/full-node/init-letsencrypt.sh
 
-  showOkMessage "Updated file permissions for Lets Encrypt!"
+  showOkMessage "Updated file permissions (set +x) for Lets Encrypt!"
 
   # Intentional, used to provide space after msg
   echo
@@ -851,7 +839,7 @@ setupSSLTLS() {
 
   # TODO: add health check in the docker compose file
   while ! curl --silent http://127.0.0.1/ping | grep --quiet "pong"; do
-    echo "Awaiting for Ursa and Nginx! Be patient..."
+    echo "🙏 Awaiting for Ursa and Nginx! Be patient..."
     sleep 3
   done
 
@@ -874,14 +862,8 @@ setupSSLTLS() {
   # Identity the OS
   os=$(identifyOS)
 
-  # Clear shell
-  # clearScr
-
   # Show disclaimer
   showDisclaimer
-
-  # Clear shell
-  # clearScr
 
   # Check if system has recommended resources (disk space and memory)
   checkSystemHasRecommendedResources "$os"
@@ -919,9 +901,6 @@ setupSSLTLS() {
   # Await a few seconds to let the user read...
   sleep 5
 
-  # Clear shell
-  # clearScr
-
   # Optional, check if user would like to setup SSL/TLS
   setupSSLTLS "$ursaPath"
 
@@ -929,9 +908,6 @@ setupSSLTLS() {
   
   # Await a few seconds to let the user read...
   sleep 5
-
-  # Clear shell
-  # clearScr
 
   # Restart docker
   restartDockerStack
