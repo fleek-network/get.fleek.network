@@ -27,7 +27,7 @@
 # - Verify if Docker is installed, if not install it
 # - It'll do a quick health check to confirm Docker is installed correctly
 # - Request a pathname where to store the Ursa repository, otherwise providing a default,
-#   e.g., `/var/www/fleek-network/ursa`
+#   e.g., `$HOME/fleek-network/ursa`
 # - Pull the `ursa` project repository to the preferred target directory via HTTPS
 #   instead of SSH for simplicity
 # - Optionally, assist on setting up and securing domain name via SSL/TLS
@@ -38,6 +38,7 @@
 
 # Default
 defaultUrsaHttpsRespository="https://github.com/fleek-network/ursa.git"
+defaultUrsaPath="$HOME/fleek-network/ursa"
 defaultMinMemoryBytesRequired=8000000
 defaultMinDiskSpaceBytesRequired=10000000
 
@@ -490,7 +491,7 @@ dockerHealthCheck() {
 }
 
 requestPathnameForUrsaRepository() {
-  defaultPath="$HOME/www/fleek-network/ursa"
+  defaultPath="$defaultUrsaPath"
   selectedPath=$defaultPath
 
   printf -v prompt "\n🤖 We'll save the Ursa source code in the recommended path ${txtPrefixForBold}%s${txtPrefixForNormal}. If you don't have a reason to change the location, stick to the default, keep it easy! \n\nAre you happy to proceed?\nType Y, or press ENTER to continue. Otherwise, N to change it!" "$defaultPath"
@@ -574,8 +575,8 @@ showDockerStackLog() {
   echo
   echo "    ${txtPrefixForBold}Ctrl-c${txtPrefixForNormal}"
   echo
-  echo "You can Stop or Start the Docker Stack at anytime, for that change the directory to the location where the source code of Ursa is stored (default is \$HOME/www/fleek-network/ursa)."
-  echo "For example, if you accepted the installation recommendation that is ~/www/fleek-network/ursa"
+  echo "You can Stop or Start the Docker Stack at anytime, for that change the directory to the location where the source code of Ursa is stored (default is $defaultUrsaPath)."
+  echo "For example, if you accepted the installation recommendation that is ~/fleek-network/ursa"
   echo
   echo "Then after, run the following commands, to either Start (up) or Stop (down)"
   echo
@@ -1069,7 +1070,7 @@ setupSSLTLS() {
     echo "😅 Gosh! Have you run the installation before?!"
     echo "The directory $ursaPath is not empty and we'll have to skip the installation, as we don't want to do any overrides."
     echo "If you are stuck on this, clear the desired location before retrying"
-    echo "e.g., if you chose to install in the default \$HOME/www/fleek-network/ursa clear it, as the assisted installer does not do deletes."
+    echo "e.g., if you chose to install in the default $defaultUrsaPath clear it, as the assisted installer does not do deletes."
 
     exitInstaller
   fi
