@@ -627,27 +627,94 @@ showDockerStackLog() {
 }
 
 initLetsEncrypt() {
-  if ! cd ./docker/full-node; then
-    showErrorMessage "Oops! Failed to open the directory for the docker configuration files. Help us improve! Report to us in our Discord channel 🙏"
+  email="$1"
+  domain="$2"
+
+  if [[ -z "$1" || -z "$2" ]]; then
+    showErrorMessage "Gosh, this is embarrassing! We're missing arguments to initialise the Lets Encrypt call. If this issue persists, report it to our Discord channel, please! 🙏"
+
+    exitInstaller
+  fi
+
+  rsa_key_size=4096
+  base_path=./docker/full-node
+  config_path="./docker/full-node/docker-compose.yml"
+  data_path="./docker/full-node/data/certbot"
+  staging=0
+
+  # TODO: Move this checkup much earlier, in the init of installer
+  # Do we have the required files, if not interrupt the process?
+  if [[ ! -d "$base_path" || ! "$(ls -A $base_path)" ]]; then
+    showErrorMessage "Oops! Missing required files, this might be due to changes in our main Ursa repository! Help us improve by letting us know in our Discord channel 🙏"
+
+    exitInstaller
+  fi
+
+  if [[ ! -e "$data_path/conf/options-ssl-nginx.conf" || ! -e "$data_path/conf/ssl-dhparams.pem" ]]; then
+    echo "🤖 Downloading recommended TLS parameters..."
+    echo
+
+    mkdir -p "$data_path/conf"
+
+    curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > "$data_path/conf/options-ssl-nginx.conf"
+    curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$data_path/conf/ssl-dhparams.pem"
+    echo
+  fi
+
+  echo "🤖 We'll now create dummy certificates for the domain $domain, be patient 🙏 please..."
+
+  path="/etc/letsencrypt/live/$domain"
+  mkdir -p "$data_path/conf/live/$domain"
+
+  if ! docker-compose -f "$config_path" \
+    run --rm --entrypoint "\
+    openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1\
+      -keyout '$path/privkey.pem' \
+      -out '$path/fullchain.pem' \
+      -subj '/CN=localhost'" certbot; then    
+    showErrorMessage "Oops! Failed to create dummy certificate for domain"
+
+    exitInstaller
+  fi
+
+  echo
+  echo "🤖 Starting Nginx, please be patient 🙏"
+
+  if ! docker-compose -f "$config_path" up --force-recreate -d nginx; then
+    showErrorMessage "Oops! Failed to start nginx..."
 
     exitInstaller
   fi
   
-  # TODO(init-letsencrypt.sh): Rewrite the "init-letsencrypt.sh"
-  # as the exit code when if [[ ! cmd ]] doesnt capture failure for some reason
-  # e.g.m when certificate registration more then 5 same domain
-  # e.g., Unable to register an account with ACME server. Error returned by the 
-  # ACME server: Error creating new account :: too many registrations for this IP: 
-  # see https://letsencrypt.org/docs/too-many-registrations-for-this-ip/
-  # Results in hasLetsEncryptStatus equal 0
-  # EMAIL="$1" DOMAINS="$2" ./init-letsencrypt.sh
-  # hasLetsEncryptStatus=$?
-  # echo "hasLetsEncryptStatus ($hasLetsEncryptStatus)"
+  echo
+  echo "🤖 Deleting dummy certificate for $domain..."
 
-  if ! EMAIL="$1" DOMAINS="$2" ./init-letsencrypt.sh; then
+  if ! docker-compose -f "$config_path" \
+    run --rm --entrypoint "\
+    rm -Rf /etc/letsencrypt/live/$domain && \
+    rm -Rf /etc/letsencrypt/archive/$domain && \
+    rm -Rf /etc/letsencrypt/renewal/$domain.conf" certbot; then
+
+    showErrorMessage "Oops! Failed to delete dummy certificates for $domain..."
+
+    exitInstaller
+  fi
+
+  echo
+  echo "🤖 Requesting the Let's Encrypt certificates for $domain..."
+
+  # Enable staging mode if needed
+  if [ $staging != "0" ]; then staging_arg="--staging"; fi
+
+  if ! docker-compose -f "$config_path" run --rm --entrypoint "\
+    certbot certonly --webroot -w /var/www/certbot \
+      $staging_arg \
+      --email $email \
+      --domain $domain \
+      --rsa-key-size $rsa_key_size \
+      --agree-tos -n \
+      --force-renewal" certbot; then
     showErrorMessage "Oops! Failed to create the SSL/TLS certificates, your domain name hasn't been secured yet. Check our guide to troubleshoot https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
-
-    cd ../../
 
     printf -v prompt "\n💡 We recommend to try again, as some temporary issues might have occurred.\n\n🙋‍♀️ Would you like to retry securing the domain?\nType Y, or press ENTER to continue. Otherwise N, to quit!"
     read -r -p "$prompt"$'\n> ' answer
@@ -655,7 +722,7 @@ initLetsEncrypt() {
     answerToLc=$(toLowerCase "$answer")
 
     if [[ "$answerToLc" == "" || "$answerToLc" == [yY] || "$answerToLc" == [yY][eE][sS] ]]; then    
-      initLetsEncrypt "$1" "$2"
+      initLetsEncrypt "$email" "$domain"
 
       read -r -p "Press ENTER to continue and try again..." answer
 
@@ -667,7 +734,10 @@ initLetsEncrypt() {
     exitInstaller
   fi
 
-  cd ../../
+  echo
+  echo "🤖 Reloading nginx ..."
+
+  docker-compose -f "$config_path" exec nginx nginx -s reload
 
   showOkMessage "Great! You have now secured your server with SSL/TLS."
 }
@@ -749,7 +819,7 @@ verifyUserHasDomain() {
 
   # given a name and an ip address, test whether there is a record for name pointing to address
   if ! dig "$userDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$serverIpAddress" >/dev/null 2>&1 ; then
-    showErrorMessage "Oops! The domain name $userDomainName doesn't have a DNS record type A pointing to the ip address $serverIpAddress. Learn how to setup your domain DNS Records by checking our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+    showErrorMessage "Oops! The domain name $userDomainName doesn't have a DNS record type A pointing to the ip address $serverIpAddress. Of course, if you've just made the changes, you might need to wait for the DNS settings to propagate. Learn how to setup your domain DNS Records by checking our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
     read -r -p "Press ENTER to continue and try again..." answer
 
