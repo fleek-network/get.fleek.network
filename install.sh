@@ -45,6 +45,10 @@ defaultDockerComposeYmlRelativePath="$defaultDockerFullNodeRelativePath/docker-c
 defaultMinMemoryBytesRequired=8000000
 defaultMinDiskSpaceBytesRequired=10000000
 
+# Installer state
+statusComplete="complete"
+installationStatus=""
+
 # Installer script dependencies
 # e.g. jq as used to iterate the config
 declare -a dependencies=("jq")
@@ -252,14 +256,19 @@ onExitInstallerTodos() {
 }
 
 onInterruption() {
-  printf "\r\n"
-  echo "😬 Ouch! The installation was interrupted and there might be applications or dependencies lying around! E.g., if the installation has already cloned the Ursa repository to your selected path, then you should clear it manually, etc."
-  echo
-  echo "If you're finding issues and need support, share your experience in our Discord at https://discord.gg/fleekxyz"
+  # Only show warning message if install NOT complete
+  if [[ "$installationStatus" != "$statusComplete" ]]; then
+    printf "\r\n"
+    echo "😬 Ouch! The installation was interrupted and there might be applications or dependencies lying around! E.g., if the installation has already cloned the Ursa repository to your selected path, then you should clear it manually, etc."
+    echo
+    echo "If you're finding issues and need support, share your experience in our Discord at https://discord.gg/fleekxyz"
+
+    onExitInstallerTodos
+    exit 1
+  fi
 
   onExitInstallerTodos
-
-  exit 1
+  exit 0
 }
 
 toLowerCase() {
@@ -1352,6 +1361,9 @@ onNightlyPreference() {
 
   # Restart docker
   restartDockerStack
+
+  # Set installation has complet
+  installationStatus="$statusComplete"
 
   # Add some space after the "docker stack restart" message
   printf "\r\n"
