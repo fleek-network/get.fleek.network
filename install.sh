@@ -375,7 +375,7 @@ installGit() {
     elif [[ "$distro" == "alpine" ]]; then
       sudo apk add git
     elif [[ "$distro" =~ "arch"  ]]; then
-      sudo pacman -S git
+      sudo pacman -Syu git
     else
       showErrorMessage "Oops! Your operating system ($os, $distro) is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
 
@@ -551,7 +551,7 @@ installDocker() {
     elif [[ "$distro" == "alpine" ]]; then
       sudo apk add --update docker openrc
     elif [[ "$distro" == "arch" ]]; then
-      sudo pacman -S docker
+      sudo pacman -Syu docker
     else
       showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
 
@@ -882,7 +882,7 @@ installMandatory() {
         exitInstaller
       fi
     elif [[ "$distro" =~ "arch"  ]]; then
-      ! sudo pacman -S "$1" && exitInstaller
+      ! sudo pacman -Syu "$1" && exitInstaller
     else
       echo "👹 Oh gosh! We're currently not providing support for $distro."
       echo "If you find this to be a bug and we provide support to your OS, report it on our discord channel please 🙏!"
@@ -959,7 +959,7 @@ verifyDepsOrInstall() {
 
       return 0
     elif [[ "$os" =~ "arch"  ]]; then
-      ! sudo pacman -S "$pkg" && exitInstaller
+      ! sudo pacman -Syu "$pkg" && exitInstaller
 
       showOkMessage "Installed ($name) via pacman"
     fi
