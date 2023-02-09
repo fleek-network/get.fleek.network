@@ -587,7 +587,7 @@ installDocker() {
 }
 
 checkIfDockerInstalled() {
-  if ! hasCommand docker || ! hasCommand docker-compose; then
+  if ! hasCommand docker; then
     printf "😅 Oops! Docker is required and was not found!\n"
 
     requestAuthorizationAndExec \
@@ -677,13 +677,13 @@ restartDockerStack() {
 
   # TODO: Use health check instead
   sleep 10
-  sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" stop
+  sudo docker compose -f "$defaultDockerComposeYmlRelativePath" stop
 
   showOkMessage "The Docker Stack will now going to start. Be patient, please!"
 
   # TODO: Use health check instead
   sleep 10
-  sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" up -d
+  sudo docker compose -f "$defaultDockerComposeYmlRelativePath" up -d
 
   showOkMessage "Great! The Docker Stack has restarted."
 
@@ -707,7 +707,7 @@ showDockerStackLog() {
   echo
   echo "  - If you have the Stack running and want to show the logs:"
   echo
-  echo "    ${txtPrefixForBold}docker-compose -f ./docker/full-node/docker-compose.yml logs -f${txtPrefixForNormal}"
+  echo "    ${txtPrefixForBold}docker compose -f ./docker/full-node/docker-compose.yml logs -f${txtPrefixForNormal}"
   echo
   echo "  - Terminate by sending the interrupt signal (SIGNIT) to Docker using the hotkey:"
   echo
@@ -720,11 +720,11 @@ showDockerStackLog() {
   echo
   echo "  - Start the Docker Stack"
   echo
-  echo "    ${txtPrefixForBold}docker-compose -f ./docker/full-node/docker-compose.yml up${txtPrefixForNormal}"
+  echo "    ${txtPrefixForBold}docker compose -f ./docker/full-node/docker-compose.yml up${txtPrefixForNormal}"
   echo
   echo "  - Stop the Docker Stack"
   echo
-  echo "    ${txtPrefixForBold}docker-compose -f ./docker/full-node/docker-compose.yml down${txtPrefixForNormal}"
+  echo "    ${txtPrefixForBold}docker compose -f ./docker/full-node/docker-compose.yml down${txtPrefixForNormal}"
   echo
   echo "🥹 Seems a lot? All the commands and much more are available in our documentation site!"
   # The extra white space between ✏️ and start of text is intentional and used for alignment
@@ -765,7 +765,7 @@ showDockerStackLog() {
 
   read -r -p "Press ENTER to continue... " answer
 
-  sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" logs -f
+  sudo docker compose -f "$defaultDockerComposeYmlRelativePath" logs -f
 }
 
 initLetsEncrypt() {
@@ -808,7 +808,7 @@ initLetsEncrypt() {
   path="/etc/letsencrypt/live/$domain"
   mkdir -p "$data_path/conf/live/$domain"
 
-  if ! docker-compose -f "$config_path" \
+  if ! docker compose -f "$config_path" \
     run --rm --entrypoint "\
     openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1\
       -keyout '$path/privkey.pem' \
@@ -822,7 +822,7 @@ initLetsEncrypt() {
   echo
   echo "🤖 Starting Nginx, please be patient 🙏"
 
-  if ! docker-compose -f "$config_path" up --force-recreate -d nginx; then
+  if ! docker compose -f "$config_path" up --force-recreate -d nginx; then
     showErrorMessage "Oops! Failed to start nginx..."
 
     exitInstaller
@@ -831,7 +831,7 @@ initLetsEncrypt() {
   echo
   echo "🤖 Deleting dummy certificate for $domain..."
 
-  if ! docker-compose -f "$config_path" \
+  if ! docker compose -f "$config_path" \
     run --rm --entrypoint "\
     rm -Rf /etc/letsencrypt/live/$domain && \
     rm -Rf /etc/letsencrypt/archive/$domain && \
@@ -848,7 +848,7 @@ initLetsEncrypt() {
   # Enable staging mode if needed
   if [ $staging != "0" ]; then staging_arg="--staging"; fi
 
-  if ! docker-compose -f "$config_path" run --rm --entrypoint "\
+  if ! docker compose -f "$config_path" run --rm --entrypoint "\
     certbot certonly --webroot -w /var/www/certbot \
       $staging_arg \
       --email $email \
@@ -871,7 +871,7 @@ initLetsEncrypt() {
       exitInstaller
     fi
 
-    sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" down
+    sudo docker compose -f "$defaultDockerComposeYmlRelativePath" down
 
     exitInstaller
   fi
@@ -879,7 +879,7 @@ initLetsEncrypt() {
   echo
   echo "🤖 Reloading nginx ..."
 
-  docker-compose -f "$config_path" exec nginx nginx -s reload
+  docker compose -f "$config_path" exec nginx nginx -s reload
 
   showOkMessage "Great! You have now secured your server with SSL/TLS."
 }
