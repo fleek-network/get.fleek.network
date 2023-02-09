@@ -122,6 +122,28 @@ config=$(cat << "JSON"
           "name": "apt-get"
         }
       }
+    },
+    {
+      "name": "dig - DNS lookup utility",
+      "bin": "dig",
+      "pkgManager": {
+        "arch": {
+          "pkg": "dnsutils",
+          "name": "pacman"
+        },
+        "debian": {
+          "pkg": "dnsutils",
+          "name": "apt-get"
+        },
+        "macos": {
+          "pkg": "dig",
+          "name": "homebrew"
+        },
+        "ubuntu": {
+          "pkg": "dnsutils",
+          "name": "apt-get"
+        }
+      }
     }
   ]
 }
