@@ -394,8 +394,6 @@ installGit() {
 
     if [[ "$distro" == "ubuntu" ]] || [[ "$distro" == "debian" ]]; then
       sudo apt-get install git
-    elif [[ "$distro" == "alpine" ]]; then
-      sudo apk add git
     elif [[ "$distro" =~ "arch"  ]]; then
       sudo pacman -Syu git
     else
@@ -570,8 +568,6 @@ installDocker() {
           \"buildkit\" : true
           }
         }" > /etc/docker/daemon.json'
-    elif [[ "$distro" == "alpine" ]]; then
-      sudo apk add --update docker openrc
     elif [[ "$distro" =~ "arch" ]]; then
       sudo pacman -Syu gnome-terminal docker docker-compose
 
@@ -662,8 +658,6 @@ requestPathnameForUrsaRepository() {
     read -r -p "Press ENTER to retry..." answer
 
     requestPathnameForUrsaRepository
-
-    exit 1
   fi
 
   if ! mkdir -p "$selectedPath"; then
@@ -881,10 +875,6 @@ initLetsEncrypt() {
 
     if [[ "$answerToLc" == "" || "$answerToLc" == [yY] || "$answerToLc" == [yY][eE][sS] ]]; then    
       initLetsEncrypt "$email" "$domain"
-
-      read -r -p "Press ENTER to continue and try again..." answer
-
-      exitInstaller
     fi
 
     sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" down
@@ -948,14 +938,21 @@ verifyDepsOrInstall() {
 
   hasCommand "$bin" && return 0
 
-  # TODO: For some reason this prompt is skipped
-  # printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y, or press ENTER to continue. Otherwise, N to exit!" "$bin"
-  # read -r -p "$prompt"$'\n> ' answer
+  printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y, or press ENTER to continue. Otherwise, N to exit!" "$bin"
+  read -r -p "$prompt"$'\n> ' ans
 
-  # if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
-  #   showErrorMessage "Oops! The $bin is required to be installed."
-  #   exitInstaller
-  # fi
+  if [[ "$ans" == [nN] || "$ans" == [nN][oO] ]]; then
+    showErrorMessage "Oops! The $bin is required to be installed."
+    exitInstaller
+  fi
+
+  if [[ ! "$ans" == "" ]]; then
+    echo "😅 We need a Yes or a No, just to make sure you're happy to proceed."
+    
+    read -r -p "Press ENTER to try again..."
+
+    verifyDepsOrInstall "$os" "$name" "$bin" "$pkgManager"
+  fi
 
   if [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
@@ -1024,8 +1021,6 @@ extactDomainName() {
   echo "$domain"
 }
 
-# TODO: Recursion needs to be tested for each of the fn
-# TODO: ENTER key needs to be tested along Y, post N and recursion
 verifyUserHasDomain() {
   printf -v prompt "\nDo you have the domain settings ready (y/n)?\nType Y, or press ENTER to confirm."
   read -r -p "$prompt"$'\n> ' ans
@@ -1035,12 +1030,9 @@ verifyUserHasDomain() {
 
     showErrorMessage "Oops! You need a domain name and have the DNS A Record type answer with the server IP address. If you'd like to learn more about it check our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
-    printf -v prompt "\nPress ENTER to continue and try again..."
-    read -r -p "$prompt"$'\n> ' ans
+    read -r -p "Press ENTER to continue and try again..."
 
     verifyUserHasDomain
-
-    exit 1
   fi
 
   # Domain name handling (start)
@@ -1083,11 +1075,9 @@ verifyUserHasDomain() {
   if ! dig "$userDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$serverIpAddress" >/dev/null 2>&1 ; then
     showErrorMessage "Oops! The domain name $userDomainName doesn't have a DNS record type A pointing to the ip address $serverIpAddress. Of course, if you've just made the changes, you might need to wait for the DNS settings to propagate. Learn how to setup your domain DNS Records by checking our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
-    read -r -p "Press ENTER to continue and try again..." answer
+    read -r -p "Press ENTER to continue and try again..."
 
     verifyUserHasDomain
-
-    exit 1
   fi
 
   # Email handling (start)
@@ -1125,8 +1115,6 @@ verifyUserHasDomain() {
 
   if [[ "$shouldRedo" == [nN] || "$shouldRedo" == [nN][oO] ]]; then
     verifyUserHasDomain
-
-    exit 1
   fi
 
   echo "$userDomainName;$emailAddress"
@@ -1354,14 +1342,14 @@ onNightlyPreference() {
     installMandatory "$dep"
   done
 
-  echo "$config" | jq -c '.dependencies[]' | while read -r conf; do
-      name=$(echo "$conf" | jq -r '.name')
-      bin=$(echo "$conf" | jq -r '.bin')
-      pkgManager=$(echo "$conf" | jq '.pkgManager')
+  for conf in $(echo "$config" | jq -c '.dependencies[]'); do
+    name=$(echo "$conf" | jq -r '.name')
+    bin=$(echo "$conf" | jq -r '.bin')
+    pkgManager=$(echo "$conf" | jq '.pkgManager')
 
-      verifyDepsOrInstall "$os" "$name" "$bin" "$pkgManager"
+    verifyDepsOrInstall "$os" "$name" "$bin" "$pkgManager"
 
-      printf "\r\n"
+    printf "\r\n"
   done
 
   # We start by verifying if git is installed, if not request to install
