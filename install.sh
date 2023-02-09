@@ -573,8 +573,23 @@ installDocker() {
     elif [[ "$distro" == "alpine" ]]; then
       sudo apk add --update docker openrc
     elif [[ "$distro" =~ "arch" ]]; then
-      sudo pacman -Syu docker
-      sudo pacman -Syu docker-compose
+      sudo pacman -Syu gnome-terminal docker docker-compose
+
+      sudo systemctl enable docker.service
+
+      latestKernel=$(pacman -Q linux)
+      currentKernel=$(uname -r)
+
+      if [[ "$latestKernel" != "$currentKernel" ]]; then
+        echo "✋ We just found that you need to reboot!"
+        echo "The reason is that you have a pending kernel upgrade as your system is $currentKernel and pacman's query has $latestKernel"
+        echo
+        echo "If docker fails to start, then is very likely that is related to this."
+        echo "Our suggestion is to reboot your system first, and only afterwards run the installer."
+        echo
+
+        read -rp "Press ENTER to continue... "
+      fi
     else
       showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
 
@@ -931,14 +946,9 @@ verifyDepsOrInstall() {
   bin="$3"
   pkgManager="$4"
 
-  echo "[debug] os ($os), name ($name), bin ($bin), pkgManager ($pkgManager)"
-
-  echo "[debug] verifyDepsOrInstall: start bin ($bin)"
-
   hasCommand "$bin" && return 0
 
-  echo "[debug] verifyDepsOrInstall: end bin ($bin)"
-
+  # TODO: For some reason this prompt is skipped
   # printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y, or press ENTER to continue. Otherwise, N to exit!" "$bin"
   # read -r -p "$prompt"$'\n> ' answer
 
@@ -952,8 +962,6 @@ verifyDepsOrInstall() {
     pkgManager=$(echo "$pkgManager" | jq ".$distro")
     pkgManagerName=$(echo "$pkgManager" | jq -r ".name")
     pkg=$(echo "$pkgManager" | jq -r ".pkg")
-
-    echo "[debug] pkgManagerName ($pkgManagerName), pkg ($pkg)"
 
     if [[ $pkgManager =~ "null" || $pkgManagerName =~ "null" || $pkg =~ "null" ]]; then
       echo "💩 Oh no! Sorry, the installer configuration file is missing some values!"
@@ -990,8 +998,6 @@ verifyDepsOrInstall() {
 
       return 0
     elif [[ "$distro" =~ "arch"  ]]; then
-      echo "[debug] distro ($distro), pkg ($pkg), sudo pacman -Syu $pkg"
-
       if [[ $pkgManagerName == "pip" ]]; then
         if ! hasCommand pip; then 
           sudo pacman --noconfirm -Syu python-pip
