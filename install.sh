@@ -908,7 +908,11 @@ verifyDepsOrInstall() {
   bin="$3"
   pkgManager="$4"
 
+  echo "[debug] verifyDepsOrInstall: start bin ($bin)"
+
   hasCommand "$bin" && return 0
+
+  echo "[debug] verifyDepsOrInstall: end bin ($bin)"
 
   printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y, or press ENTER to continue. Otherwise, N to exit!" "$bin"
   read -r -p "$prompt"$'\n> ' answer
@@ -1307,8 +1311,6 @@ onNightlyPreference() {
     installMandatory "$dep"
   done
 
-  exit 0
-
   echo "$config" | jq -c '.dependencies[]' | while read -r conf; do
       name=$(echo "$conf" | jq -r '.name')
       bin=$(echo "$conf" | jq -r '.bin')
@@ -1318,6 +1320,8 @@ onNightlyPreference() {
 
       printf "\r\n"
   done
+
+  exit 0
 
   # We start by verifying if git is installed, if not request to install
   checkIfGitInstalled "$os"
