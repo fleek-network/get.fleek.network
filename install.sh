@@ -42,8 +42,84 @@ defaultUrsaPath="$HOME/fleek-network/ursa"
 defaultMinMemoryBytesRequired=8000000
 defaultMinDiskSpaceBytesRequired=10000000
 
-# Dependencies
-declare -a dependencies=("sudo" "curl" "tldextract" "whois")
+# Installer script dependencies
+# e.g. jq as used to iterate the config
+declare -a dependencies=("jq")
+
+# Config (json)
+config=$(cat << "JSON"
+{
+  "dependencies": [
+    {
+      "name": "Yq - Cli YAML, JSON, XML, CSV",
+      "bin": "yq",
+      "pkgManager": {
+        "arch": {
+          "pkg": "go-yq",
+          "name": "pacman"
+        },
+        "debian": {
+          "pkg": "yq",
+          "name": "snap"
+        },
+        "macos": {
+          "pkg": "yq",
+          "name": "homebrew"
+        },
+        "ubuntu": {
+          "pkg": "yq",
+          "name": "snap"
+        }
+      }
+    },
+    {
+      "name": "Whois - Internet domain name and network number directory service",
+      "bin": "whois",
+      "pkgManager": {
+        "arch": {
+          "pkg": "whois",
+          "name": "pacman"
+        },
+        "debian": {
+          "pkg": "whois",
+          "name": "apt-get"
+        },
+        "macos": {
+          "pkg": "whois",
+          "name": "homebrew"
+        },
+        "ubuntu": {
+          "pkg": "whois",
+          "name": "apt-get"
+        }
+      }
+    },
+    {
+      "name": "tldextract-rs cli - extract tld info from url",
+      "bin": "tldextract",
+      "pkgManager": {
+        "arch": {
+          "pkg": "tldextract",
+          "name": "pacman"
+        },
+        "debian": {
+          "pkg": "tldextract",
+          "name": "apt-get"
+        },
+        "macos": {
+          "pkg": "tldextract",
+          "name": "homebrew"
+        },
+        "ubuntu": {
+          "pkg": "tldextract",
+          "name": "apt-get"
+        }
+      }
+    }
+  ]
+}
+JSON
+)
 
 # Style utils
 txtPrefixForBold=$(tput bold)
@@ -72,6 +148,22 @@ confirmEmailAddress() {
   [[ "$1" =~ $validate ]]
 }
 
+confirm() {
+  case $1 in
+    [yY])
+      echo 0
+      ;;
+    [yY][eE][sS])
+      echo 0
+      ;;
+    [nN])
+      echo 1
+      ;;
+    [nN][oO])
+      echo 1
+      ;;
+  esac;
+}
 
 resetStyles() {
   echo "${txtPrefixForNormal}"
@@ -197,18 +289,24 @@ showDisclaimer() {
   echo "🤓 One more thing, your system ${txtPrefixForBold}User ${txtPrefixForNormal}should have ${txtPrefixForBold}write permissions ${txtPrefixForNormal}to install applications. Also, some advanced users might find better to follow the documentation in our official guides, or borrow from the installation script source code."
   echo "If that's your preference, then go ahead and check our guides at https://docs.fleek.network, or our repository https://github.com/fleek-network/get.fleek.network"
 
-  printf -v prompt "\n\n🤖 Are you happy to continue (y/n)?"
-  read -r -p "$prompt"$'\n> ' answer
+  printf -v prompt "\n\n🤖 Are you happy to continue (y/n)?\nType Y, or press ENTER to continue. Otherwise, N to exit!"
+  while read -rp "$prompt"$'\n> ' ans; do
+    data=$(confirm "$ans")
 
-  answerToLc=$(toLowerCase "$answer")
+    [[ ! $data ]] && continue
 
-  if [[ "$answerToLc" == "n" ]]; then
-    echo "🦖 The installation assistant terminates here, as you're required to accept in order to have the assisted installer guide you. If you've changed your mind, try again!"
-    echo
-    echo "Otherwise, if you'd like to learn a bit more visit our website at https://fleek.network"
+    if [[ "$data" -eq 1 ]]; then
+      echo
+      echo "🦖 The installation assistant terminates here, as you're required to accept in order to have the assisted installer guide you. If you've changed your mind, try again!"
+      echo
+      echo "Otherwise, if you'd like to learn a bit more visit our website at https://fleek.network"
+      echo
 
-    exitInstaller
-  fi
+      exitInstaller
+    elif [[ "$data" -eq 0 ]]; then
+      break
+    fi
+  done
 }
 
 windowsUsersWarning() {
@@ -235,7 +333,7 @@ shouldHaveHomebrewInstalled() {
     fi
   fi
 
-  showOkMessage "[Skipping] Homebrew package manager is installed!"
+  showOkMessage "Homebrew package manager is installed!"
 }
 
 installHomebrew() {
@@ -320,17 +418,21 @@ checkSystemHasRecommendedResources() {
   if [[ ("$mem" -lt "$defaultMinMemoryBytesRequired") ]] || [[ ( "$partDiskSpace" -lt "$defaultMinDiskSpaceBytesRequired" ) ]]; then
     echo "😬 Oh no! We're afraid that you need at least 8 GB of RAM and 10 GB of available disk space."
     echo
-    printf -v prompt "\n\n🤖 Do you want to continue (y/n)?"
+    printf -v prompt "\n\n🤖 Are you sure you want to continue (y/n)?"
     read -r -p "$prompt"$'\n> ' answer
 
-    answerToLc=$(toLowerCase "$answer")
-
-    if [[ "$answerToLc" == "n" ]]; then
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
       exitInstaller
     fi
-  else
-    showOkMessage "Great! Your system has enough resources (disk space and memory)"
+
+    echo "😅 Alright, let's try that but your system definitely seem to be below our recommendations, don't expect it to work correctly..."
+
+    sleep 5
+
+    return 0
   fi
+  
+  showOkMessage "Great! Your system has enough resources (disk space and memory)"
 }
 
 checkIfGitInstalled() {
@@ -487,7 +589,7 @@ dockerHealthCheck() {
     exitInstaller
   fi
 
-  showOkMessage "Docker health-check passed! [skipping]"
+  showOkMessage "Docker health-check passed!"
 }
 
 requestPathnameForUrsaRepository() {
@@ -510,6 +612,8 @@ requestPathnameForUrsaRepository() {
     read -r -p "Press ENTER to retry..." answer
 
     requestPathnameForUrsaRepository
+
+    exit 1
   fi
 
   if ! mkdir -p "$selectedPath"; then
@@ -613,6 +717,9 @@ showDockerStackLog() {
     
     exit 0;
   fi
+
+  # whitespace to improve   
+  printf "\r\n"
   
   echo "👋 Hey! Just a quick hint!"
   echo
@@ -743,12 +850,107 @@ initLetsEncrypt() {
   showOkMessage "Great! You have now secured your server with SSL/TLS."
 }
 
-verifyDepsOrInstall() {
-  if ! hasCommand "$1"; then
-    apt-get update
-    apt-get install "$1" -y
+installMandatory() {
+  hasCommand "$1" && return 0
 
-    showOkMessage "Installed $1"
+  printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y, or press ENTER to continue. Otherwise, N to exit!" "$1"
+  read -r -p "$prompt"$'\n> ' answer
+
+  if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+    showErrorMessage "Oops! The $1 is required to be installed."
+    exitInstaller
+  fi
+
+  if [[ "$os" == "mac" ]]; then
+    ! brew install "$1" && exitInstaller
+  elif [[ "$os" == "linux" ]]; then
+    distro=$(identifyDistro)
+    if [[ "$distro" == "ubuntu" ]] || [[ "$distro" == "debian" ]]; then
+      if ! sudo apt update || ! sudo apt-get install "$1"; then
+        exitInstaller
+      fi
+    elif [[ "$os" == "arch" ]]; then
+      ! sudo pacman -S "$1" && exitInstaller
+    else
+      echo "👹 Oh gosh! We're currently not providing support for $distro."
+      echo "If you find this to be a bug and we provide support to your OS, report it on our discord channel please 🙏!"
+      echo
+
+      exitInstaller
+    fi
+  fi
+
+  echo "os $os, distro $distro"
+
+  showOkMessage "Installed $1"
+
+  # Add some space after the msg
+  printf "\r\n"
+
+  return 0
+}
+
+verifyDepsOrInstall() {
+  os="$1"
+  name="$2"
+  bin="$3"
+  pkgManager="$4"
+
+  hasCommand "$bin" && return 0
+
+  printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y, or press ENTER to continue. Otherwise, N to exit!" "$bin"
+  read -r -p "$prompt"$'\n> ' answer
+
+  if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+    showErrorMessage "Oops! The $bin is required to be installed."
+    exitInstaller
+  fi
+
+  if [[ "$os" == "linux" ]]; then
+    distro=$(identifyDistro)
+    pkgManager=$(echo "$pkgManager" | jq ".$distro")
+    pkgManagerName=$(echo "$pkgManager" | jq -r ".name")
+    pkg=$(echo "$pkgManager" | jq -r ".pkg")
+
+    if [[ $pkgManager == "null" || $pkgManagerName == "null" || $pkg == "null" ]]; then
+      echo "💩 Oh no! Sorry, the installer configuration file is missing some values!"
+      echo "Help us improve by reporting this issue in our discord channel https://discord.gg/fleekxyz"
+      echo "Thanks a lot for your support 🙏"
+      echo
+
+      exitInstaller
+    fi
+
+    if [[ "$distro" == "ubuntu" || "$distro" == "debian" ]]; then
+      if [[ $pkgManagerName == "snap" ]]; then
+        if ! hasCommand "snap"; then
+          sudo apt-get install snapd
+
+          # ensure snap is in the PATH
+          source /etc/profile.d/apps-bin-path.sh
+        fi
+
+        if ! sudo snap install "$pkg"; then
+          exitInstaller
+        fi
+
+        showOkMessage "Installed ($name) via snap"
+
+        return 0
+      fi
+
+      if ! sudo apt update || ! sudo apt-get install "$pkg"; then
+        exitInstaller
+      fi
+
+      showOkMessage "Installed ($name) via apt-get"
+
+      return 0
+    elif [[ "$os" == "arch" ]]; then
+      ! sudo pacman -S "$pkg" && exitInstaller
+
+      showOkMessage "Installed ($name) via pacman"
+    fi
   fi
 }
 
@@ -1003,21 +1205,6 @@ setupSSLTLS() {
   COMPOSE_DOCKER_CLI_BUILD=1 sudo docker compose -f ./docker/full-node/docker-compose.yml up -d
 
   # TODO: add health check in the docker compose file
-  # counter=1
-  # maxCount=10
-  # while ! curl --silent http://127.0.0.1/ping | grep --quiet "pong"; do
-  #   if [[ counter -gt $maxCount ]]; then
-  #     echo "👹 Oops! Number of attempts exceeded the max count..."
-
-  #     exitInstaller
-  #   fi
-
-  #   echo "🙏 Awaiting for Ursa and Nginx! Be patient..."
-
-  #   sleep 10
-    
-  #   counter=$((counter+1))
-  # done
 
   if ! initLetsEncrypt "$emailAddress" "$userDomainName"; then
     exitInstaller
@@ -1045,13 +1232,26 @@ setupSSLTLS() {
   # Show disclaimer
   showDisclaimer
 
+  # Had space after disclaimer
+  printf "\r\n"
+
   # Check if system has recommended resources (disk space and memory)
   checkSystemHasRecommendedResources "$os"
 
   # Check if has dependencies installed
   for dep in "${dependencies[@]}"
   do
-    verifyDepsOrInstall "$dep"
+    installMandatory "$dep"
+  done
+
+  echo "$config" | jq -c '.dependencies[]' | while read -r conf; do
+      name=$(echo "$conf" | jq -r '.name')
+      bin=$(echo "$conf" | jq -r '.bin')
+      pkgManager=$(echo "$conf" | jq '.pkgManager')
+
+      verifyDepsOrInstall "$os" "$name" "$bin" "$pkgManager"
+
+      printf "\r\n"
   done
 
   # We start by verifying if git is installed, if not request to install
