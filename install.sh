@@ -372,17 +372,17 @@ installGit() {
 
     if [[ "$distro" == "ubuntu" ]] || [[ "$distro" == "debian" ]]; then
       sudo apt-get install git
-    elif [[ "$os" == "alpine" ]]; then
+    elif [[ "$distro" == "alpine" ]]; then
       sudo apk add git
-    elif [[ "$os" =~ "arch"  ]]; then
+    elif [[ "$distro" =~ "arch"  ]]; then
       sudo pacman -S git
     else
-      showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
+      showErrorMessage "Oops! Your operating system ($os, $distro) is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
 
       exitInstaller
     fi
   else
-    showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
+    showErrorMessage "Oops! Your operating system ($os) is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
 
     exitInstaller
   fi
@@ -881,7 +881,7 @@ installMandatory() {
       if ! sudo apt update || ! sudo apt-get install "$1"; then
         exitInstaller
       fi
-    elif [[ "$os" =~ "arch"  ]]; then
+    elif [[ "$distro" =~ "arch"  ]]; then
       ! sudo pacman -S "$1" && exitInstaller
     else
       echo "👹 Oh gosh! We're currently not providing support for $distro."
