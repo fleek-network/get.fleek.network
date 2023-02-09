@@ -1307,6 +1307,8 @@ onNightlyPreference() {
     installMandatory "$dep"
   done
 
+  exit 0
+
   echo "$config" | jq -c '.dependencies[]' | while read -r conf; do
       name=$(echo "$conf" | jq -r '.name')
       bin=$(echo "$conf" | jq -r '.bin')
