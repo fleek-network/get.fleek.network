@@ -39,6 +39,9 @@
 # Default
 defaultUrsaHttpsRespository="https://github.com/fleek-network/ursa.git"
 defaultUrsaPath="$HOME/fleek-network/ursa"
+defaultUrsaNightlyImage="ghcr.io/fleek-network/ursa:nightly"
+defaultDockerFullNodeRelativePath="./docker/full-node"
+defaultDockerComposeYmlRelativePath="$defaultDockerFullNodeRelativePath/docker-compose.yml"
 defaultMinMemoryBytesRequired=8000000
 defaultMinDiskSpaceBytesRequired=10000000
 
@@ -289,7 +292,7 @@ showDisclaimer() {
   echo "🤓 One more thing, your system ${txtPrefixForBold}User ${txtPrefixForNormal}should have ${txtPrefixForBold}write permissions ${txtPrefixForNormal}to install applications. Also, some advanced users might find better to follow the documentation in our official guides, or borrow from the installation script source code."
   echo "If that's your preference, then go ahead and check our guides at https://docs.fleek.network, or our repository https://github.com/fleek-network/get.fleek.network"
 
-  printf -v prompt "\n\n🤖 Are you happy to continue (y/n)?\nType Y, or press ENTER to continue. Otherwise, N to exit!"
+  printf -v prompt "\n\n🤖 Are you happy to continue (y/n)?\nType Y to continue. Otherwise, N to quit!"
   while read -rp "$prompt"$'\n> ' ans; do
     data=$(confirm "$ans")
 
@@ -643,13 +646,13 @@ restartDockerStack() {
 
   # TODO: Use health check instead
   sleep 10
-  sudo docker-compose -f ./docker/full-node/docker-compose.yml stop
+  sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" stop
 
   showOkMessage "The Docker Stack will now going to start. Be patient, please!"
 
   # TODO: Use health check instead
   sleep 10
-  sudo docker-compose -f ./docker/full-node/docker-compose.yml up -d
+  sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" up -d
 
   showOkMessage "Great! The Docker Stack has restarted."
 
@@ -731,7 +734,7 @@ showDockerStackLog() {
 
   read -r -p "Press ENTER to continue... " answer
 
-  sudo docker-compose -f ./docker/full-node/docker-compose.yml logs -f
+  sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" logs -f
 }
 
 initLetsEncrypt() {
@@ -746,8 +749,8 @@ initLetsEncrypt() {
 
   rsa_key_size=4096
   base_path=./docker/full-node
-  config_path="./docker/full-node/docker-compose.yml"
-  data_path="./docker/full-node/data/certbot"
+  config_path="$defaultDockerComposeYmlRelativePath"
+  data_path="$defaultDockerFullNodeRelativePath/data/certbot"
   staging=0
 
   # TODO: Move this checkup much earlier, in the init of installer
@@ -837,7 +840,7 @@ initLetsEncrypt() {
       exitInstaller
     fi
 
-    sudo docker-compose -f ./docker/full-node/docker-compose.yml down
+    sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" down
 
     exitInstaller
   fi
@@ -967,17 +970,15 @@ extactDomainName() {
 # TODO: ENTER key needs to be tested along Y, post N and recursion
 verifyUserHasDomain() {
   printf -v prompt "\nDo you have the domain settings ready (y/n)?\nType Y, or press ENTER to confirm."
-  read -r -p "$prompt"$'\n> ' answer
+  read -r -p "$prompt"$'\n> ' ans
 
-  answerToLc=$(toLowerCase "$answer")
-
-  if [[ ! "$answerToLc" == "" && "$answerToLc" == [nN] || "$answerToLc" == [nN][oO] ]]; then
+  if [[ ! "$ans" == "" && "$ans" == [nN] || "$ans" == [nN][oO] ]]; then
     printf "\n"
 
     showErrorMessage "Oops! You need a domain name and have the DNS A Record type answer with the server IP address. If you'd like to learn more about it check our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
     printf -v prompt "\nPress ENTER to continue and try again..."
-    read -r -p "$prompt"$'\n> ' answer
+    read -r -p "$prompt"$'\n> ' ans
 
     verifyUserHasDomain
 
@@ -999,9 +1000,6 @@ verifyUserHasDomain() {
   ERROR_IP_ADDRESS_NOT_AVAILABLE="ERROR_IP_ADDRESS_NOT_AVAILABLE"
   detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "$ERROR_IP_ADDRESS_NOT_AVAILABLE")
 
-  # Declare detected ip address as default server ip address
-  serverIpAddress=${answer:="$detectedIpAddress"}
-
   printf -v prompt "\n💡 Provide us the IP address of the machine where you are installing the Node. We've noticed that this machine public IP address is ${txtPrefixForBold}%s ${txtPrefixForNormal}(we'll use it as the default)\n\nLet us know, what's the IP address the domain answers with?\n\nPress ENTER to accept default, or type the IP Address" "$detectedIpAddress"
   while read -rp "$prompt"$'\n> ' ans; do
     if confirmIpAddress "$ans"; then
@@ -1013,6 +1011,9 @@ verifyUserHasDomain() {
 
     echo "💩 Uh oh! Provide a valid ip address, please..."
   done
+
+  # Declare detected ip address as default server ip address
+  serverIpAddress=${ans:="$detectedIpAddress"}
 
   if [[ $serverIpAddress = "$ERROR_IP_ADDRESS_NOT_AVAILABLE" ]]; then
     showErrorMessage "Oops! This is embarrassing, but we failed to discover the default IP Address ($ERROR_IP_ADDRESS_NOT_AVAILABLE)"
@@ -1116,7 +1117,7 @@ replaceNginxConfFileForHttp() {
           proxy_pass http://ursa:4069;
         }
     }
-  " > ./docker/full-node/data/nginx/http.conf
+  " > "$defaultDockerFullNodeRelativePath"/data/nginx/http.conf
 }
 
 replaceNginxConfFileForHttps() {
@@ -1156,7 +1157,7 @@ replaceNginxConfFileForHttps() {
           proxy_pass http://ursa:4069;
         }
     }
-  " > ./docker/full-node/data/nginx/https.conf
+  " > "$defaultDockerFullNodeRelativePath"/data/nginx/https.conf
 }
 
 setupSSLTLS() {
@@ -1176,13 +1177,7 @@ setupSSLTLS() {
   userDomainName=$(echo "$trimData" | cut -d ";" -f 1)
   emailAddress=$(echo "$trimData" | cut -d ";" -f 2)
 
-  if ! cd "$1"; then
-    showErrorMessage "Oops! This is embarasssing! Failed to change to ursa directory. Help us improve, report it in our discord channel 🙏"
-
-    exitInstaller
-  fi
-
-  if ! rm ./docker/full-node/data/nginx/app.conf; then
+  if ! rm "$defaultDockerFullNodeRelativePath"/data/nginx/app.conf; then
     showErrorMessage "Oops! Failed to clear the nginx default config. Help us improve, report it in our discord channel 🙏"
 
     exitInstaller
@@ -1194,7 +1189,7 @@ setupSSLTLS() {
     exitInstaller
   fi
 
-  chmod +x ./docker/full-node/init-letsencrypt.sh
+  chmod +x "$defaultDockerFullNodeRelativePath"/init-letsencrypt.sh
 
   showOkMessage "Updated the file permissions for Lets Encrypt initialisation script (set +x)!"
 
@@ -1202,7 +1197,7 @@ setupSSLTLS() {
   echo
 
   # start stack in bg, as lets encrypt will need the nginx to validate
-  COMPOSE_DOCKER_CLI_BUILD=1 sudo docker compose -f ./docker/full-node/docker-compose.yml up -d
+  COMPOSE_DOCKER_CLI_BUILD=1 sudo docker compose -f "$defaultDockerComposeYmlRelativePath" up -d
 
   # TODO: add health check in the docker compose file
 
@@ -1217,6 +1212,63 @@ setupSSLTLS() {
 
     exitInstaller
   fi
+}
+
+changeDirectoryToPathOrFailure() {
+  local name=$1
+  local targetPath=$2
+
+  if [[ -z "$name" || -z "$targetPath" ]]; then
+    showErrorMessage "Oops! Failed to change directory after cloning the repository. Help us improve! Report to us in our Discord channel 🙏"
+
+    exitInstaller
+  fi
+
+  if [[ $(pwd) != "$targetPath" ]]; then
+    if ! cd "$targetPath"; then
+      showErrorMessage "Oops! Our apologies but we've failed to change directory to $name. Help us improve by reporting it to us in our Discord channel 🙏"
+
+      exitInstaller
+    fi
+  fi
+}
+
+onNightlyPreference() {
+  echo
+  echo "✋ When running the Stack, Docker will have to build the Ursa image from source."
+  echo "💡 Our recommendation is to use our Nightly build, as otherwise the image build process can be quite long 😴!"
+  echo
+  echo "In the future, you can check our documentation and guides to learn how to update this when required."
+  echo
+
+  printf -v prompt "\n\n🤖 Are you happy to use the Nightly build (y/n)?\nType Y to accept. Otherwise, N to build from source!"
+  while read -rp "$prompt"$'\n> ' ans; do
+    data=$(confirm "$ans")
+
+    [[ ! $data ]] && continue
+
+    if [[ "$data" -eq 1 ]]; then
+      echo
+      echo "🦀 Ok! Rembember, the Ursa image may take some time to build depending on your machine..."
+      echo
+
+      break
+    elif [[ "$data" -eq 0 ]]; then
+      yq -ie 'del(.services.ursa.build)' "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
+      yq -i ".services.ursa.image = \"$defaultUrsaNightlyImage\"" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
+
+      if ! yq '.services.ursa.image' "$defaultDockerComposeYmlRelativePath" | grep -q "$defaultUrsaNightlyImage" || ! yq '.services.ursa.build' "$defaultDockerComposeYmlRelativePath" | grep -qE "null|no matches found"; then
+        echo
+        echo "💩 Uh oh! For some reason we failed to change the docker compose yaml to use nightly instead."
+        echo "Our apologies but this shouldn't happen! Let us improve by reporting this issue to our discord https://discord.gg/fleekxyz, please 🙏"
+        echo
+
+        exitInstaller
+      fi
+
+      break
+    fi
+  done
 }
 
 (
@@ -1267,7 +1319,9 @@ setupSSLTLS() {
 
   # Check if directory does not exit or empty
   if [[ "$(ls -A "$ursaPath" >/dev/null 2>&1)" ]]; then
+    echo
     echo "😅 Gosh! Have you run the installation before?!"
+    echo
     echo "The directory $ursaPath is not empty and we'll have to skip the installation, as we don't want to do any overrides."
     echo "If you are stuck on this, clear the desired location before retrying"
     echo "e.g., if you chose to install in the default $defaultUrsaPath clear it, as the assisted installer does not do deletes."
@@ -1277,12 +1331,16 @@ setupSSLTLS() {
 
   # Pull the `ursa` project repository to the preferred target directory via HTTPS
   cloneUrsaRepositoryToPath "$ursaPath"
+  changeDirectoryToPathOrFailure "Ursa" "$ursaPath"
 
   # Await a few seconds to let the user read...
   sleep 5
 
+  # Recommend the Nightly build to speed up onboarding
+  onNightlyPreference
+
   # Optional, check if user would like to setup SSL/TLS
-  setupSSLTLS "$ursaPath"
+  setupSSLTLS
 
   showOkMessage "The installation process has completed!"
 
