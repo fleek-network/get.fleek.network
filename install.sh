@@ -1335,8 +1335,6 @@ onNightlyPreference() {
       printf "\r\n"
   done
 
-  exit 0
-
   # We start by verifying if git is installed, if not request to install
   checkIfGitInstalled "$os"
 
