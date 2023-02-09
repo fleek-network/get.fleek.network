@@ -107,7 +107,7 @@ config=$(cat << "JSON"
       "pkgManager": {
         "arch": {
           "pkg": "tldextract",
-          "name": "pacman"
+          "name": "pip"
         },
         "debian": {
           "pkg": "tldextract",
@@ -968,6 +968,14 @@ verifyDepsOrInstall() {
       return 0
     elif [[ "$distro" =~ "arch"  ]]; then
       echo "[debug] distro ($distro), pkg ($pkg), sudo pacman -Syu $pkg"
+
+      if [[ $pkgManagerName == "snap" ]]; then
+        if ! hasCommand pip; then 
+          sudo pacman -Syu python-pip
+        fi
+
+        pip install tldextract
+      fi
 
       ! sudo pacman --noconfirm -Syu "$pkg" && exitInstaller
 
