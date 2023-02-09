@@ -908,6 +908,8 @@ verifyDepsOrInstall() {
   bin="$3"
   pkgManager="$4"
 
+  echo "[debug] os ($os), name ($name), bin ($bin), pkgManager ($pkgManager)"
+
   echo "[debug] verifyDepsOrInstall: start bin ($bin)"
 
   hasCommand "$bin" && return 0
