@@ -971,10 +971,10 @@ verifyDepsOrInstall() {
 
       if [[ $pkgManagerName == "snap" ]]; then
         if ! hasCommand pip; then 
-          sudo pacman -Syu python-pip
+          sudo pacman --noconfirm -Syu python-pip
         fi
 
-        pip install tldextract
+        pip install tldextract==3.4.0
       fi
 
       ! sudo pacman --noconfirm -Syu "$pkg" && exitInstaller
