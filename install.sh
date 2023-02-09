@@ -916,13 +916,13 @@ verifyDepsOrInstall() {
 
   echo "[debug] verifyDepsOrInstall: end bin ($bin)"
 
-  printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y, or press ENTER to continue. Otherwise, N to exit!" "$bin"
-  read -r -p "$prompt"$'\n> ' answer
+  # printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y, or press ENTER to continue. Otherwise, N to exit!" "$bin"
+  # read -r -p "$prompt"$'\n> ' answer
 
-  if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
-    showErrorMessage "Oops! The $bin is required to be installed."
-    exitInstaller
-  fi
+  # if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+  #   showErrorMessage "Oops! The $bin is required to be installed."
+  #   exitInstaller
+  # fi
 
   if [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
