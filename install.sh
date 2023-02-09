@@ -959,6 +959,8 @@ verifyDepsOrInstall() {
 
       return 0
     elif [[ "$distro" =~ "arch"  ]]; then
+      echo "[debug] distro ($distro), pkg ($pkg), sudo pacman -Syu $pkg"
+
       ! sudo pacman -Syu "$pkg" && exitInstaller
 
       showOkMessage "Installed ($name) via pacman"
