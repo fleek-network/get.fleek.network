@@ -107,7 +107,7 @@ config=$(cat << "JSON"
       "pkgManager": {
         "arch": {
           "pkg": "tldextract",
-          "name": "pacman"
+          "name": "pip"
         },
         "debian": {
           "pkg": "tldextract",
@@ -119,6 +119,28 @@ config=$(cat << "JSON"
         },
         "ubuntu": {
           "pkg": "tldextract",
+          "name": "apt-get"
+        }
+      }
+    },
+    {
+      "name": "dig - DNS lookup utility",
+      "bin": "dig",
+      "pkgManager": {
+        "arch": {
+          "pkg": "dnsutils",
+          "name": "pacman"
+        },
+        "debian": {
+          "pkg": "dnsutils",
+          "name": "apt-get"
+        },
+        "macos": {
+          "pkg": "dig",
+          "name": "homebrew"
+        },
+        "ubuntu": {
+          "pkg": "dnsutils",
           "name": "apt-get"
         }
       }
@@ -551,7 +573,23 @@ installDocker() {
     elif [[ "$distro" == "alpine" ]]; then
       sudo apk add --update docker openrc
     elif [[ "$distro" =~ "arch" ]]; then
-      sudo pacman -Syu docker
+      sudo pacman -Syu gnome-terminal docker docker-compose
+
+      sudo systemctl enable docker.service
+
+      latestKernel=$(pacman -Q linux)
+      currentKernel=$(uname -r)
+
+      if [[ "$latestKernel" != "$currentKernel" ]]; then
+        echo "✋ We just found that you need to reboot!"
+        echo "The reason is that you have a pending kernel upgrade as your system is $currentKernel and pacman's query has $latestKernel"
+        echo
+        echo "If docker fails to start, then is very likely that is related to this."
+        echo "Our suggestion is to reboot your system first, and only afterwards run the installer."
+        echo
+
+        read -rp "Press ENTER to continue... "
+      fi
     else
       showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
 
@@ -910,13 +948,14 @@ verifyDepsOrInstall() {
 
   hasCommand "$bin" && return 0
 
-  printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y, or press ENTER to continue. Otherwise, N to exit!" "$bin"
-  read -r -p "$prompt"$'\n> ' answer
+  # TODO: For some reason this prompt is skipped
+  # printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y, or press ENTER to continue. Otherwise, N to exit!" "$bin"
+  # read -r -p "$prompt"$'\n> ' answer
 
-  if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
-    showErrorMessage "Oops! The $bin is required to be installed."
-    exitInstaller
-  fi
+  # if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+  #   showErrorMessage "Oops! The $bin is required to be installed."
+  #   exitInstaller
+  # fi
 
   if [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
@@ -924,7 +963,7 @@ verifyDepsOrInstall() {
     pkgManagerName=$(echo "$pkgManager" | jq -r ".name")
     pkg=$(echo "$pkgManager" | jq -r ".pkg")
 
-    if [[ $pkgManager == "null" || $pkgManagerName == "null" || $pkg == "null" ]]; then
+    if [[ $pkgManager =~ "null" || $pkgManagerName =~ "null" || $pkg =~ "null" ]]; then
       echo "💩 Oh no! Sorry, the installer configuration file is missing some values!"
       echo "Help us improve by reporting this issue in our discord channel https://discord.gg/fleekxyz"
       echo "Thanks a lot for your support 🙏"
@@ -959,7 +998,17 @@ verifyDepsOrInstall() {
 
       return 0
     elif [[ "$distro" =~ "arch"  ]]; then
-      ! sudo pacman -Syu "$pkg" && exitInstaller
+      if [[ $pkgManagerName == "pip" ]]; then
+        if ! hasCommand pip; then 
+          sudo pacman --noconfirm -Syu python-pip
+        fi
+
+        pip install tldextract==3.4.0
+
+        return 0
+      fi
+
+      ! sudo pacman --noconfirm -Syu "$pkg" && exitInstaller
 
       showOkMessage "Installed ($name) via pacman"
     fi
