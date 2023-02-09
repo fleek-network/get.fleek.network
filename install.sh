@@ -246,7 +246,7 @@ ART
   echo
   echo "⭐️ Ursa, a Decentralized Content Delivery Network (DCDN) ⭐️"
   echo
-  echo "★★★★★★★★★ 👩🏾‍💻 ${txtPrefixForBold}Website ${txtPrefixForNormal}https://fleek.network"
+  echo "★★★★★★★★★ 🌍 ${txtPrefixForBold}Website ${txtPrefixForNormal}https://fleek.network"
   echo "★★★★★★★★★ 📚 ${txtPrefixForBold}Documentation ${txtPrefixForNormal}https://docs.fleek.network"
   echo "★★★★★★★★★ 💾 ${txtPrefixForBold}Git repository ${txtPrefixForNormal}https://github.com/fleek-network/ursa"
   echo "★★★★★★★★★ 🤖 ${txtPrefixForBold}Discord ${txtPrefixForNormal}https://discord.gg/fleekxyz"
