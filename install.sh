@@ -930,7 +930,9 @@ verifyDepsOrInstall() {
     pkgManagerName=$(echo "$pkgManager" | jq -r ".name")
     pkg=$(echo "$pkgManager" | jq -r ".pkg")
 
-    if [[ $pkgManager == "null" || $pkgManagerName == "null" || $pkg == "null" ]]; then
+    echo "[debug] pkgManagerName ($pkgManagerName), pkg ($pkg)"
+
+    if [[ $pkgManager =~ "null" || $pkgManagerName =~ "null" || $pkg =~ "null" ]]; then
       echo "💩 Oh no! Sorry, the installer configuration file is missing some values!"
       echo "Help us improve by reporting this issue in our discord channel https://discord.gg/fleekxyz"
       echo "Thanks a lot for your support 🙏"
