@@ -969,12 +969,14 @@ verifyDepsOrInstall() {
     elif [[ "$distro" =~ "arch"  ]]; then
       echo "[debug] distro ($distro), pkg ($pkg), sudo pacman -Syu $pkg"
 
-      if [[ $pkgManagerName == "snap" ]]; then
+      if [[ $pkgManagerName == "pip" ]]; then
         if ! hasCommand pip; then 
           sudo pacman --noconfirm -Syu python-pip
         fi
 
         pip install tldextract==3.4.0
+
+        return 0
       fi
 
       ! sudo pacman --noconfirm -Syu "$pkg" && exitInstaller
