@@ -374,7 +374,7 @@ installGit() {
       sudo apt-get install git
     elif [[ "$os" == "alpine" ]]; then
       sudo apk add git
-    elif [[ "$os" == "arch" ]]; then
+    elif [[ "$os" =~ "arch"  ]]; then
       sudo pacman -S git
     else
       showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
@@ -881,7 +881,7 @@ installMandatory() {
       if ! sudo apt update || ! sudo apt-get install "$1"; then
         exitInstaller
       fi
-    elif [[ "$os" == "arch" ]]; then
+    elif [[ "$os" =~ "arch"  ]]; then
       ! sudo pacman -S "$1" && exitInstaller
     else
       echo "👹 Oh gosh! We're currently not providing support for $distro."
@@ -958,7 +958,7 @@ verifyDepsOrInstall() {
       showOkMessage "Installed ($name) via apt-get"
 
       return 0
-    elif [[ "$os" == "arch" ]]; then
+    elif [[ "$os" =~ "arch"  ]]; then
       ! sudo pacman -S "$pkg" && exitInstaller
 
       showOkMessage "Installed ($name) via pacman"
