@@ -550,7 +550,7 @@ installDocker() {
         }" > /etc/docker/daemon.json'
     elif [[ "$distro" == "alpine" ]]; then
       sudo apk add --update docker openrc
-    elif [[ "$distro" == "arch" ]]; then
+    elif [[ "$distro" =~ "arch" ]]; then
       sudo pacman -Syu docker
     else
       showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
@@ -958,7 +958,7 @@ verifyDepsOrInstall() {
       showOkMessage "Installed ($name) via apt-get"
 
       return 0
-    elif [[ "$os" =~ "arch"  ]]; then
+    elif [[ "$distro" =~ "arch"  ]]; then
       ! sudo pacman -Syu "$pkg" && exitInstaller
 
       showOkMessage "Installed ($name) via pacman"
