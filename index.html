@@ -992,7 +992,7 @@ verifyDepsOrInstall() {
 
   hasCommand "$bin" && return 0
 
-  printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y, or press ENTER to continue. Otherwise, N to exit!" "$bin"
+  printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y to continue. Otherwise, N to exit!" "$bin"
   read -r -p "$prompt"$'\n> ' ans
 
   if [[ "$ans" == [nN] || "$ans" == [nN][oO] ]]; then
