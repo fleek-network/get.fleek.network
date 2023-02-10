@@ -919,6 +919,12 @@ initLetsEncrypt() {
     answerToLc=$(toLowerCase "$answer")
 
     if [[ "$answerToLc" == "" || "$answerToLc" == [yY] || "$answerToLc" == [yY][eE][sS] ]]; then    
+      echo
+      echo "🤖 We're going to restart the Docker Stack..."
+      echo
+      sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" down      
+      sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" start
+
       initLetsEncrypt "$email" "$domain"
     fi
 
