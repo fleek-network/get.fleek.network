@@ -93,29 +93,19 @@ config='{
   ]
 }'
 
-# for row in $(echo "${config}" | jq -r '.dependencies[] | @base64'); do
-#     _jq() {
-#      echo ${row} | base64 --decode | jq -r "${1}"
-#     }
+for row in $(echo "${config}" | jq -r '.dependencies[] | @base64'); do
+    _jq() {
+     echo ${row} | base64 --decode | jq -r "${1}"
+    }
     
-#    echo $(_jq '.name')
+   echo $(_jq '.name')
    
 
-#     name=$(echo "$conf" | jq -r '.name')
-#     bin=$(echo "$conf" | jq -r '.bin')
-#     pkgManager=$(echo "$conf" | jq '.pkgManager')
+    # name=$(echo "$conf" | jq -r '.name')
+    # bin=$(echo "$conf" | jq -r '.bin')
+    # pkgManager=$(echo "$conf" | jq '.pkgManager')
 
-#     # verifyDepsOrInstall "$os" "$name" "$bin" "$pkgManager"
+    # verifyDepsOrInstall "$os" "$name" "$bin" "$pkgManager"
 
-#     echo "[debug] name ($name), bin ($bin), pkgManager ($pkgManager)"
-# done
-
-readarray -t deps < <(jq -r '.dependencies[]' "$config")
-
-for conf in $deps; do
-    name=$(echo "$conf" | jq -r '.name')
-    bin=$(echo "$conf" | jq -r '.bin')
-    pkgManager=$(echo "$conf" | jq '.pkgManager')
-
-    echo "[debug] name ($name), bin ($bin), pkgManager ($pkgManager)"
+    # echo "[debug] name ($name), bin ($bin), pkgManager ($pkgManager)"
 done
