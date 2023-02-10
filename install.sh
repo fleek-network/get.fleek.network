@@ -366,12 +366,16 @@ showDisclaimer() {
 }
 
 commonWarningMessage() {
-  echo "Otherwise, check our guides to learn how to run it yourself through Docker or natively for testing. Although, if you are serious about running a Network Node, then you'll need a dedicate machine to run the Node in the long term, which is why Linux server is the recommended and supported choice!"
+  echo "While we hope to provide support for a wide range of devices and systems in the future, there are countless theories and reported sightings of life from other galaxies that we'll visit first..."
+  echo "Information could be declassified by officials as a means of preparing the public for the impending disclosure of the Node presence on Earth, so follow us on Twitter to stay informed https://twitter.com/fleek_net"
+  echo
+  echo "In any case, check our guides to learn how to run it yourself through Docker or natively for testing. Although, if you are serious about running a Network Node, then you'll need a dedicate machine to run the Node in the long term, which is why Linux server is the recommended and supported choice!"
   echo
   echo "If you'd like to learn more visit our documentation site at https://docs.fleek.network"
 }
 
 windowsUsersWarning() {
+  asciiArtNoOSSupport
   echo "⚠️ Windows is not supported by our installer! We recommend linux Server edition, such as Ubuntu or Debian."
   echo "If not, enable ${txtPrefixForBold}Windows Subsystem Linux (WSL)${txtPrefixForNormal} and install Ubuntu or Debian."
   echo
@@ -382,7 +386,7 @@ macOsUsersWarning() {
   asciiArtNoOSSupport
   echo "⚠️ MacOS is not supported by our installer! We recommend linux Server edition, such as Ubuntu or Debian."
   echo
-  echo "The macOS is a graphical OS, and as of 21 April 2022, Apple has discontinued macOS Server. While we hope to provide support for a wide range of devices and systems in the future, Desktop operating systems such as macOs or Windows are not yet scheduled."
+  echo "The macOS is a graphical OS, and as of 21 April 2022, Apple has discontinued macOS Server."
   echo
   commonWarningMessage
 }
