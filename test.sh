@@ -93,19 +93,14 @@ config='{
   ]
 }'
 
-for row in $(echo "${config}" | jq -r '.dependencies[] | @base64'); do
-    _jq() {
-     echo ${row} | base64 --decode | jq -r "${1}"
-    }
-    
-   echo $(_jq '.name')
-   
+getJQPropertyValue() {
+  echo "${1}" | base64 --decode | jq -r "${2}"
+}
 
-    # name=$(echo "$conf" | jq -r '.name')
-    # bin=$(echo "$conf" | jq -r '.bin')
-    # pkgManager=$(echo "$conf" | jq '.pkgManager')
+for dep in $(echo "${config}" | jq -r '.dependencies[] | @base64'); do
+  name=$(getJQPropertyValue "$dep" ".name")
+  bin=$(getJQPropertyValue "$dep" ".bin")
+  pkgManager=$(getJQPropertyValue "$dep" ".pkgManager")
 
-    # verifyDepsOrInstall "$os" "$name" "$bin" "$pkgManager"
-
-    # echo "[debug] name ($name), bin ($bin), pkgManager ($pkgManager)"
+  echo "$os" "$name" "$bin" "$pkgManager"
 done
