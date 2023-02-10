@@ -1016,6 +1016,8 @@ verifyDepsOrInstall() {
 
     if [[ $pkgManager =~ "null" || $pkgManagerName =~ "null" || $pkg =~ "null" ]]; then
       echo "💩 Oh no! Sorry, the installer configuration file is missing some values!"
+      echo "LOG: pkgm ($pkgManager), pkgmn ($pkgManagerName), pkg ($pkg)"
+      echo
       echo "Help us improve by reporting this issue in our discord channel https://discord.gg/fleekxyz"
       echo "Thanks a lot for your support 🙏"
       echo
@@ -1027,9 +1029,6 @@ verifyDepsOrInstall() {
       if [[ $pkgManagerName == "snap" ]]; then
         if ! hasCommand "snap"; then
           sudo apt-get install snapd
-
-          # ensure snap is in the PATH
-          source /etc/profile.d/apps-bin-path.sh
         fi
 
         if ! sudo snap install "$pkg"; then
@@ -1037,6 +1036,9 @@ verifyDepsOrInstall() {
         fi
 
         showOkMessage "Installed ($name) via snap"
+
+        # ensure snap is in the PATH and pkgs
+        source /etc/profile.d/apps-bin-path.sh
 
         return 0
       fi
