@@ -391,6 +391,10 @@ macOsUsersWarning() {
   commonWarningMessage
 }
 
+getJQPropertyValue() {
+  echo "${1}" | base64 --decode | jq -r "${2}"
+}
+
 installGit() {
   os=$(identifyOS)
 
@@ -814,6 +818,7 @@ initLetsEncrypt() {
   fi
 
   if [[ ! -e "$data_path/conf/options-ssl-nginx.conf" || ! -e "$data_path/conf/ssl-dhparams.pem" ]]; then
+    echo
     echo "🤖 Downloading recommended TLS parameters..."
     echo
 
@@ -824,7 +829,9 @@ initLetsEncrypt() {
     echo
   fi
 
+  echo
   echo "🤖 We'll now create dummy certificates for the domain $domain, be patient 🙏 please..."
+  echo
 
   path="/etc/letsencrypt/live/$domain"
   mkdir -p "$data_path/conf/live/$domain"
@@ -842,6 +849,7 @@ initLetsEncrypt() {
 
   echo
   echo "🤖 Starting Nginx, please be patient 🙏"
+  echo
 
   if ! docker-compose -f "$config_path" up --force-recreate -d nginx; then
     showErrorMessage "Oops! Failed to start nginx..."
@@ -851,6 +859,7 @@ initLetsEncrypt() {
   
   echo
   echo "🤖 Deleting dummy certificate for $domain..."
+  echo
 
   if ! docker-compose -f "$config_path" \
     run --rm --entrypoint "\
@@ -865,6 +874,7 @@ initLetsEncrypt() {
 
   echo
   echo "🤖 Requesting the Let's Encrypt certificates for $domain..."
+  echo
 
   # Enable staging mode if needed
   if [ $staging != "0" ]; then staging_arg="--staging"; fi
@@ -895,6 +905,7 @@ initLetsEncrypt() {
 
   echo
   echo "🤖 Reloading nginx ..."
+  echo
 
   docker-compose -f "$config_path" exec nginx nginx -s reload
 
@@ -955,7 +966,7 @@ verifyDepsOrInstall() {
     exitInstaller
   fi
 
-  if [[ ! "$ans" == "" ]]; then
+  if [[ "$ans" == "" ]]; then
     echo "😅 We need a Yes or a No, just to make sure you're happy to proceed."
     
     read -r -p "Press ENTER to try again..."
@@ -1353,14 +1364,12 @@ onNightlyPreference() {
     installMandatory "$dep"
   done
 
-  for conf in $(echo "$config" | jq -c '.dependencies[]'); do
-    name=$(echo "$conf" | jq -r '.name')
-    bin=$(echo "$conf" | jq -r '.bin')
-    pkgManager=$(echo "$conf" | jq '.pkgManager')
+  for dep in $(echo "${config}" | jq -r '.dependencies[] | @base64'); do
+    name=$(getJQPropertyValue "$dep" ".name")
+    bin=$(getJQPropertyValue "$dep" ".bin")
+    pkgManager=$(getJQPropertyValue "$dep" ".pkgManager")
 
     verifyDepsOrInstall "$os" "$name" "$bin" "$pkgManager"
-
-    printf "\r\n"
   done
 
   # We start by verifying if git is installed, if not request to install
@@ -1395,6 +1404,9 @@ onNightlyPreference() {
 
   # Recommend the Nightly build to speed up onboarding
   onNightlyPreference
+
+  # Add some space after the "nightly" request
+  printf "\r\n"
 
   # Optional, check if user would like to setup SSL/TLS
   setupSSLTLS
