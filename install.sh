@@ -449,6 +449,30 @@ isOSSupported() {
 
     exitInstaller
   fi
+
+  if [[ "$1" == "ubuntu" ]]; then
+    currVersion=$(lsb_release -r -s | tr -d '.')
+
+    if [[ "$currVersion" -lt "2204" ]]; then
+      echo
+      echo "👹 Oops! You'll need Ubuntu 22.04 at least."
+      echo
+
+      exitInstaller
+    fi
+  fi
+
+  if [[ "$1" == "debian" ]]; then
+    currVersion=$(lsb_release -r -s | tr -d '.')
+
+    if [[ "$currVersion" -lt "11" ]]; then
+      echo
+      echo "👹 Oops! You'll need Debian 11 at least."
+      echo
+
+      exitInstaller
+    fi
+  fi
 }
 
 identifyDistro() {
