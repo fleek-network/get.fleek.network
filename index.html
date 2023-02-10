@@ -920,6 +920,10 @@ initLetsEncrypt() {
 
     if [[ "$answerToLc" == "" || "$answerToLc" == [yY] || "$answerToLc" == [yY][eE][sS] ]]; then    
       echo
+      echo "💡 If the issues persists then it might be related to the DNS, that you might want to update."
+      echo "In most Linux Operating systems, these DNS servers are specified in the file /etc/resolv.conf"
+      echo "this file contains at least one nameserver line that defines the DNS server."
+      echo
       echo "🤖 We're going to restart the Docker Stack..."
       echo
       sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" down      
