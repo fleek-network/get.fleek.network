@@ -54,8 +54,7 @@ installationStatus=""
 declare -a dependencies=("jq")
 
 # Config (json)
-config=$(cat << "JSON"
-{
+config='{
   "dependencies": [
     {
       "name": "Yq - Cli YAML, JSON, XML, CSV",
@@ -68,10 +67,6 @@ config=$(cat << "JSON"
         "debian": {
           "pkg": "yq",
           "name": "snap"
-        },
-        "macos": {
-          "pkg": "yq",
-          "name": "homebrew"
         },
         "ubuntu": {
           "pkg": "yq",
@@ -91,10 +86,6 @@ config=$(cat << "JSON"
           "pkg": "whois",
           "name": "apt-get"
         },
-        "macos": {
-          "pkg": "whois",
-          "name": "homebrew"
-        },
         "ubuntu": {
           "pkg": "whois",
           "name": "apt-get"
@@ -112,10 +103,6 @@ config=$(cat << "JSON"
         "debian": {
           "pkg": "tldextract",
           "name": "apt-get"
-        },
-        "macos": {
-          "pkg": "tldextract",
-          "name": "homebrew"
         },
         "ubuntu": {
           "pkg": "tldextract",
@@ -135,10 +122,6 @@ config=$(cat << "JSON"
           "pkg": "dnsutils",
           "name": "apt-get"
         },
-        "macos": {
-          "pkg": "dig",
-          "name": "homebrew"
-        },
         "ubuntu": {
           "pkg": "dnsutils",
           "name": "apt-get"
@@ -146,9 +129,7 @@ config=$(cat << "JSON"
       }
     }
   ]
-}
-JSON
-)
+}'
 
 # Style utils
 txtPrefixForBold=$(tput bold)
@@ -254,6 +235,47 @@ ART
   echo "★★★★★★★★★ 🎨 ${txtPrefixForBold}Ascii art by ${txtPrefixForNormal}https://www.asciiart.eu"
 }
 
+
+asciiArtNoOSSupport() {
+# the cat and ascii art (ART, as `here tag``)
+# is intentionally positioned to the most left
+# do not change
+cat << "ART"
+.     .       .  .   . .   .   . .    +  .
+  .     .  :     .    .. :. .___---------___.
+       .  .   .    .  :.:. _".^ .^ ^.  '.. :"-_. .
+    .  :       .  .  .:../:            . .^  :.:\.
+        .   . :: +. :.:/: .   .    .        . . .:\
+ .  :    .     . _ :::/:               .  ^ .  . .:\
+  .. . .   . - : :.:./.                        .  .:\
+  .      .     . :..|:                    .  .  ^. .:|
+    .       . : : ..||        .                . . !:|
+  .     . . . ::. ::\(                           . :)/
+ .   .     : . : .:.|. ######              .#######::|
+  :.. .  :-  : .:  ::|.#######           ..########:|
+ .  .  .  ..  .  .. :\ ########          :######## :/
+  .        .+ :: : -.:\ ########       . ########.:/
+    .  .+   . . . . :.:\. #######       #######..:/
+      :: . . . . ::.:..:.\           .   .   ..:/
+   .   .   .  .. :  -::::.\.       | |     . .:/
+      .  :  .  .  .-:.":.::.\             ..:/
+ .      -.   . . . .: .:::.:.\.           .:/
+.   .   .  :      : ....::_:..:\   ___.  :/
+   .   .  .   .:. .. .  .: :.:.:\       :/
+     +   .   .   : . ::. :.:. .:.|\  .:/|
+     .         +   .  .  ...:: ..|  --.:|
+.      . . .   .  .  . ... :..:.."(  ..)"
+ .   .       .      :  .   .: ::/  .  .::\
+ART
+# 👆 ART (here tag) end positioned to the most left intentionally
+
+  echo
+  echo "👾 Alien technosignature detected around our stars 👾"
+  echo
+
+  sleep 3
+}
+
 requestAuthorizationAndExec() {
   printf -v prompt "\n🤖 %s (y/n)?" "$1"
   read -r -p "$prompt"$'\n> ' answer
@@ -343,53 +365,32 @@ showDisclaimer() {
   done
 }
 
-windowsUsersWarning() {
-  echo "⚠️ Windows is not supported! We recommend enabling ${txtPrefixForBold}Windows Subsystem Linux (WSL)${txtPrefixForNormal} Ubuntu distro."
+commonWarningMessage() {
+  echo "Otherwise, check our guides to learn how to run it yourself through Docker or natively for testing. Although, if you are serious about running a Network Node, then you'll need a dedicate machine to run the Node in the long term, which is why Linux server is the recommended and supported choice!"
   echo
   echo "If you'd like to learn more visit our documentation site at https://docs.fleek.network"
 }
 
-shouldHaveHomebrewInstalled() {
-  if ! hasCommand brew; then
-    showErrorMessage "Oops! Homebrew package manager for MacOS is required but not found!"
-
-    printf "\r\n"
-
-    requestAuthorizationAndExec \
-      "We can start the installation process for you, are you happy to proceed" \
-      "You need to have Homebrew package manager installed on MacOS, as we recommend it to install applications such as Git. You can install it on your own by visiting the Git website https://git-scm.com/ before proceeding..." \
-      installHomebrew
-
-    if [[ "$?" = 1 ]]; then
-      showErrorMessage "Oops! Failed to install Homebrew."
-
-      exitInstaller
-    fi
-  fi
-
-  showOkMessage "Homebrew package manager is installed!"
+windowsUsersWarning() {
+  echo "⚠️ Windows is not supported by our installer! We recommend linux Server edition, such as Ubuntu or Debian."
+  echo "If not, enable ${txtPrefixForBold}Windows Subsystem Linux (WSL)${txtPrefixForNormal} and install Ubuntu or Debian."
+  echo
+  commonWarningMessage
 }
 
-installHomebrew() {
-  os=$(identifyOS)
-
-  if [[ "$os" != "mac" ]]; then
-    showErrorMessage "Oops! For some odd reason this function was called from the wrong context, as it should only be called for MacOS!"    
-
-    exitInstaller
-  fi  
-
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+macOsUsersWarning() {
+  asciiArtNoOSSupport
+  echo "⚠️ MacOS is not supported by our installer! We recommend linux Server edition, such as Ubuntu or Debian."
+  echo
+  echo "The macOS is a graphical OS, and as of 21 April 2022, Apple has discontinued macOS Server. While we hope to provide support for a wide range of devices and systems in the future, Desktop operating systems such as macOs or Windows are not yet scheduled."
+  echo
+  commonWarningMessage
 }
 
 installGit() {
   os=$(identifyOS)
 
-  if [[ "$os" == "mac" ]]; then
-    shouldHaveHomebrewInstalled
-
-    brew install git
-  elif [[ "$os" == "linux" ]]; then
+  if [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
 
     if [[ "$distro" == "ubuntu" ]] || [[ "$distro" == "debian" ]]; then
@@ -421,7 +422,11 @@ identifyOS() {
 
   osToLc=$(toLowerCase "$os")
 
-  if [[ "$osToLc" == "cygwin" ]] || [[ "$osToLc" == "mingw" ]]; then
+  echo "$osToLc"
+}
+
+isOSSupported() {
+  if [[ "$1" == "cygwin" ]] || [[ "$1" == "mingw" ]]; then
     printf "\n"
 
     windowsUsersWarning
@@ -429,7 +434,13 @@ identifyOS() {
     exitInstaller
   fi
 
-  echo "$osToLc"
+  if [[ "$1" == "mac" ]]; then
+    printf "\n"
+
+    macOsUsersWarning
+
+    exitInstaller
+  fi
 }
 
 identifyDistro() {
@@ -498,11 +509,7 @@ gitHealthCheck() {
 installDocker() {
   os=$(identifyOS)
 
-  if [[ "$os" == "mac" ]]; then
-    shouldHaveHomebrewInstalled
-
-    brew install docker
-  elif [[ "$os" == "linux" ]]; then
+  if [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
 
     if [[ "$distro" == "ubuntu" ]]; then
@@ -587,7 +594,7 @@ installDocker() {
         read -rp "Press ENTER to continue... "
       fi
     else
-      showErrorMessage "Oops! Your operating system is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
+      showErrorMessage "Oops! Your Linux distro is not supported yet by our install script, you can also contribute and help us provide support by opening a PR in https://github.com/fleek-network/get.fleek.network, otherwise to install on your own read our guides at https://docs.fleek.network"
 
       exitInstaller
     fi
@@ -901,9 +908,7 @@ installMandatory() {
     exitInstaller
   fi
 
-  if [[ "$os" == "mac" ]]; then
-    ! brew install "$1" && exitInstaller
-  elif [[ "$os" == "linux" ]]; then
+  if [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
     if [[ "$distro" == "ubuntu" ]] || [[ "$distro" == "debian" ]]; then
       if ! sudo apt update || ! sudo apt-get install "$1"; then
@@ -1326,6 +1331,8 @@ onNightlyPreference() {
 
   # Identity the OS
   os=$(identifyOS)
+
+  isOSSupported "$os"
 
   # Show disclaimer
   showDisclaimer
