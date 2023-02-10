@@ -949,13 +949,19 @@ initLetsEncrypt() {
 installMandatory() {
   hasCommand "$1" && return 0
 
-  printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y, or press ENTER to continue. Otherwise, N to exit!" "$1"
-  read -r -p "$prompt"$'\n> ' answer
+  printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y to continue. Otherwise, N to exit!" "$1"
+  while read -rp "$prompt"$'\n> ' answer; do
+    data=$(confirm "$answer")
 
-  if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
-    showErrorMessage "Oops! The $1 is required to be installed."
-    exitInstaller
-  fi
+    [[ ! $data ]] && continue
+
+    if [[ "$data" -eq 1 ]]; then
+      showErrorMessage "Oops! The $1 is required to be installed."
+      exitInstaller
+    elif [[ "$data" -eq 0 ]]; then
+      break
+    fi
+  done
 
   if [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
@@ -993,12 +999,18 @@ verifyDepsOrInstall() {
   hasCommand "$bin" && return 0
 
   printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y to continue. Otherwise, N to exit!" "$bin"
-  read -r -p "$prompt"$'\n> ' ans
+  while read -rp "$prompt"$'\n> ' answer; do
+    data=$(confirm "$answer")
 
-  if [[ "$ans" == [nN] || "$ans" == [nN][oO] ]]; then
-    showErrorMessage "Oops! The $bin is required to be installed."
-    exitInstaller
-  fi
+    [[ ! $data ]] && continue
+
+    if [[ "$data" -eq 1 ]]; then
+      showErrorMessage "Oops! The $1 is required to be installed."
+      exitInstaller
+    elif [[ "$data" -eq 0 ]]; then
+      break
+    fi
+  done
 
   if [[ "$ans" == "" ]]; then
     echo "😅 We need a Yes or a No, just to make sure you're happy to proceed."
