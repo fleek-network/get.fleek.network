@@ -9,19 +9,19 @@
 # Quick install: `curl https://get.fleek.network | bash`
 #
 # This script automates the process illustrated in our guide "Running a Node in a Docker container"
-# advanced users might find better to follow the instructions in the guide
-# if that's your preference, go ahead and check our guides https://docs.fleek.network
+# advanced users might find it better to follow the instructions in the guide
+# If that's your preference, go ahead and check our guides https://docs.fleek.network
 #
 # For the users happy to have the script assist in the installation process of Fleek Network
 # and the required dependencies, run the script at your own risk. Part of the project will
-# verify if certain dependencies are installed, or needed but it won't try to customise or
+# verify if specific dependencies are installed or needed, but it won't try to customise or
 # take into consideration your custom environment. If you have a custom environment, then
-# is best to follow the instructions providing in our guide, as other wise risk changing
+# is best to follow the instructions in our guide, as otherwise risk changing
 # or overriding your custom setup.
 #
-# This script will:
+# Ideally, the script will:
 # - Check if the system has enough disk space and memory, otherwise warn the user
-# - Verify is user is in Docker as Docker in Docker not supported
+# - Verify if the user is in Docker, as Docker in Docker is not supported
 # - Verify if Git is installed, if not install it
 # - It'll do a quick health check to confirm Git is installed correctly 
 # - Verify if Docker is installed, if not install it
@@ -30,11 +30,11 @@
 #   e.g., `$HOME/fleek-network/ursa`
 # - Pull the `ursa` project repository to the preferred target directory via HTTPS
 #   instead of SSH for simplicity
-# - Optionally, assist on setting up and securing domain name via SSL/TLS
+# - Optionally, assist in setting up and securing domain name via SSL/TLS
 # - Run the Docker stack
 # - Do a health check to confirm the Fleek Network Node is running
 #
-# Found an issue? Report it here: https://github.com/fleek-network/get.fleek.network
+# Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
 
 # Default
 defaultUrsaHttpsRespository="https://github.com/fleek-network/ursa.git"
