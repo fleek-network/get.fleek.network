@@ -303,7 +303,7 @@ onInterruption() {
   # Only show warning message if install NOT complete
   if [[ "$installationStatus" != "$statusComplete" ]]; then
     printf "\r\n"
-    echo "😬 Ouch! The installation was interrupted and there might be applications or dependencies lying around! E.g., if the installation has already cloned the Ursa repository to your selected path, then you should clear it manually, etc."
+    echo "😬 Ouch! The installation was interrupted, and applications or dependencies might be lying around! E.g., if the installation has already cloned the Ursa repository to your selected path, than you should clear it manually, etc."
     echo
     echo "If you're finding issues and need support, share your experience in our Discord at https://discord.gg/fleekxyz"
 
@@ -338,11 +338,11 @@ showDisclaimer() {
   printf "\r\n\n"
   echo "⭐️ The assisted installer follows the steps in our guide ${txtPrefixForBold}Running a Node in a Docker container${txtPrefixForNormal}."
   echo
-  echo "If you are happy to have the script assist you in the installaton, there's a certain level of trust that you have to consider, as it instruct commands in your behalf, such as like installing Git, Docker or other third-party related dependencies. With that considered, we'll ask when dependencies are missing and if happy to proceed with the installation, before commands are executed."
+  echo "If you are happy to have the script assist you in the installation, there's a certain level of trust that you have to consider. It instructs commands on your behalf, such as installing Git, Docker or other third-party-related dependencies. With that considered, we'll ask when dependencies are missing and if you are happy to proceed with the installation before executing any commands."
   echo
   echo "Our script source is open to everybody and can be verified at https://github.com/fleek-network/get.fleek.network, give it a look 👀."
   echo
-  echo "🤓 One more thing, your system ${txtPrefixForBold}User ${txtPrefixForNormal}should have ${txtPrefixForBold}write permissions ${txtPrefixForNormal}to install applications. Also, some advanced users might find better to follow the documentation in our official guides, or borrow from the installation script source code."
+  echo "🤓 One more thing, your system ${txtPrefixForBold}User ${txtPrefixForNormal}should have ${txtPrefixForBold}write permissions ${txtPrefixForNormal}to install applications. Also, some advanced users might find it better to follow the documentation in our official guides or borrow from the installation script source code."
   echo "If that's your preference, then go ahead and check our guides at https://docs.fleek.network, or our repository https://github.com/fleek-network/get.fleek.network"
 
   printf -v prompt "\n\n🤖 Are you happy to continue (y/n)?\nType Y to continue. Otherwise, N to quit!"
@@ -353,7 +353,7 @@ showDisclaimer() {
 
     if [[ "$data" -eq 1 ]]; then
       echo
-      echo "🦖 The installation assistant terminates here, as you're required to accept in order to have the assisted installer guide you. If you've changed your mind, try again!"
+      echo "🦖 The installation assistant terminates here, as you must accept the agreement to have the assisted installer guide you. If you've changed your mind, try again!"
       echo
       echo "Otherwise, if you'd like to learn a bit more visit our website at https://fleek.network"
       echo
@@ -369,7 +369,7 @@ commonWarningMessage() {
   echo "While we hope to provide support for a wide range of devices and systems in the future, there are countless theories and reported sightings of life from other galaxies that we'll visit first..."
   echo "Information could be declassified by officials as a means of preparing the public for the impending disclosure of the Node presence on Earth, so follow us on Twitter to stay informed https://twitter.com/fleek_net"
   echo
-  echo "In any case, check our guides to learn how to run it yourself through Docker or natively for testing. Although, if you are serious about running a Network Node, then you'll need a dedicate machine to run the Node in the long term, which is why Linux server is the recommended and supported choice!"
+  echo "Check our guides to learn how to run it yourself through Docker or natively for testing. Although, if you are serious about running a Network Node, then you'll need a dedicated machine to run the Node in the long term, which is why a Linux server is the recommended and supported choice!"
   echo
   echo "If you'd like to learn more visit our documentation site at https://docs.fleek.network"
 }
@@ -491,7 +491,7 @@ checkSystemHasRecommendedResources() {
   partDiskSpace=$(df --output=avail -B 1 "$PWD" |tail -n 1)
 
   if [[ ("$mem" -lt "$defaultMinMemoryBytesRequired") ]] || [[ ( "$partDiskSpace" -lt "$defaultMinDiskSpaceBytesRequired" ) ]]; then
-    echo "😬 Oh no! We're afraid that you need at least 8 GB of RAM and 10 GB of available disk space."
+    echo "😬 Oh no! We're afraid you need at least 8 GB of RAM and 10 GB of available disk space."
     echo
     printf -v prompt "\n\n🤖 Are you sure you want to continue (y/n)?"
     read -r -p "$prompt"$'\n> ' answer
@@ -500,7 +500,7 @@ checkSystemHasRecommendedResources() {
       exitInstaller
     fi
 
-    echo "😅 Alright, let's try that but your system definitely seem to be below our recommendations, don't expect it to work correctly..."
+    echo "😅 Alright, let's try that, but your system is below our recommendations, so don't expect it to work correctly..."
 
     sleep 5
 
@@ -619,8 +619,8 @@ installDocker() {
         echo "✋ We just found that you need to reboot!"
         echo "The reason is that you have a pending kernel upgrade as your system is $currentKernel and pacman's query has $latestKernel"
         echo
-        echo "If docker fails to start, then is very likely that is related to this."
-        echo "Our suggestion is to reboot your system first, and only afterwards run the installer."
+        echo "If docker fails to start, then it is very likely that it is related to this."
+        echo "We suggest rebooting your system first and only afterwards running the installer."
         echo
 
         read -rp "Press ENTER to continue... "
@@ -667,9 +667,7 @@ dockerHealthCheck() {
   res=$(docker run -i --log-driver=none -a stdout hello-world)
 
   if ! echo "$res" | grep "$expectedMessage" &> /dev/null; then
-    showErrorMessage "Oops! The docker daemon should create a container for the hello-world image \
-    and output a message, but failed! Check if you are connected to the internet, docker is installed \
-    correctly, or the docker hub might be down, etc."
+    showErrorMessage "Oops! The docker daemon should create a container for the hello-world image and output a message, but it failed! Check if your internet connection, docker installation, or it might be that the docker hub might be down, etc."
 
     exitInstaller
   fi
@@ -746,10 +744,10 @@ showDockerStackLog() {
   echo
   echo "🥳 Great! We have ${txtPrefixForBold}completed${txtPrefixForNormal} the installation!"
   echo
-  echo "The Stack should be running now and you can show or hide the log output at anytime."
+  echo "The Stack should be running now, and you can show or hide the log output anytime."
   echo
   echo "Our Stack logs can be quite verbose, as it shows WARNINGS, INFO, ERRORS, etc."
-  echo "It's important to understand what they mean by simply reading our Node Health-check guide"
+  echo "It's essential to understand what they mean by simply reading our Node Health-check guide"
   echo "https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
   echo
   echo "Here are some handy commands to show or hide the logs"
@@ -1096,7 +1094,7 @@ verifyUserHasDomain() {
   if [[ ! "$ans" == "" && "$ans" == [nN] || "$ans" == [nN][oO] ]]; then
     printf "\n"
 
-    showErrorMessage "Oops! You need a domain name and have the DNS A Record type answer with the server IP address. If you'd like to learn more about it check our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+    showErrorMessage "Oops! It would be best to have a domain name and the DNS A Record type answer with the server IP address. If you'd like to learn more about it, check our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
     read -r -p "Press ENTER to continue and try again..."
 
@@ -1277,7 +1275,7 @@ replaceNginxConfFileForHttps() {
 setupSSLTLS() {
   echo "⚠️ You're ${txtPrefixForBold}required ${txtPrefixForNormal}to have a Domain name point to your server IP address."
   echo
-  echo "Visit your domain name registrar's dashboard, or create a new domain, update the A record to have the hostname answer with the server IP address!"
+  echo "Visit your domain name registrar's dashboard, create a new domain, and update the A record to have the hostname answer with the server IP address!"
   echo
   # The extra white space between the 🫡 and text is intentional for spacing
   echo "🫡  Make sure you complete this step before proceeding, as we'll verify it!"
