@@ -200,8 +200,6 @@ launchAsciiArt() {
 # do not change
 cat << "ART"
 ★★★★★★★★★
-★★★★★★★★★
-★★★★★★★★★
 
 ⚡️ The Fleek Network team presents ⚡️
 
@@ -223,6 +221,8 @@ cat << "ART"
           `-._/._/
 ART
 # 👆 ART (here tag) end positioned to the most left intentionally
+
+  sleep 2
 
   echo
   echo "⭐️ Ursa, a Decentralized Content Delivery Network (DCDN) ⭐️"
