@@ -29,7 +29,7 @@ If you have any questions or feedback, find us on [Discord](https://discord.gg/f
 Open a new terminal window, and connect to a [supported](https://docs.fleek.network/guides/Network%20nodes/how-to-install-a-node-easily-with-the-assisted-installer#which-operating-systems-are-supported) Linux server.
 
 ```
-curl https://get.fleek.network | bash
+curl https://get.fleek.network -sSf | sh
 ```
 
 Learn more about the assisted installer [here](https://docs.fleek.network/guides/Network%20nodes/how-to-install-a-node-easily-with-the-assisted-installer)
