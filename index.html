@@ -327,6 +327,10 @@ showErrorMessage() {
   printf "\r\n🚩 %s\n" "$1" >&2
 }
 
+showPoopMessage() {
+  printf "\r\n💩 %s\n" "$1" >&2
+}
+
 showHintMessage() {
   printf "\r\n💡 %s\n" "$1"  
 }
@@ -1109,7 +1113,7 @@ verifyUserHasDomain() {
       break
     fi
 
-    echo "💩 Uh oh! Provide a valid domain name, please..."
+    showPoopMessage "Uh oh! Provide a valid domain name, please..."
   done
 
   # Ip address handling (start)
@@ -1125,7 +1129,7 @@ verifyUserHasDomain() {
       break
     fi
 
-    echo "💩 Uh oh! Provide a valid ip address, please..."
+    showPoopMessage "Uh oh! Provide a valid ip address, please..."
   done
 
   # Declare detected ip address as default server ip address
@@ -1154,7 +1158,7 @@ verifyUserHasDomain() {
       break
     fi
 
-    echo "💩 Uh oh! Provide a valid email address, please..."
+    showPoopMessage "Uh oh! Provide a valid email address, please..."
   done
 
   printf -v prompt "\n🤖 Here are the details you have provided, make sure the information is correct.\n\nDomain name:      %s\nIP Address:     %s\nEmail address:      %s\n\nIs this correct (y/n)?\nType Y or Yes to confirm. Otherwise, N or No to make changes!" "$userDomainName" "$serverIpAddress" "$emailAddress"
