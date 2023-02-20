@@ -97,6 +97,12 @@ transl["check_sys_has_recommended_resources_oh_no_need_at_least"]="Oh no! We're 
 transl["check_sys_has_recommended_resources_warning_below_recommendation"]="Alright, let's try that, but your system is below our recommendations, so don't expect it to work correctly..."
 transl["check_sys_has_recommended_resources_great_enought_resources"]="Great! Your system has enough resources (disk space and memory)"
 
+transl["check_if_git_installed_oops"]="Oops! Git is required and was not found!"
+transl["check_if_git_installed_we_can_start_install"]="We can start the installation process for you, are you happy to proceed"
+transl["check_if_git_installed_need_git_installed"]="You need to have git installed to clone the Fleek Network Ursa repository."
+transl["check_if_git_installed_oops_failed_install"]="Oops! Failed to install git."
+transl["check_if_git_installed_success_install"]="Nice! Git is installed!"
+
 # Installer state
 statusComplete="complete"
 installationStatus=""
@@ -568,22 +574,22 @@ checkSystemHasRecommendedResources() {
 
 checkIfGitInstalled() {
   if ! hasCommand git; then
-    echo "😅 Oops! Git is required and was not found!"
+    echo "😅 ${transl[check_if_git_installed_oops]}"
     echo
 
     requestAuthorizationAndExec \
-      "We can start the installation process for you, are you happy to proceed" \
-      "You need to have git installed to clone the Fleek Network Ursa repository." \
+      "${transl[check_if_git_installed_we_can_start_install]}" \
+      "${transl[check_if_git_installed_need_git_installed]}" \
       installGit
 
     if [[ "$?" = 1 ]]; then
-      showErrorMessage "Oops! Failed to install git."
+      showErrorMessage "${transl[check_if_git_installed_oops_failed_install]}"
 
       exitInstaller
     fi
   fi
 
-  showOkMessage "Nice! Git is installed!"
+  showOkMessage "${transl[check_if_git_installed_success_install]}"
 }
 
 gitHealthCheck() {
