@@ -77,6 +77,12 @@ transl["common_warning_msg_information_declassified"]="Information could be decl
 transl["common_warning_msg_check_guides"]="Check our guides to learn how to run it yourself through Docker or natively for testing. Although, if you are serious about running a Network Node, then you'll need a dedicated machine to run the Node in the long term, which is why a Linux server is the recommended and supported choice!"
 transl["common_warning_msg_visit_docs"]="If you'd like to learn more visit our documentation site at $defaultFleekNetworkDocsWebsite"
 
+transl["windows_users_warning_not_supported"]="Windows is not supported by our installer! We recommend linux Server edition, such as Ubuntu or Debian."
+transl["windows_users_warning_if_not_enable_wsl"]="If not, enable ${txtPrefixForBold}Windows Subsystem Linux (WSL)${txtPrefixForNormal} and install Ubuntu or Debian."
+
+transl["macos_users_warning_not_supported"]="MacOS is not supported by our installer! We recommend linux Server edition, such as Ubuntu or Debian."
+transl["macos_users_warning_has_discontinued"]="The macOS is a graphical OS, and as of 21 April 2022, Apple has discontinued macOS Server."
+
 # Installer state
 statusComplete="complete"
 installationStatus=""
@@ -412,17 +418,17 @@ commonWarningMessage() {
 
 windowsUsersWarning() {
   asciiArtNoOSSupport
-  echo "⚠️ Windows is not supported by our installer! We recommend linux Server edition, such as Ubuntu or Debian."
-  echo "If not, enable ${txtPrefixForBold}Windows Subsystem Linux (WSL)${txtPrefixForNormal} and install Ubuntu or Debian."
+  echo "⚠️ ${transl[windows_users_warning_not_supported]}"
+  echo "${transl[windows_users_warning_if_not_enable_wsl]}"
   echo
   commonWarningMessage
 }
 
 macOsUsersWarning() {
   asciiArtNoOSSupport
-  echo "⚠️ MacOS is not supported by our installer! We recommend linux Server edition, such as Ubuntu or Debian."
+  echo "⚠️ ${transl[macos_users_warning_not_supported]}"
   echo
-  echo "The macOS is a graphical OS, and as of 21 April 2022, Apple has discontinued macOS Server."
+  echo "${transl[macos_users_warning_has_discontinued]}"
   echo
   commonWarningMessage
 }
