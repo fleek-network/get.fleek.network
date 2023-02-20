@@ -42,7 +42,9 @@
 
 # Default
 defaultFleekNetworkWebsite="https://fleek.network"
+defaultFleekNetworkDocsWebsite="https://docs.fleek.network"
 defaultDiscordUrl="https://discord.gg/fleekxyz"
+defaultFleekNetworkTwitterUrl="https://twitter.com/fleek_net"
 defaultGetFleekNetworkRepository="https://github.com/fleek-network/get.fleek.network"
 defaultUrsaHttpsRespository="https://github.com/fleek-network/ursa.git"
 defaultUrsaPath="$HOME/fleek-network/ursa"
@@ -64,11 +66,16 @@ transl["show_disclaimer_title"]="The assisted installer follows the steps in our
 transl["show_disclaimer_if_happy"]="If you are happy to have the script assist you in the installation, there's a certain level of trust that you have to consider. It instructs commands on your behalf, such as installing Git, Docker or other third-party-related dependencies. With that considered, we'll ask when dependencies are missing and if you are happy to proceed with the installation before executing any commands."
 transl["show_disclaimer_script_repository"]="Our script source is open to everybody and can be verified at $defaultGetFleekNetworkRepository, give it a look"
 transl["show_disclaimer_more"]="One more thing, your system ${txtPrefixForBold}User ${txtPrefixForNormal}should have ${txtPrefixForBold}write permissions ${txtPrefixForNormal}to install applications. Also, some advanced users might find it better to follow the documentation in our official guides or borrow from the installation script source code."
-transl["show_disclaimer_guides"]="If that's your preference, then go ahead and check our guides at https://docs.fleek.network, or our repository $defaultGetFleekNetworkRepository"
+transl["show_disclaimer_guides"]="If that's your preference, then go ahead and check our guides at $defaultFleekNetworkDocsWebsite, or our repository $defaultGetFleekNetworkRepository"
 transl["show_disclaimer_should_continue"]="Are you happy to continue (y/n)"
 transl["show_disclaimer_should_yes_or_no_quit"]="Type Y to continue. Otherwise, N to quit!"
 transl["show_disclaimer_terminates_here"]="The installation assistant terminates here, as you must accept the agreement to have the assisted installer guide you. If you've changed your mind, try again!"
 transl["show_disclaimer_terminates_otherwise"]="Otherwise, if you'd like to learn a bit more visit our website at $defaultFleekNetworkWebsite"
+
+transl["common_warning_msg_try_support"]="While we hope to provide support for a wide range of devices and systems in the future, there are countless theories and reported sightings of life from other galaxies that we'll visit first..."
+transl["common_warning_msg_information_declassified"]="Information could be declassified by officials as a means of preparing the public for the impending disclosure of the Node presence on Earth, so follow us on Twitter to stay informed $defaultFleekNetworkTwitterUrl"
+transl["common_warning_msg_check_guides"]="Check our guides to learn how to run it yourself through Docker or natively for testing. Although, if you are serious about running a Network Node, then you'll need a dedicated machine to run the Node in the long term, which is why a Linux server is the recommended and supported choice!"
+transl["common_warning_msg_visit_docs"]="If you'd like to learn more visit our documentation site at $defaultFleekNetworkDocsWebsite"
 
 # Installer state
 statusComplete="complete"
@@ -395,12 +402,12 @@ showDisclaimer() {
 }
 
 commonWarningMessage() {
-  echo "While we hope to provide support for a wide range of devices and systems in the future, there are countless theories and reported sightings of life from other galaxies that we'll visit first..."
-  echo "Information could be declassified by officials as a means of preparing the public for the impending disclosure of the Node presence on Earth, so follow us on Twitter to stay informed https://twitter.com/fleek_net"
+  echo "${transl[common_warning_msg_try_support]}"
+  echo "${transl[common_warning_msg_information_declassified]}"
   echo
-  echo "Check our guides to learn how to run it yourself through Docker or natively for testing. Although, if you are serious about running a Network Node, then you'll need a dedicated machine to run the Node in the long term, which is why a Linux server is the recommended and supported choice!"
+  echo "${transl[common_warning_msg_check_guides]}"
   echo
-  echo "If you'd like to learn more visit our documentation site at https://docs.fleek.network"
+  echo "${transl[common_warning_msg_visit_docs]}"
 }
 
 windowsUsersWarning() {
