@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - chore/deploy-assisted-installer
 
   workflow_dispatch:
 
@@ -20,7 +19,7 @@ jobs:
         # Intentional: Do not modify
         run: |
           mkdir build
-          cp install.sh ./build/index.html
+          cp install ./build/index.html
           cp ./static/CNAME ./build
           chmod 755 ./build/index.html
 
