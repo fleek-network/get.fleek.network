@@ -642,6 +642,11 @@ installDocker() {
 }
 
 checkIfDockerInstalled() {
+  # TODO: docker-compose is going to be deprecated
+  # but before moving to `docker compose` as subcommand
+  # is required to check the user docker version and also
+  # check if docker compose is available. Some users are still
+  # using legacy e.g., preinstalled docker or archlinux, etc
   if ! hasCommand docker || ! hasCommand docker-compose; then
     printf "😅 Oops! Docker is required and was not found!\n"
 
@@ -1313,9 +1318,18 @@ setupSSLTLS() {
   echo
 
   # start stack in bg, as lets encrypt will need the nginx to validate
-  COMPOSE_DOCKER_CLI_BUILD=1 sudo docker compose -f "$defaultDockerComposeYmlRelativePath" up -d
+  COMPOSE_DOCKER_CLI_BUILD=1 sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" up -d
 
   # TODO: add health check in the docker compose file
+
+  # Health check
+  statusCode=$(curl --write-out "%{http_code}" --silent --output /dev/null http://"$userDomainName"/ping)
+
+  if [[ "$statusCode" -ne 200 ]]; then
+    showPoopMessage "Uh oh! Can't seem to communicate with the reverse proxy. If you have a firewall, it allows web traffic on port 80 (HTTP) and port 443 (HTTPS)"
+
+    read -r -p "😅 It's very likely that the Let's Encrypt step will fail, if you decide to proceed! Press ENTER to continue..."
+  fi
 
   if ! initLetsEncrypt "$emailAddress" "$userDomainName"; then
     exitInstaller
