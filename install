@@ -41,6 +41,9 @@
 (( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
 
 # Default
+defaultFleekNetworkWebsite="https://fleek.network"
+defaultDiscordUrl="https://discord.gg/fleekxyz"
+defaultGetFleekNetworkRepository="https://github.com/fleek-network/get.fleek.network"
 defaultUrsaHttpsRespository="https://github.com/fleek-network/ursa.git"
 defaultUrsaPath="$HOME/fleek-network/ursa"
 defaultUrsaNightlyImage="ghcr.io/fleek-network/ursa:nightly"
@@ -48,6 +51,24 @@ defaultDockerFullNodeRelativePath="./docker/full-node"
 defaultDockerComposeYmlRelativePath="$defaultDockerFullNodeRelativePath/docker-compose.yml"
 defaultMinMemoryBytesRequired=8000000
 defaultMinDiskSpaceBytesRequired=10000000
+
+# Localization
+declare -a transl=()
+
+transl["ascii_art_no_os_support_alien_technosignature"]="Alien technosignature detected around our stars"
+
+transl["on_interruption_ouch_error"]="Ouch! The installation was interrupted, and applications or dependencies might be lying around! E.g., if the installation has already cloned the Ursa repository to your selected path, than you should clear it manually, etc."
+transl["on_interruption_if_require_support"]="If you're finding issues and need support, share your experience in our Discord at $defaultDiscordUrl"
+
+transl["show_disclaimer_title"]="The assisted installer follows the steps in our guide ${txtPrefixForBold}Running a Node in a Docker container${txtPrefixForNormal}."
+transl["show_disclaimer_if_happy"]="If you are happy to have the script assist you in the installation, there's a certain level of trust that you have to consider. It instructs commands on your behalf, such as installing Git, Docker or other third-party-related dependencies. With that considered, we'll ask when dependencies are missing and if you are happy to proceed with the installation before executing any commands."
+transl["show_disclaimer_script_repository"]="Our script source is open to everybody and can be verified at $defaultGetFleekNetworkRepository, give it a look"
+transl["show_disclaimer_more"]="One more thing, your system ${txtPrefixForBold}User ${txtPrefixForNormal}should have ${txtPrefixForBold}write permissions ${txtPrefixForNormal}to install applications. Also, some advanced users might find it better to follow the documentation in our official guides or borrow from the installation script source code."
+transl["show_disclaimer_guides"]="If that's your preference, then go ahead and check our guides at https://docs.fleek.network, or our repository $defaultGetFleekNetworkRepository"
+transl["show_disclaimer_should_continue"]="Are you happy to continue (y/n)"
+transl["show_disclaimer_should_yes_or_no_quit"]="Type Y to continue. Otherwise, N to quit!"
+transl["show_disclaimer_terminates_here"]="The installation assistant terminates here, as you must accept the agreement to have the assisted installer guide you. If you've changed your mind, try again!"
+transl["show_disclaimer_terminates_otherwise"]="Otherwise, if you'd like to learn a bit more visit our website at $defaultFleekNetworkWebsite"
 
 # Installer state
 statusComplete="complete"
@@ -274,7 +295,7 @@ ART
 # 👆 ART (here tag) end positioned to the most left intentionally
 
   echo
-  echo "👾 Alien technosignature detected around our stars 👾"
+  echo "👾 ${transl[ascii_art_no_os_support_alien_technosignature]} 👾"
   echo
 
   sleep 3
@@ -307,9 +328,9 @@ onInterruption() {
   # Only show warning message if install NOT complete
   if [[ "$installationStatus" != "$statusComplete" ]]; then
     printf "\r\n"
-    echo "😬 Ouch! The installation was interrupted, and applications or dependencies might be lying around! E.g., if the installation has already cloned the Ursa repository to your selected path, than you should clear it manually, etc."
+    echo "😬 ${transl[on_interruption_ouch_error]}"
     echo
-    echo "If you're finding issues and need support, share your experience in our Discord at https://discord.gg/fleekxyz"
+    echo "${transl["on_interruption_if_require_support"]}"
 
     onExitInstallerTodos
     exit 1
@@ -344,16 +365,16 @@ showDisclaimer() {
   launchAsciiArt
 
   printf "\r\n\n"
-  echo "⭐️ The assisted installer follows the steps in our guide ${txtPrefixForBold}Running a Node in a Docker container${txtPrefixForNormal}."
+  echo "⭐️ ${transl[show_disclaimer_title]}"
   echo
-  echo "If you are happy to have the script assist you in the installation, there's a certain level of trust that you have to consider. It instructs commands on your behalf, such as installing Git, Docker or other third-party-related dependencies. With that considered, we'll ask when dependencies are missing and if you are happy to proceed with the installation before executing any commands."
+  echo "${transl[show_disclaimer_if_happy]}"
   echo
-  echo "Our script source is open to everybody and can be verified at https://github.com/fleek-network/get.fleek.network, give it a look 👀."
+  echo "${transl[show_disclaimer_script_repository]} 👀."
   echo
-  echo "🤓 One more thing, your system ${txtPrefixForBold}User ${txtPrefixForNormal}should have ${txtPrefixForBold}write permissions ${txtPrefixForNormal}to install applications. Also, some advanced users might find it better to follow the documentation in our official guides or borrow from the installation script source code."
-  echo "If that's your preference, then go ahead and check our guides at https://docs.fleek.network, or our repository https://github.com/fleek-network/get.fleek.network"
+  echo "🤓 ${transl[show_disclaimer_more]}"
+  echo "${transl[show_disclaimer_guides]}"
 
-  printf -v prompt "\n\n🤖 Are you happy to continue (y/n)?\nType Y to continue. Otherwise, N to quit!"
+  printf -v prompt "\n\n🤖 %s?\n%s" "${transl[show_disclaimer_should_continue]}" "${transl[show_disclaimer_should_yes_or_no_quit]}"
   while read -rp "$prompt"$'\n> ' ans; do
     data=$(confirm "$ans")
 
@@ -361,9 +382,9 @@ showDisclaimer() {
 
     if [[ "$data" -eq 1 ]]; then
       echo
-      echo "🦖 The installation assistant terminates here, as you must accept the agreement to have the assisted installer guide you. If you've changed your mind, try again!"
+      echo "🦖 ${transl[show_disclaimer_terminates_here]}"
       echo
-      echo "Otherwise, if you'd like to learn a bit more visit our website at https://fleek.network"
+      echo "${transl[show_disclaimer_terminates_otherwise]}"
       echo
 
       exitInstaller
