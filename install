@@ -41,6 +41,7 @@
 (( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
 
 # Default
+defaultGetFleekNetworkUrl="https://get.fleek.network"
 defaultFleekNetworkWebsite="https://fleek.network"
 defaultFleekNetworkDocsWebsite="https://docs.fleek.network"
 defaultDiscordUrl="https://discord.gg/fleekxyz"
@@ -57,9 +58,14 @@ defaultMinDiskSpaceBytesRequired=10000000
 # Localization
 declare -a transl=()
 
+transl["common_press_enter_continue"]="Press ENTER to continue"
 transl["common_prompt_yes_as_y"]="y"
 transl["common_prompt_no_as_n"]="n"
 transl["common_prompt_are_you_sure_continue_y_or_n"]="Are you sure you want to continue (${transl[common_prompt_yes_as_y]}/${transl[common_prompt_no_as_n]})"
+transl["common_oops_linux_distro_not_supported"]="Oops! Your Linux distro is not supported yet by our install script, you can also contribute and help us provide support by opening a PR in $defaultGetFleekNetworkUrl, otherwise to install on your own read our guides at $defaultFleekNetworkDocsWebsite"
+transl["common_oops_os_not_supported"]="Oops! Your operating system is not supported yet, to install on your own read our guides at $defaultFleekNetworkDocsWebsite"
+
+
 
 transl["ascii_art_no_os_support_alien_technosignature"]="Alien technosignature detected around our stars"
 
@@ -102,6 +108,13 @@ transl["check_if_git_installed_we_can_start_install"]="We can start the installa
 transl["check_if_git_installed_need_git_installed"]="You need to have git installed to clone the Fleek Network Ursa repository."
 transl["check_if_git_installed_oops_failed_install"]="Oops! Failed to install git."
 transl["check_if_git_installed_success_install"]="Nice! Git is installed!"
+
+transl["git_health_check_oops_odd_reason"]="Oops! For some odd reason, git doesn't seem to be installed!"
+
+transl["install_docker_need_reboot"]="We just found that you need to reboot!"
+transl["install_docker_need_reboot_reason"]="The reason is that you have a pending kernel upgrade as your system is $currentKernel and pacman's query has $latestKernel"
+transl["install_docker_need_reboot_if_failure"]="If docker fails to start, then it is very likely that it is related to this."
+transl["install_docker_suggest_rebooting"]="We suggest rebooting your system first and only afterwards running the installer."
 
 # Installer state
 statusComplete="complete"
@@ -594,7 +607,7 @@ checkIfGitInstalled() {
 
 gitHealthCheck() {
   if ! hasCommand git; then
-    showErrorMessage "Oops! For some odd reason, git doesn't seem to be installed!"
+    showErrorMessage "${transl[git_health_check_oops_odd_reason]}"
 
     exitInstaller
   fi
@@ -678,22 +691,22 @@ installDocker() {
       currentKernel=$(uname -r)
 
       if [[ "$latestKernel" != "$currentKernel" ]]; then
-        echo "✋ We just found that you need to reboot!"
-        echo "The reason is that you have a pending kernel upgrade as your system is $currentKernel and pacman's query has $latestKernel"
+        echo "✋ ${transl[install_docker_need_reboot]}"
+        echo "${transl[install_docker_need_reboot_reason]}"
         echo
-        echo "If docker fails to start, then it is very likely that it is related to this."
-        echo "We suggest rebooting your system first and only afterwards running the installer."
+        echo "${transl[install_docker_need_reboot_if_failure]}"
+        echo "${transl[install_docker_suggest_rebooting]}"
         echo
 
-        read -rp "Press ENTER to continue... "
+        read -rp "${transl[common_press_enter_continue]} "
       fi
     else
-      showErrorMessage "Oops! Your Linux distro is not supported yet by our install script, you can also contribute and help us provide support by opening a PR in https://github.com/fleek-network/get.fleek.network, otherwise to install on your own read our guides at https://docs.fleek.network"
+      showErrorMessage "${transl[common_oops_linux_distro_not_supported]}"
 
       exitInstaller
     fi
   else
-    showErrorMessage "Oops! Your operating system is not supported yet, to install on your own read our guides at https://docs.fleek.network"
+    showErrorMessage "${transl[common_oops_os_not_supported]}"
 
     exitInstaller
   fi
