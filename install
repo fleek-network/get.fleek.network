@@ -57,6 +57,10 @@ defaultMinDiskSpaceBytesRequired=10000000
 # Localization
 declare -a transl=()
 
+transl["common_prompt_yes_as_y"]="y"
+transl["common_prompt_no_as_n"]="n"
+transl["common_prompt_are_you_sure_continue_y_or_n"]="Are you sure you want to continue (${transl[common_prompt_yes_as_y]}/${transl[common_prompt_no_as_n]})"
+
 transl["ascii_art_no_os_support_alien_technosignature"]="Alien technosignature detected around our stars"
 
 transl["on_interruption_ouch_error"]="Ouch! The installation was interrupted, and applications or dependencies might be lying around! E.g., if the installation has already cloned the Ursa repository to your selected path, than you should clear it manually, etc."
@@ -88,6 +92,10 @@ transl["install_git_oops_os"]="Oops! Your operating system ($os) is not supporte
 
 transl["is_os_supported_oops_need_ubuntu"]="Oops! You'll need Ubuntu 22.04 at least."
 transl["is_os_supported_oops_need_debian"]="Oops! You'll need Debian 11 at least."
+
+transl["check_sys_has_recommended_resources_oh_no_need_at_least"]="Oh no! We're afraid you need at least 8 GB of RAM and 10 GB of available disk space."
+transl["check_sys_has_recommended_resources_warning_below_recommendation"]="Alright, let's try that, but your system is below our recommendations, so don't expect it to work correctly..."
+transl["check_sys_has_recommended_resources_great_enought_resources"]="Great! Your system has enough resources (disk space and memory)"
 
 # Installer state
 statusComplete="complete"
@@ -539,23 +547,23 @@ checkSystemHasRecommendedResources() {
   partDiskSpace=$(df --output=avail -B 1 "$PWD" |tail -n 1)
 
   if [[ ("$mem" -lt "$defaultMinMemoryBytesRequired") ]] || [[ ( "$partDiskSpace" -lt "$defaultMinDiskSpaceBytesRequired" ) ]]; then
-    echo "😬 Oh no! We're afraid you need at least 8 GB of RAM and 10 GB of available disk space."
+    echo "😬 ${transl[check_sys_has_recommended_resources_oh_no_need_at_least]}"
     echo
-    printf -v prompt "\n\n🤖 Are you sure you want to continue (y/n)?"
+    printf -v prompt "\n\n🤖 %s?" "${transl[common_prompt_are_you_sure_continue_y_or_n]}"
     read -r -p "$prompt"$'\n> ' answer
 
     if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
       exitInstaller
     fi
 
-    echo "😅 Alright, let's try that, but your system is below our recommendations, so don't expect it to work correctly..."
+    echo "😅 ${transl[check_sys_has_recommended_resources_warning_below_recommendation]}"
 
     sleep 5
 
     return 0
   fi
   
-  showOkMessage "Great! Your system has enough resources (disk space and memory)"
+  showOkMessage "${transl[check_sys_has_recommended_resources_great_enought_resources]}"
 }
 
 checkIfGitInstalled() {
