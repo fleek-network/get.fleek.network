@@ -1,0 +1,100 @@
+#!/bin/bash
+
+declare -A en_US=()
+
+en_US["common_press_enter_continue"]="Press ENTER to continue"
+en_US["common_press_enter_retry"]="Press ENTER to retry"
+en_US["common_prompt_yes_as_y"]="y"
+en_US["common_prompt_no_as_n"]="n"
+en_US["common_prompt_are_you_sure_continue_y_or_n"]="Are you sure you want to continue (${transl[common_prompt_yes_as_y]}/${transl[common_prompt_no_as_n]})"
+en_US["common_oops_linux_distro_not_supported"]="Oops! Your Linux distro is not supported yet by our install script, you can also contribute and help us provide support by opening a PR in $defaultGetFleekNetworkUrl, otherwise to install on your own read our guides at $defaultFleekNetworkDocsWebsite"
+en_US["common_oops_os_not_supported"]="Oops! Your operating system is not supported yet, to install on your own read our guides at $defaultFleekNetworkDocsWebsite"
+en_US["common_check_installed_we_can_start_install"]="We can start the installation process for you, are you happy to proceed"
+
+en_US["ascii_art_no_os_support_alien_technosignature"]="Alien technosignature detected around our stars"
+
+en_US["on_interruption_ouch_error"]="Ouch! The installation was interrupted, and applications or dependencies might be lying around! E.g., if the installation has already cloned the Ursa repository to your selected path, than you should clear it manually, etc."
+en_US["on_interruption_if_require_support"]="If you're finding issues and need support, share your experience in our Discord at $defaultDiscordUrl"
+
+en_US["show_disclaimer_title"]="The assisted installer follows the steps in our guide ${txtPrefixForBold}Running a Node in a Docker container${txtPrefixForNormal}."
+en_US["show_disclaimer_if_happy"]="If you are happy to have the script assist you in the installation, there's a certain level of trust that you have to consider. It instructs commands on your behalf, such as installing Git, Docker or other third-party-related dependencies. With that considered, we'll ask when dependencies are missing and if you are happy to proceed with the installation before executing any commands."
+en_US["show_disclaimer_script_repository"]="Our script source is open to everybody and can be verified at $defaultGetFleekNetworkRepository, give it a look"
+en_US["show_disclaimer_more"]="One more thing, your system ${txtPrefixForBold}User ${txtPrefixForNormal}should have ${txtPrefixForBold}write permissions ${txtPrefixForNormal}to install applications. Also, some advanced users might find it better to follow the documentation in our official guides or borrow from the installation script source code."
+en_US["show_disclaimer_guides"]="If that's your preference, then go ahead and check our guides at $defaultFleekNetworkDocsWebsite, or our repository $defaultGetFleekNetworkRepository"
+en_US["show_disclaimer_should_continue"]="Are you happy to continue (y/n)"
+en_US["show_disclaimer_should_yes_or_no_quit"]="Type Y to continue. Otherwise, N to quit!"
+en_US["show_disclaimer_terminates_here"]="The installation assistant terminates here, as you must accept the agreement to have the assisted installer guide you. If you've changed your mind, try again!"
+en_US["show_disclaimer_terminates_otherwise"]="Otherwise, if you'd like to learn a bit more visit our website at $defaultFleekNetworkWebsite"
+
+en_US["common_warning_msg_try_support"]="While we hope to provide support for a wide range of devices and systems in the future, there are countless theories and reported sightings of life from other galaxies that we'll visit first..."
+en_US["common_warning_msg_information_declassified"]="Information could be declassified by officials as a means of preparing the public for the impending disclosure of the Node presence on Earth, so follow us on Twitter to stay informed $defaultFleekNetworkTwitterUrl"
+en_US["common_warning_msg_check_guides"]="Check our guides to learn how to run it yourself through Docker or natively for testing. Although, if you are serious about running a Network Node, then you'll need a dedicated machine to run the Node in the long term, which is why a Linux server is the recommended and supported choice!"
+en_US["common_warning_msg_visit_docs"]="If you'd like to learn more visit our documentation site at $defaultFleekNetworkDocsWebsite"
+
+en_US["windows_users_warning_not_supported"]="Windows is not supported by our installer! We recommend linux Server edition, such as Ubuntu or Debian."
+en_US["windows_users_warning_if_not_enable_wsl"]="If not, enable ${txtPrefixForBold}Windows Subsystem Linux (WSL)${txtPrefixForNormal} and install Ubuntu or Debian."
+
+en_US["macos_users_warning_not_supported"]="MacOS is not supported by our installer! We recommend linux Server edition, such as Ubuntu or Debian."
+en_US["macos_users_warning_has_discontinued"]="The macOS is a graphical OS, and as of 21 April 2022, Apple has discontinued macOS Server."
+
+en_US["install_git_oops_os_and_distro"]="Oops! Your operating system ($os, $distro) is not supported yet by our install script, to install on your own read our guides at $defaultFleekNetworkDocsWebsite"
+en_US["install_git_oops_os"]="Oops! Your operating system ($os) is not supported yet by our install script, to install on your own read our guides at $defaultFleekNetworkDocsWebsite"
+
+en_US["is_os_supported_oops_need_ubuntu"]="Oops! You'll need Ubuntu 22.04 at least."
+en_US["is_os_supported_oops_need_debian"]="Oops! You'll need Debian 11 at least."
+
+en_US["check_sys_has_recommended_resources_oh_no_need_at_least"]="Oh no! We're afraid you need at least 8 GB of RAM and 10 GB of available disk space."
+en_US["check_sys_has_recommended_resources_warning_below_recommendation"]="Alright, let's try that, but your system is below our recommendations, so don't expect it to work correctly..."
+en_US["check_sys_has_recommended_resources_great_enought_resources"]="Great! Your system has enough resources (disk space and memory)"
+
+en_US["check_if_git_installed_oops"]="Oops! Git is required and was not found!"
+en_US["check_if_git_installed_need_git_installed"]="You need to have git installed to clone the Fleek Network Ursa repository."
+en_US["check_if_git_installed_oops_failed_install"]="Oops! Failed to install git."
+en_US["check_if_git_installed_success_install"]="Nice! Git is installed!"
+
+en_US["git_health_check_oops_odd_reason"]="Oops! For some odd reason, git doesn't seem to be installed!"
+
+en_US["install_docker_need_reboot"]="We just found that you need to reboot!"
+en_US["install_docker_need_reboot_reason"]="The reason is that you have a pending kernel upgrade as your system is $currentKernel and pacman's query has $latestKernel"
+en_US["install_docker_need_reboot_if_failure"]="If docker fails to start, then it is very likely that it is related to this."
+en_US["install_docker_suggest_rebooting"]="We suggest rebooting your system first and only afterwards running the installer."
+
+en_US["check_if_docker_installed"]="Oops! Docker is required and was not found!"
+en_US["check_if_docker_need_docker_installed"]="You need to have Docker installed to run the Fleek Network Ursa repository container stack!"
+en_US["check_if_docker_oops_failed_install_docker"]="Oops! Failed to install docker."
+en_US["check_if_docker_success"]="Awesome! Docker is installed!"
+
+en_US["docker_health_check_oops_docker_compose"]="Oops! For some odd reason, docker-compose doesn't seem to be installed!"
+en_US["docker_health_check_oops_docker_daemon_hello_world"]="Oops! The docker daemon should create a container for the hello-world image and output a message, but it failed! Check if your internet connection, docker installation, or it might be that the docker hub might be down, etc."
+en_US["docker_health_check_passed"]="Docker health-check passed!"
+
+en_US["request_path_for_ursa_repo_save_to_location_use_default"]="We'll save the Ursa source code in the recommended path ${txtPrefixForBold}${defaultPath}${txtPrefixForNormal}. If you don't have a reason to change the location, stick to the default, keep it easy! \n\n"
+en_US["request_path_for_ursa_repo_save_to_location_happy_proceed"]="Are you happy to proceed?"
+en_US["request_path_for_ursa_repo_save_to_location_y_or_n_change"]="Type Y, or press ENTER to continue. Otherwise, N to change it!"
+en_US["request_path_for_ursa_repo_save_to_locattion_where_store"]="What path would you like to store the repository?"
+en_US["request_path_for_ursa_repo_save_to_locattion_oops_already_exists"]="Oops! The #selectedPath# already exists, ensure that the directory is cleared before trying again."
+en_US["request_path_for_ursa_repo_save_to_oops_failed_create_dir"]="Oops! Failed to create the directory #selectedPath#, make sure you have the right permissions."
+
+en_US["clone_ursa_repo_to_path_oops_failed_to_clonse"]="Oops! Failed to clone the Ursa repository ($defaultUrsaHttpsRespository)"
+en_US["clone_ursa_repo_to_path_ok_msg"]="The Ursa repository located at $defaultUrsaHttpsRespository was cloned to $ursaPath!"
+
+en_US["restart_docker_stack_is_going_to_restart"]="The Docker Stack is going to restart. Be patient, please!"
+en_US["restart_docker_stack_is_going_to_start"]="The Docker Stack will now going to start. Be patient, please!"
+en_US["restart_docker_stack_has_restarted"]="Great! The Docker Stack has restarted."
+
+en_US["show_docker_stack_log_great"]="🥳 Great! We have ${txtPrefixForBold}completed${txtPrefixForNormal} the installation!"
+en_US["show_docker_stack_log_stack_should_be_running"]="The Stack should be running now, and you can show or hide the log output anytime."
+en_US["show_docker_stack_log_stack_logs_can_be_verbose_1_of_2"]="Our Stack logs can be quite verbose, as it shows WARNINGS, INFO, ERRORS, etc."
+en_US["show_docker_stack_log_stack_logs_can_be_verbose_2_of_2"]="It's essential to understand what they mean by simply reading our Node Health-check guide"
+en_US["show_docker_stack_log_stack_logs_handy_commands"]="Here are some handy commands to show or hide the logs"
+en_US["show_docker_stack_log_stack_logs_handy_cmd_show_logs"]="If you have the Stack running and want to show the logs"
+en_US["show_docker_stack_log_stack_logs_handy_cmd_signit"]="Terminate by sending the interrupt signal (SIGNIT) to Docker using the hotkey"
+# TODO: the variable should be replaced, as its user selectable
+en_US["show_docker_stack_log_stack_logs_can_stop_start_docker"]="You can Stop or Start the Docker Stack at anytime, for that change the directory to the location where the source code of Ursa is stored (default is #selectedUrsaPath#)."
+en_US["show_docker_stack_log_stack_logs_can_stop_start_docker_example"]="For example, if you accepted the installation recommendation that is ~/fleek-network/ursa"
+en_US["show_docker_stack_log_stack_logs_can_stop_then_after_start_or_stop"]="Then after, run the following commands, to either Start (up) or Stop (down)"
+en_US["show_docker_stack_log_stack_logs_can_stop_then_after_start"]="Start the Docker Stack"
+en_US["show_docker_stack_log_stack_logs_can_stop_then_after_stop"]="Stop the Docker Stack"
+en_US["show_docker_stack_log_stack_logs_seems_a_lot"]="Seems a lot? All the commands and much more are available in our documentation site!"
+en_US["show_docker_stack_log_stack_logs_learn_how_maintain"]="Learn how to maintain your Node by visiting our documentation at $defaultFleekNetworkDocsWebsite"
+en_US["show_docker_stack_log_stack_logs_got_feedback"]="Got feedback? Find our ${txtPrefixForBold}Discord ${txtPrefixForNormal}at $defaultDiscordUrl and ${txtPrefixForBold}Twitter ${txtPrefixForNormal}at $defaultFleekNetworkTwitterUrl"
