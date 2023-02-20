@@ -131,6 +131,9 @@ transl["request_path_for_ursa_repo_save_to_locattion_where_store"]="What path wo
 transl["request_path_for_ursa_repo_save_to_locattion_oops_already_exists"]="Oops! The #selectedPath# already exists, ensure that the directory is cleared before trying again."
 transl["request_path_for_ursa_repo_save_to_oops_failed_create_dir"]="Oops! Failed to create the directory #selectedPath#, make sure you have the right permissions."
 
+transl["clone_ursa_repo_to_path_oops_failed_to_clonse"]="Oops! Failed to clone the Ursa repository ($defaultUrsaHttpsRespository)"
+transl["clone_ursa_repo_to_path_ok_msg"]="The Ursa repository located at $defaultUrsaHttpsRespository was cloned to $ursaPath!"
+
 # Installer state
 statusComplete="complete"
 installationStatus=""
@@ -809,12 +812,12 @@ requestPathnameForUrsaRepository() {
 
 cloneUrsaRepositoryToPath() {
   if ! git clone $defaultUrsaHttpsRespository "$1"; then
-    showErrorMessage "Oops! Failed to clone the Ursa repository ($defaultUrsaHttpsRespository)"
+    showErrorMessage "${transl[clone_ursa_repo_to_path_oops_failed_to_clonse]}"
 
     exitInstaller
   fi
 
-  showOkMessage "The Ursa repository located at $defaultUrsaHttpsRespository was cloned to $ursaPath!"
+  showOkMessage "${transl[clone_ursa_repo_to_path_ok_msg]}"
 
   printf "\r\n"
 }
