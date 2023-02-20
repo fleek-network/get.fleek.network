@@ -64,8 +64,7 @@ transl["common_prompt_no_as_n"]="n"
 transl["common_prompt_are_you_sure_continue_y_or_n"]="Are you sure you want to continue (${transl[common_prompt_yes_as_y]}/${transl[common_prompt_no_as_n]})"
 transl["common_oops_linux_distro_not_supported"]="Oops! Your Linux distro is not supported yet by our install script, you can also contribute and help us provide support by opening a PR in $defaultGetFleekNetworkUrl, otherwise to install on your own read our guides at $defaultFleekNetworkDocsWebsite"
 transl["common_oops_os_not_supported"]="Oops! Your operating system is not supported yet, to install on your own read our guides at $defaultFleekNetworkDocsWebsite"
-
-
+transl["common_check_installed_we_can_start_install"]="We can start the installation process for you, are you happy to proceed"
 
 transl["ascii_art_no_os_support_alien_technosignature"]="Alien technosignature detected around our stars"
 
@@ -104,7 +103,6 @@ transl["check_sys_has_recommended_resources_warning_below_recommendation"]="Alri
 transl["check_sys_has_recommended_resources_great_enought_resources"]="Great! Your system has enough resources (disk space and memory)"
 
 transl["check_if_git_installed_oops"]="Oops! Git is required and was not found!"
-transl["check_if_git_installed_we_can_start_install"]="We can start the installation process for you, are you happy to proceed"
 transl["check_if_git_installed_need_git_installed"]="You need to have git installed to clone the Fleek Network Ursa repository."
 transl["check_if_git_installed_oops_failed_install"]="Oops! Failed to install git."
 transl["check_if_git_installed_success_install"]="Nice! Git is installed!"
@@ -115,6 +113,15 @@ transl["install_docker_need_reboot"]="We just found that you need to reboot!"
 transl["install_docker_need_reboot_reason"]="The reason is that you have a pending kernel upgrade as your system is $currentKernel and pacman's query has $latestKernel"
 transl["install_docker_need_reboot_if_failure"]="If docker fails to start, then it is very likely that it is related to this."
 transl["install_docker_suggest_rebooting"]="We suggest rebooting your system first and only afterwards running the installer."
+
+transl["check_if_docker_installed"]="Oops! Docker is required and was not found!"
+transl["check_if_docker_need_docker_installed"]="You need to have Docker installed to run the Fleek Network Ursa repository container stack!"
+transl["check_if_docker_oops_failed_install_docker"]="Oops! Failed to install docker."
+transl["check_if_docker_success"]="Awesome! Docker is installed!"
+
+transl["docker_health_check_oops_docker_compose"]="Oops! For some odd reason, docker-compose doesn't seem to be installed!"
+transl["docker_health_check_oops_docker_daemon_hello_world"]="Oops! The docker daemon should create a container for the hello-world image and output a message, but it failed! Check if your internet connection, docker installation, or it might be that the docker hub might be down, etc."
+transl["docker_health_check_passed"]="Docker health-check passed!"
 
 # Installer state
 statusComplete="complete"
@@ -591,7 +598,7 @@ checkIfGitInstalled() {
     echo
 
     requestAuthorizationAndExec \
-      "${transl[check_if_git_installed_we_can_start_install]}" \
+      "${transl[common_check_installed_we_can_start_install]}" \
       "${transl[check_if_git_installed_need_git_installed]}" \
       installGit
 
@@ -719,26 +726,26 @@ checkIfDockerInstalled() {
   # check if docker compose is available. Some users are still
   # using legacy e.g., preinstalled docker or archlinux, etc
   if ! hasCommand docker || ! hasCommand docker-compose; then
-    printf "😅 Oops! Docker is required and was not found!\n"
+    printf "😅 %s}\n" "${transl[check_if_docker_installer]}"
 
     requestAuthorizationAndExec \
-      "We can start the installation process for you, are you happy to proceed" \
-      "You need to have Docker installed to run the Fleek Network Ursa repository container stack!" \
+      "${transl[common_check_installed_we_can_start_install]}" \
+      "${transl[check_if_docker_need_docker_installed]}" \
       installDocker
 
     if [[ "$?" = 1 ]]; then
-      showErrorMessage "Oops! Failed to install docker."
+      showErrorMessage "${transl[check_if_docker_oops_failed_install_docker]}"
 
       exitInstaller
     fi
   fi
 
-  showOkMessage "Awesome! Docker is installed!"
+  showOkMessage "${transl[check_if_docker_success]}"
 }
 
 dockerHealthCheck() {
   if ! hasCommand docker-compose; then
-    showErrorMessage "Oops! For some odd reason, docker-compose doesn't seem to be installed!"
+    showErrorMessage "${transl[docker_health_check_oops_docker_compose]}"
 
     exitInstaller
   fi
@@ -747,12 +754,12 @@ dockerHealthCheck() {
   res=$(docker run -i --log-driver=none -a stdout hello-world)
 
   if ! echo "$res" | grep "$expectedMessage" &> /dev/null; then
-    showErrorMessage "Oops! The docker daemon should create a container for the hello-world image and output a message, but it failed! Check if your internet connection, docker installation, or it might be that the docker hub might be down, etc."
+    showErrorMessage "${transl[docker_health_check_oops_docker_daemon_hello_world]}"
 
     exitInstaller
   fi
 
-  showOkMessage "Docker health-check passed!"
+  showOkMessage "${transl[docker_health_check_passed]}"
 }
 
 requestPathnameForUrsaRepository() {
