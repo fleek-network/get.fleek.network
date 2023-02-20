@@ -138,6 +138,23 @@ transl["restart_docker_stack_is_going_to_restart"]="The Docker Stack is going to
 transl["restart_docker_stack_is_going_to_start"]="The Docker Stack will now going to start. Be patient, please!"
 transl["restart_docker_stack_has_restarted"]="Great! The Docker Stack has restarted."
 
+transl["show_docker_stack_log_great"]="🥳 Great! We have ${txtPrefixForBold}completed${txtPrefixForNormal} the installation!"
+transl["show_docker_stack_log_stack_should_be_running"]="The Stack should be running now, and you can show or hide the log output anytime."
+transl["show_docker_stack_log_stack_logs_can_be_verbose_1_of_2"]="Our Stack logs can be quite verbose, as it shows WARNINGS, INFO, ERRORS, etc."
+transl["show_docker_stack_log_stack_logs_can_be_verbose_2_of_2"]="It's essential to understand what they mean by simply reading our Node Health-check guide"
+transl["show_docker_stack_log_stack_logs_handy_commands"]="Here are some handy commands to show or hide the logs"
+transl["show_docker_stack_log_stack_logs_handy_cmd_show_logs"]="If you have the Stack running and want to show the logs"
+transl["show_docker_stack_log_stack_logs_handy_cmd_signit"]="Terminate by sending the interrupt signal (SIGNIT) to Docker using the hotkey"
+# TODO: the variable should be replaced, as its user selectable
+transl["show_docker_stack_log_stack_logs_can_stop_start_docker"]="You can Stop or Start the Docker Stack at anytime, for that change the directory to the location where the source code of Ursa is stored (default is #selectedUrsaPath#)."
+transl["show_docker_stack_log_stack_logs_can_stop_start_docker_example"]="For example, if you accepted the installation recommendation that is ~/fleek-network/ursa"
+transl["show_docker_stack_log_stack_logs_can_stop_then_after_start_or_stop"]="Then after, run the following commands, to either Start (up) or Stop (down)"
+transl["show_docker_stack_log_stack_logs_can_stop_then_after_start"]="Start the Docker Stack"
+transl["show_docker_stack_log_stack_logs_can_stop_then_after_stop"]="Stop the Docker Stack"
+transl["show_docker_stack_log_stack_logs_seems_a_lot"]="Seems a lot? All the commands and much more are available in our documentation site!"
+transl["show_docker_stack_log_stack_logs_learn_how_maintain"]="Learn how to maintain your Node by visiting our documentation at $defaultFleekNetworkDocsWebsite"
+transl["show_docker_stack_log_stack_logs_got_feedback"]="Got feedback? Find our ${txtPrefixForBold}Discord ${txtPrefixForNormal}at $defaultDiscordUrl and ${txtPrefixForBold}Twitter ${txtPrefixForNormal}at $defaultFleekNetworkTwitterUrl"
+
 # Installer state
 statusComplete="complete"
 installationStatus=""
