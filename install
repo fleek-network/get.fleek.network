@@ -83,6 +83,12 @@ transl["windows_users_warning_if_not_enable_wsl"]="If not, enable ${txtPrefixFor
 transl["macos_users_warning_not_supported"]="MacOS is not supported by our installer! We recommend linux Server edition, such as Ubuntu or Debian."
 transl["macos_users_warning_has_discontinued"]="The macOS is a graphical OS, and as of 21 April 2022, Apple has discontinued macOS Server."
 
+transl["install_git_oops_os_and_distro"]="Oops! Your operating system ($os, $distro) is not supported yet by our install script, to install on your own read our guides at $defaultFleekNetworkDocsWebsite"
+transl["install_git_oops_os"]="Oops! Your operating system ($os) is not supported yet by our install script, to install on your own read our guides at $defaultFleekNetworkDocsWebsite"
+
+transl["is_os_supported_oops_need_ubuntu"]="Oops! You'll need Ubuntu 22.04 at least."
+transl["is_os_supported_oops_need_debian"]="Oops! You'll need Debian 11 at least."
+
 # Installer state
 statusComplete="complete"
 installationStatus=""
@@ -448,12 +454,12 @@ installGit() {
     elif [[ "$distro" =~ "arch"  ]]; then
       sudo pacman -Syu git
     else
-      showErrorMessage "Oops! Your operating system ($os, $distro) is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
+      showErrorMessage "${transl[install_git_oops_os_and_distro]}"
 
       exitInstaller
     fi
   else
-    showErrorMessage "Oops! Your operating system ($os) is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
+    showErrorMessage "${transl[install_git_oops_os]}"
 
     exitInstaller
   fi
@@ -497,7 +503,7 @@ isOSSupported() {
 
     if [[ "$currVersion" -lt "2204" ]]; then
       echo
-      echo "👹 Oops! You'll need Ubuntu 22.04 at least."
+      echo "👹 ${transl[is_os_supported_oops_need_ubuntu]}"
       echo
 
       exitInstaller
@@ -509,7 +515,7 @@ isOSSupported() {
 
     if [[ "$currVersion" -lt "11" ]]; then
       echo
-      echo "👹 Oops! You'll need Debian 11 at least."
+      echo "👹 ${transl[is_os_supported_oops_need_debian]}"
       echo
 
       exitInstaller
