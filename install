@@ -134,6 +134,10 @@ transl["request_path_for_ursa_repo_save_to_oops_failed_create_dir"]="Oops! Faile
 transl["clone_ursa_repo_to_path_oops_failed_to_clonse"]="Oops! Failed to clone the Ursa repository ($defaultUrsaHttpsRespository)"
 transl["clone_ursa_repo_to_path_ok_msg"]="The Ursa repository located at $defaultUrsaHttpsRespository was cloned to $ursaPath!"
 
+transl["restart_docker_stack_is_going_to_restart"]="The Docker Stack is going to restart. Be patient, please!"
+transl["restart_docker_stack_is_going_to_start"]="The Docker Stack will now going to start. Be patient, please!"
+transl["restart_docker_stack_has_restarted"]="Great! The Docker Stack has restarted."
+
 # Installer state
 statusComplete="complete"
 installationStatus=""
@@ -823,20 +827,20 @@ cloneUrsaRepositoryToPath() {
 }
 
 restartDockerStack() {
-  echo "🤖 The Docker Stack is going to restart. Be patient, please!"
+  echo "🤖 ${transl[restart_docker_stack_is_going_to_restart]}"
   echo
 
   # TODO: Use health check instead
   sleep 10
   sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" stop
 
-  showOkMessage "The Docker Stack will now going to start. Be patient, please!"
+  showOkMessage "${transl[restart_docker_stack_is_going_to_start]}"
 
   # TODO: Use health check instead
   sleep 10
   sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" up -d
 
-  showOkMessage "Great! The Docker Stack has restarted."
+  showOkMessage "${transl[restart_docker_stack_has_restarted]}"
 
   sleep 3
 }
