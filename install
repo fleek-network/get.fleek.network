@@ -59,6 +59,7 @@ defaultMinDiskSpaceBytesRequired=10000000
 declare -a transl=()
 
 transl["common_press_enter_continue"]="Press ENTER to continue"
+transl["common_press_enter_retry"]="Press ENTER to retry"
 transl["common_prompt_yes_as_y"]="y"
 transl["common_prompt_no_as_n"]="n"
 transl["common_prompt_are_you_sure_continue_y_or_n"]="Are you sure you want to continue (${transl[common_prompt_yes_as_y]}/${transl[common_prompt_no_as_n]})"
@@ -122,6 +123,13 @@ transl["check_if_docker_success"]="Awesome! Docker is installed!"
 transl["docker_health_check_oops_docker_compose"]="Oops! For some odd reason, docker-compose doesn't seem to be installed!"
 transl["docker_health_check_oops_docker_daemon_hello_world"]="Oops! The docker daemon should create a container for the hello-world image and output a message, but it failed! Check if your internet connection, docker installation, or it might be that the docker hub might be down, etc."
 transl["docker_health_check_passed"]="Docker health-check passed!"
+
+transl["request_path_for_ursa_repo_save_to_location_use_default"]="We'll save the Ursa source code in the recommended path ${txtPrefixForBold}${defaultPath}${txtPrefixForNormal}. If you don't have a reason to change the location, stick to the default, keep it easy! \n\n"
+transl["request_path_for_ursa_repo_save_to_location_happy_proceed"]="Are you happy to proceed?"
+transl["request_path_for_ursa_repo_save_to_location_y_or_n_change"]="Type Y, or press ENTER to continue. Otherwise, N to change it!"
+transl["request_path_for_ursa_repo_save_to_locattion_where_store"]="What path would you like to store the repository?"
+transl["request_path_for_ursa_repo_save_to_locattion_oops_already_exists"]="Oops! The #selectedPath# already exists, ensure that the directory is cleared before trying again."
+transl["request_path_for_ursa_repo_save_to_oops_failed_create_dir"]="Oops! Failed to create the directory #selectedPath#, make sure you have the right permissions."
 
 # Installer state
 statusComplete="complete"
@@ -764,28 +772,34 @@ dockerHealthCheck() {
 
 requestPathnameForUrsaRepository() {
   defaultPath="$defaultUrsaPath"
+  # TODO: on translation, the selected path needs to be computed
+  # that is that on runtime the defaultPath might need to be replaced
+  # by the user selected choice, as we have these as precomputed text
+  # TODO: close after test param expansion, see below
   selectedPath=$defaultPath
 
-  printf -v prompt "\n🤖 We'll save the Ursa source code in the recommended path ${txtPrefixForBold}%s${txtPrefixForNormal}. If you don't have a reason to change the location, stick to the default, keep it easy! \n\nAre you happy to proceed?\nType Y, or press ENTER to continue. Otherwise, N to change it!" "$defaultPath"
+  printf -v prompt "\n🤖 %s\n\n%s?\n%s" "${transl[request_path_for_ursa_repo_save_to_location_use_default]}" "${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}" "${transl[request_path_for_ursa_repo_save_to_location_happy_proceed]} ${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}"
   read -r -p "$prompt"$'\n> ' answer
 
   answerToLc=$(toLowerCase "$answer")
 
   if [[ ! "$answerToLc" == "" && "$answerToLc" == [nN] || "$answerToLc" == [nN][oO] ]]; then
-    printf -v prompt "\n🙋‍♀️ What path would you like to store the repository?"
+    printf -v prompt "\n🙋‍♀️ %s" "${transl[request_path_for_ursa_repo_save_to_locattion_where_store]}"
     read -r -p "$prompt"$'\n> ' answer
   fi
 
   if [[ -d "$selectedPath" ]]; then
-    showErrorMessage "Oops! The $selectedPath already exists, ensure that the directory is cleared before trying again."
+    # TODO: test param expansion
+    showErrorMessage "${transl[request_path_for_ursa_repo_save_to_locattion_oops_already_exists]/#selectedPath#/$selectedPath}"
 
-    read -r -p "Press ENTER to retry..." answer
+    read -r -p "${transl[common_press_enter_retry]}..." answer
 
     requestPathnameForUrsaRepository
   fi
 
   if ! mkdir -p "$selectedPath"; then
-    showErrorMessage "Oops! Failed to create the directory $selectedPath, make sure you have the right permissions."
+    # TODO: test param expansion
+    showErrorMessage "${transl[request_path_for_ursa_repo_save_to_oops_failed_create_dir]/#selectedPath#/$selectedPath}"
 
     exitInstaller
   fi
