@@ -61,7 +61,7 @@ declare -a supportedLanguages=("en_US")
 for lang in "${supportedLanguages[@]}"; do
   # TODO: disabled temporarily to test in branch `feat/localization`
   # . <(curl -s "$defaultGetFleekNetworkUrl/locales/$lang")
-  . <(curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/feat/localization/locales/$lang")
+  . <(curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/feat/localization/locales/$lang?202302211258")
 done
 
 # App text translations
