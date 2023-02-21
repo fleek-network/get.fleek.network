@@ -1176,7 +1176,7 @@ verifyUserHasDomain() {
   ERROR_IP_ADDRESS_NOT_AVAILABLE="ERROR_IP_ADDRESS_NOT_AVAILABLE"
   detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "$ERROR_IP_ADDRESS_NOT_AVAILABLE")
 
-  printf -v prompt "\n💡 %s\n\n%s\n\n%s" "${transl[verify_user_has_domain_provide_ip_of_machine_1_of_3]}" "${transl[verify_user_has_domain_provide_ip_of_machine_2_of_3]/_detectedIpAddress_/$detectedIpAddress}" "${transl[verify_user_has_domain_provide_ip_of_machine_3_of_3]}"
+  printf -v prompt "\n💡 %s\n\n%s\n\n%s" "${transl[verify_user_has_domain_provide_ip_of_machine_1_of_3]/_detectedIpAddress_/$detectedIpAddress}" "${transl[verify_user_has_domain_provide_ip_of_machine_2_of_3]}" "${transl[verify_user_has_domain_provide_ip_of_machine_3_of_3]}"
   while read -rp "$prompt"$'\n> ' ans; do
     if confirmIpAddress "$ans"; then
       serverIpAddress="$ans"
@@ -1207,7 +1207,7 @@ verifyUserHasDomain() {
   fi
 
   # Email handling (start)
-  printf -v prompt "💡 %s\n%s\n\n%s\n%s" "${transl[verify_user_has_domain_provide_valid_email_1_of_4]}" "${transl[verify_user_has_domain_provide_valid_email_2_of_4]}" "${transl[verify_user_has_domain_provide_valid_email_3_of_4]}" "${transl[verify_user_has_domain_provide_valid_email_4_of_4]}"
+  printf -v prompt "💡 %s\n%s\n\n%s\n%s\n\n%s" "${transl[verify_user_has_domain_provide_valid_email_1_of_5]}" "${transl[verify_user_has_domain_provide_valid_email_2_of_5]}" "${transl[verify_user_has_domain_provide_valid_email_3_of_5]}" "${transl[verify_user_has_domain_provide_valid_email_4_of_5]}" "${transl[verify_user_has_domain_provide_valid_email_5_of_5]}"
   while read -rp "$prompt"$'\n> ' ans; do
     if confirmEmailAddress "$ans"; then
       emailAddress=$(toLowerCase "$ans")
