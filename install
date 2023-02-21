@@ -934,13 +934,13 @@ initLetsEncrypt() {
     rm -Rf /etc/letsencrypt/archive/$domain && \
     rm -Rf /etc/letsencrypt/renewal/$domain.conf" certbot; then
 
-    showErrorMessage "Oops! Failed to delete dummy certificates for $domain..."
+    showErrorMessage "${transl[init_lets_encrypt_oops_failed_delete_certificates]/#domain#/$domain}..."
 
     exitInstaller
   fi
 
   echo
-  echo "🤖 Requesting the Let's Encrypt certificates for $domain..."
+  echo "🤖 ${transl[init_lets_encrypt_requesting_lets_encrypt_certificates]/#domain#/$domain}..."
   echo
 
   # Enable staging mode if needed
@@ -954,20 +954,20 @@ initLetsEncrypt() {
       --rsa-key-size $rsa_key_size \
       --agree-tos -n \
       --force-renewal" certbot; then
-    showErrorMessage "Oops! Failed to create the SSL/TLS certificates, your domain name hasn't been secured yet. Check our guide to troubleshoot https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+    showErrorMessage "${transl[init_lets_encrypt_oops_failed_create_tls_certificates]} https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
-    printf -v prompt "\n💡 We recommend to try again, as some temporary issues might have occurred.\n\n🙋‍♀️ Would you like to retry securing the domain?\nType Y, or press ENTER to continue. Otherwise N, to quit!"
+    printf -v prompt "\n💡 %s\n\n🙋‍♀️ %s\n%s" "${transl[init_lets_encrypt_prompt_recommend_try_again]}" "${transl[init_lets_encrypt_prompt_recommend_try_again_ask]}" "${transl[init_lets_encrypt_prompt_recommend_try_again_y_or_quit]}"
     read -r -p "$prompt"$'\n> ' answer
 
     answerToLc=$(toLowerCase "$answer")
 
     if [[ "$answerToLc" == "" || "$answerToLc" == [yY] || "$answerToLc" == [yY][eE][sS] ]]; then    
       echo
-      echo "💡 If the issues persists then it might be related to the DNS, that you might want to update."
-      echo "In most Linux Operating systems, these DNS servers are specified in the file /etc/resolv.conf"
-      echo "this file contains at least one nameserver line that defines the DNS server."
+      echo "💡 ${transl[init_lets_encrypt_if_issue_persists]}"
+      echo "${transl[init_lets_encrypt_linux_os_dns_config_location_1_of_2]}"
+      echo "${transl[init_lets_encrypt_linux_os_dns_config_location_2_of_2]}"
       echo
-      echo "🤖 We're going to restart the Docker Stack..."
+      echo "🤖 ${transl[init_lets_encrypt_restart_docker_stack]}..."
       echo
       sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" down      
       sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" start
