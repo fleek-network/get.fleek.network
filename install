@@ -684,7 +684,7 @@ checkIfDockerInstalled() {
   # check if docker compose is available. Some users are still
   # using legacy e.g., preinstalled docker or archlinux, etc
   if ! hasCommand docker || ! hasCommand docker-compose; then
-    printf "😅 %s}\n" "${transl[check_if_docker_installer]}"
+    printf "😅 %s\n" "${transl[check_if_docker_installed]}"
 
     requestAuthorizationAndExec \
       "${transl[common_check_installed_we_can_start_install]}" \
