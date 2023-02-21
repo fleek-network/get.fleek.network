@@ -790,8 +790,7 @@ restartDockerStack() {
 }
 
 showDockerStackLog() {
-  echo "★★★★★★★★★"
-  echo "★★★★★★★★★"
+  echo
   echo "★★★★★★★★★"
   echo
   echo "🥳 ${transl[show_docker_stack_log_great]}"
@@ -831,8 +830,7 @@ showDockerStackLog() {
   echo "🌈 ${transl[show_docker_stack_log_stack_logs_got_feedback]}"
   echo
   echo "★★★★★★★★★"
-  echo "★★★★★★★★★"
-  echo "★★★★★★★★★"
+  echo
 
   printf -v prompt "\n🙋‍♀️ %s\n%s" "${transl[show_docker_stack_log_stack_logs_prompt_see_output]}" "${transl[show_docker_stack_log_stack_logs_prompt_see_output_y_or_skip]}"
   read -r -p "$prompt"$'\n> ' answer
