@@ -1392,14 +1392,14 @@ changeDirectoryToPathOrFailure() {
   local targetPath=$2
 
   if [[ -z "$name" || -z "$targetPath" ]]; then
-    showErrorMessage "Oops! Failed to change directory after cloning the repository. Help us improve! Report to us in our Discord channel 🙏"
+    showErrorMessage "${transl[change_directory_to_path_oops_failed_change_dir_discord]} 🙏"
 
     exitInstaller
   fi
 
   if [[ $(pwd) != "$targetPath" ]]; then
     if ! cd "$targetPath"; then
-      showErrorMessage "Oops! Our apologies but we've failed to change directory to $name. Help us improve by reporting it to us in our Discord channel 🙏"
+      showErrorMessage "${transl[change_directory_to_path_oops_failed_change_dir_to_name]/#name#/$name} 🙏"
 
       exitInstaller
     fi
