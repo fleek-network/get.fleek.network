@@ -231,14 +231,15 @@ clearScr() {
 launchAsciiArt() {
   printf "\r\n"
 
+  echo "★★★★★★★★★"
+  echo
+  echo "⚡️ ${transl[ascii_art_fleek_team_presents]} ⚡️"
+  echo
+
 # the cat and ascii art (ART, as `here tag``)
 # is intentionally positioned to the most left
 # do not change
 cat << "ART"
-★★★★★★★★★
-
-⚡️ ${transl[ascii_art_fleek_team_presents]} ⚡️
-
         _..._
       .'     '.     _
     /    .-""-\   _/ \
