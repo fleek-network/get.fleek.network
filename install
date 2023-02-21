@@ -1141,7 +1141,7 @@ verifyUserHasDomain() {
   printf -v prompt "\n%s?\n%s" "${transl[verify_user_has_domain_have_domain_ready]}" "${transl[verify_user_has_domain_have_domain_ready_yes_or_n_or_q]}"
   read -r -p "$prompt"$'\n> ' ans
 
-  if [[ ! "$ans" == [qQ] ]]; then
+  if [[ "$ans" == [qQ] ]]; then
     showErrorMessage "🦖 ${transl[verify_user_has_domain_user_quit_message]}"
 
     exit 1
