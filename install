@@ -865,7 +865,7 @@ initLetsEncrypt() {
   domain="$2"
 
   if [[ -z "$1" || -z "$2" ]]; then
-    showErrorMessage "Gosh, this is embarrassing! We're missing arguments to initialise the Lets Encrypt call. If this issue persists, report it to our Discord channel, please! 🙏"
+    showErrorMessage "${transl[init_lets_encrypt_gosh_embarrassing_missing_args]} 🙏"
 
     exitInstaller
   fi
@@ -879,14 +879,14 @@ initLetsEncrypt() {
   # TODO: Move this checkup much earlier, in the init of installer
   # Do we have the required files, if not interrupt the process?
   if [[ ! -d "$base_path" || ! "$(ls -A $base_path)" ]]; then
-    showErrorMessage "Oops! Missing required files, this might be due to changes in our main Ursa repository! Help us improve by letting us know in our Discord channel 🙏"
+    showErrorMessage "${transl[init_lets_encrypt_oops_missing_required_files]} 🙏"
 
     exitInstaller
   fi
 
   if [[ ! -e "$data_path/conf/options-ssl-nginx.conf" || ! -e "$data_path/conf/ssl-dhparams.pem" ]]; then
     echo
-    echo "🤖 Downloading recommended TLS parameters..."
+    echo "🤖 ${transl[init_lets_encrypt_download_recommended_tls]}..."
     echo
 
     mkdir -p "$data_path/conf"
@@ -897,7 +897,7 @@ initLetsEncrypt() {
   fi
 
   echo
-  echo "🤖 We'll now create dummy certificates for the domain $domain, be patient 🙏 please..."
+  echo "🤖 ${transl[init_lets_encrypt_create_dummy_certificates]/#domain#/$domain} 🙏"
   echo
 
   path="/etc/letsencrypt/live/$domain"
@@ -909,23 +909,23 @@ initLetsEncrypt() {
       -keyout '$path/privkey.pem' \
       -out '$path/fullchain.pem' \
       -subj '/CN=localhost'" certbot; then    
-    showErrorMessage "Oops! Failed to create dummy certificate for domain"
+    showErrorMessage "${transl[init_lets_encrypt_oops_failed_create_dummy_certificate]}"
 
     exitInstaller
   fi
 
   echo
-  echo "🤖 Starting Nginx, please be patient 🙏"
+  echo "🤖 ${transl[init_lets_encrypt_starting_nginx]} 🙏"
   echo
 
   if ! docker-compose -f "$config_path" up --force-recreate -d nginx; then
-    showErrorMessage "Oops! Failed to start nginx..."
+    showErrorMessage "${transl[init_lets_encrypt_failed_start_nginx]}..."
 
     exitInstaller
   fi
   
   echo
-  echo "🤖 Deleting dummy certificate for $domain..."
+  echo "🤖 ${transl[init_lets_encrypt_deleting_dummy_certificate]}..."
   echo
 
   if ! docker-compose -f "$config_path" \
