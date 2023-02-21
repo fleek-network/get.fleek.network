@@ -567,7 +567,7 @@ checkSystemHasRecommendedResources() {
     printf -v prompt "\n\n🤖 %s?" "${transl[common_prompt_are_you_sure_continue_y_or_n]}"
     read -r -p "$prompt"$'\n> ' answer
 
-    intlAnswer=$(mapLanguageYesNoQuitToSystem "$answer")
+    intlAnswer=$(mapLanguageYesNoQuitToSystem "$selectedLanguage" "$answer")
 
     if [[ "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
       exitInstaller
@@ -763,7 +763,7 @@ requestPathnameForUrsaRepository() {
   printf -v prompt "\n🤖 %s\n\n%s?\n%s" "${transl[request_path_for_ursa_repo_save_to_location_use_default]/_selectedPath_/$selectedPath}" "${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}" "${transl[request_path_for_ursa_repo_save_to_location_happy_proceed]} ${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}"
   read -r -p "$prompt"$'\n> ' answer
 
-  intlAnswer=$(mapLanguageYesNoQuitToSystem "$answer")
+  intlAnswer=$(mapLanguageYesNoQuitToSystem "$selectedLanguage" "$answer")
 
   if [[ ! "$intlAnswer" == "" && "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
     printf -v prompt "\n🙋‍♀️ %s" "${transl[request_path_for_ursa_repo_save_to_locattion_where_store]}"
@@ -869,7 +869,7 @@ showDockerStackLog() {
   printf -v prompt "\n🙋‍♀️ %s\n%s" "${transl[show_docker_stack_log_stack_logs_prompt_see_output]}" "${transl[show_docker_stack_log_stack_logs_prompt_see_output_y_or_skip]}"
   read -r -p "$prompt"$'\n> ' answer
 
-  intlAnswer=$(mapLanguageYesNoQuitToSystem "$answer")
+  intlAnswer=$(mapLanguageYesNoQuitToSystem "$selectedLanguage" "$answer")
 
   if [[ "$intlAnswer" == [sS][kK][iI][pP] ]]; then
     printf "\r\n"
@@ -998,7 +998,7 @@ initLetsEncrypt() {
     printf -v prompt "\n💡 %s\n\n🙋‍♀️ %s\n%s" "${transl[init_lets_encrypt_prompt_recommend_try_again]}" "${transl[init_lets_encrypt_prompt_recommend_try_again_ask]}" "${transl[init_lets_encrypt_prompt_recommend_try_again_y_or_quit]}"
     read -r -p "$prompt"$'\n> ' answer
 
-    intlAnswer=$(mapLanguageYesNoQuitToSystem "$answer")
+    intlAnswer=$(mapLanguageYesNoQuitToSystem "$selectedLanguage" "$answer")
 
     if [[ "$intlAnswer" == [qQ] ]]; then
       echo "🦖 ${transl[init_lets_encrypt_prompt_recommend_you_have_quit]}"
