@@ -72,7 +72,7 @@ en_US["docker_health_check_oops_docker_compose"]="Oops! For some odd reason, doc
 en_US["docker_health_check_oops_docker_daemon_hello_world"]="Oops! The docker daemon should create a container for the hello-world image and output a message, but it failed! Check if your internet connection, docker installation, or it might be that the docker hub might be down, etc."
 en_US["docker_health_check_passed"]="Docker health-check passed!"
 
-en_US["request_path_for_ursa_repo_save_to_location_use_default"]="We'll save the Ursa source code in the recommended path ${txtPrefixForBold}${defaultPath}${txtPrefixForNormal}. If you don't have a reason to change the location, stick to the default, keep it easy! \n\n"
+en_US["request_path_for_ursa_repo_save_to_location_use_default"]="We'll save the Ursa source code in the recommended path ${txtPrefixForBold}_selectedPath_${txtPrefixForNormal}. If you don't have a reason to change the location, stick to the default, keep it easy!"
 en_US["request_path_for_ursa_repo_save_to_location_happy_proceed"]="Are you happy to proceed?"
 en_US["request_path_for_ursa_repo_save_to_location_y_or_n_change"]="Type Y, or press ENTER to continue. Otherwise, N to change it!"
 en_US["request_path_for_ursa_repo_save_to_locattion_where_store"]="What path would you like to store the repository?"
@@ -80,7 +80,7 @@ en_US["request_path_for_ursa_repo_save_to_locattion_oops_already_exists"]="Oops!
 en_US["request_path_for_ursa_repo_save_to_oops_failed_create_dir"]="Oops! Failed to create the directory _selectedPath_, make sure you have the right permissions."
 
 en_US["clone_ursa_repo_to_path_oops_failed_to_clonse"]="Oops! Failed to clone the Ursa repository ($defaultUrsaHttpsRespository)"
-en_US["clone_ursa_repo_to_path_ok_msg"]="The Ursa repository located at $defaultUrsaHttpsRespository was cloned to $ursaPath!"
+en_US["clone_ursa_repo_to_path_ok_msg"]="The Ursa repository located at $defaultUrsaHttpsRespository was cloned to _ursaPath_!"
 
 en_US["restart_docker_stack_is_going_to_restart"]="The Docker Stack is going to restart. Be patient, please!"
 en_US["restart_docker_stack_is_going_to_start"]="The Docker Stack will now going to start. Be patient, please!"

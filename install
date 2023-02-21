@@ -765,7 +765,7 @@ cloneUrsaRepositoryToPath() {
     exitInstaller
   fi
 
-  showOkMessage "${transl[clone_ursa_repo_to_path_ok_msg]}"
+  showOkMessage "${transl[clone_ursa_repo_to_path_ok_msg]/_ursaPath_/$1}"
 
   printf "\r\n"
 }
