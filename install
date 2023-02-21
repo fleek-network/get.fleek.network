@@ -1355,6 +1355,12 @@ setupSSLTLS() {
 
   trimData=$(verifyUserHasDomain | xargs)
 
+  if [[ ! "$trimData" ]]; then
+    showErrorMessage "🦖 ${transl[setup_ssl_tls_failed_verify_user_domain_and_email]}..."
+
+    exit 1
+  fi
+
   userDomainName=$(echo "$trimData" | cut -d ";" -f 1)
   emailAddress=$(echo "$trimData" | cut -d ";" -f 2)
 
