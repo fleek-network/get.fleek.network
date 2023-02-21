@@ -59,7 +59,9 @@ defaultMinDiskSpaceBytesRequired=10000000
 declare -a supportedLanguages=("en_US")
 
 for lang in "${supportedLanguages[@]}"; do
-  . <(curl -s "$defaultGetFleekNetworkUrl/locales/$lang")
+  # TODO: disabled temporarily to test in branch `feat/localization`
+  # . <(curl -s "$defaultGetFleekNetworkUrl/locales/$lang")
+  . <(curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/feat/localization/locales/$lang")
 done
 
 # App text translations
