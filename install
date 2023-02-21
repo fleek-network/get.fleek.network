@@ -40,6 +40,9 @@
 [ "$BASH" ] || { printf >&2 '🙏 Run the script with Bash, please!\n'; exit 1; }
 (( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
 
+# Date
+dateRuntime=$(date '+%Y%m%d%H%M%S')
+
 # Default
 defaultGetFleekNetworkUrl="https://get.fleek.network"
 defaultFleekNetworkWebsite="https://fleek.network"
@@ -59,9 +62,10 @@ defaultMinDiskSpaceBytesRequired=10000000
 declare -a supportedLanguages=("en_US")
 
 for lang in "${supportedLanguages[@]}"; do
+  # use of ?dateRuntime intentional, prevent cache, do not modify
   # TODO: disabled temporarily to test in branch `feat/localization`
-  # . <(curl -s "$defaultGetFleekNetworkUrl/locales/$lang")
-  . <(curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/feat/localization/locales/$lang?202302211258")
+  # . <(curl -s "$defaultGetFleekNetworkUrl/locales/$lang?$dateRuntime")
+  . <(curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/feat/localization/locales/$lang?$dateRuntime")
 done
 
 # App text translations
