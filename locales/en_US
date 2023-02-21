@@ -3,13 +3,16 @@
 declare -A en_US=()
 
 en_US["common_press_enter_continue"]="Press ENTER to continue"
-en_US["common_press_enter_retry"]="Press ENTER to retry"
+en_US["common_press_enter_retry"]="Press ENTER to try again"
 en_US["common_prompt_yes_as_y"]="y"
 en_US["common_prompt_no_as_n"]="n"
 en_US["common_prompt_are_you_sure_continue_y_or_n"]="Are you sure you want to continue (${transl[common_prompt_yes_as_y]}/${transl[common_prompt_no_as_n]})"
 en_US["common_oops_linux_distro_not_supported"]="Oops! Your Linux distro is not supported yet by our install script, you can also contribute and help us provide support by opening a PR in $defaultGetFleekNetworkUrl, otherwise to install on your own read our guides at $defaultFleekNetworkDocsWebsite"
 en_US["common_oops_os_not_supported"]="Oops! Your operating system is not supported yet, to install on your own read our guides at $defaultFleekNetworkDocsWebsite"
 en_US["common_check_installed_we_can_start_install"]="We can start the installation process for you, are you happy to proceed"
+en_US["common_install_we_need_to"]="We need to install #application#, is that ok (${en_US[common_prompt_yes_as_y]}/${transl[common_prompt_no_as_n]})?"
+en_US["common_install_type_y_or_n"]="Type ${en_US[common_prompt_yes_as_y]} to continue. Otherwise, ${en_US[common_prompt_no_as_n]} to exit!"
+en_US["common_install_app_install_required"]="Oops! The #application# is required to be installed"
 
 en_US["ascii_art_no_os_support_alien_technosignature"]="Alien technosignature detected around our stars"
 
@@ -128,5 +131,12 @@ en_US["init_lets_encrypt_restart_docker_stack"]="We're going to restart the Dock
 en_US["init_lets_encrypt_reloading_nginx"]="Reloading nginx"
 en_US["init_lets_encrypt_success_secured_message"]="Great! You have now secured your server with SSL/TLS."
 
-en_US["install_mandatory_we_need_to"]="We need to install #application#, is that ok (${en_US[common_prompt_yes_as_y]}/${transl[common_prompt_no_as_n]})?"
-en_US["install_mandatory_type_y_or_n"]="Type ${en_US[common_prompt_yes_as_y]} to continue. Otherwise, ${en_US[common_prompt_no_as_n]} to exit!"
+en_US["install_mandatory_distro_not_supported"]="Oh gosh! We're currently not providing support for #distro#."
+en_US["install_mandatory_if_bug_discord"]="If you find this to be a bug and we provide support to your OS, report it on our discord channel please"
+en_US["install_mandatory_installed"]="Installed"
+
+en_US["verify_deps_installed_need_yes_or_no_answer"]="We need a Yes or a No, just to make sure you're happy to proceed."
+en_US["verify_deps_installed_config_has_missing_values"]="Oh no! Sorry, the installer configuration file is missing some values!"
+en_US["verify_deps_installed_help_us_improve_discord"]="Help us improve by reporting this issue in our discord channel $defaultDiscordUrl"
+en_US["verify_deps_installed_thanks_support"]="Thanks a lot for your support"
+en_US["verify_deps_installed_via_package_manager"]="Installed #name# via"

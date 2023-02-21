@@ -992,7 +992,7 @@ initLetsEncrypt() {
 installMandatory() {
   hasCommand "$1" && return 0
 
-  printf -v prompt "\n\n🤖 %s\n%s" "${transl[install_mandatory_we_need_to]/#application#/$1}" "${transl[install_mandatory_type_y_or_n]}"
+  printf -v prompt "\n\n🤖 %s\n%s" "${transl[common_install_we_need_to]/#application#/$1}" "${transl[common_install_type_y_or_n]}"
   while read -rp "$prompt"$'\n> ' answer; do
     data=$(confirm "$answer")
 
@@ -1039,14 +1039,14 @@ verifyDepsOrInstall() {
 
   hasCommand "$bin" && return 0
 
-  printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y to continue. Otherwise, N to exit!" "$bin"
+  printf -v prompt "\n\n🤖 %s\n%s" "${transl[common_install_we_need_to]/#application#/$bin}" "${transl[common_install_type_y_or_n]}"
   while read -rp "$prompt"$'\n> ' answer; do
     data=$(confirm "$answer")
 
     [[ ! $data ]] && continue
 
     if [[ "$data" -eq 1 ]]; then
-      showErrorMessage "Oops! The $1 is required to be installed."
+      showErrorMessage "${transl[install_mandatory_app_install_required]/#application#/$1}"
       exitInstaller
     elif [[ "$data" -eq 0 ]]; then
       break
@@ -1054,9 +1054,9 @@ verifyDepsOrInstall() {
   done
 
   if [[ "$ans" == "" ]]; then
-    echo "😅 We need a Yes or a No, just to make sure you're happy to proceed."
+    echo "😅 ${transl[verify_deps_installed_need_yes_or_no_answer]}"
     
-    read -r -p "Press ENTER to try again..."
+    read -r -p "${transl[common_press_enter_retry]}..."
 
     verifyDepsOrInstall "$os" "$name" "$bin" "$pkgManager"
   fi
@@ -1068,11 +1068,11 @@ verifyDepsOrInstall() {
     pkg=$(echo "$pkgManager" | jq -r ".pkg")
 
     if [[ $pkgManager =~ "null" || $pkgManagerName =~ "null" || $pkg =~ "null" ]]; then
-      echo "💩 Oh no! Sorry, the installer configuration file is missing some values!"
+      echo "💩 ${transl[verify_deps_installed_config_has_missing_values]}"
       echo "LOG: pkgm ($pkgManager), pkgmn ($pkgManagerName), pkg ($pkg)"
       echo
-      echo "Help us improve by reporting this issue in our discord channel https://discord.gg/fleekxyz"
-      echo "Thanks a lot for your support 🙏"
+      echo "${transl[verify_deps_installed_help_us_improve_discord]}"
+      echo "${transl[verify_deps_installed_thanks_support]} 🙏"
       echo
 
       exitInstaller
@@ -1088,7 +1088,7 @@ verifyDepsOrInstall() {
           exitInstaller
         fi
 
-        showOkMessage "Installed ($name) via snap"
+        showOkMessage "${transl[verify_deps_installed_via_package_manager]/#name#/$name} snap"
 
         # ensure snap is in the PATH and pkgs
         source /etc/profile.d/apps-bin-path.sh
@@ -1100,7 +1100,7 @@ verifyDepsOrInstall() {
         exitInstaller
       fi
 
-      showOkMessage "Installed ($name) via apt-get"
+      showOkMessage "${transl[verify_deps_installed_via_package_manager]/#name#/$name} apt-get"
 
       return 0
     elif [[ "$distro" =~ "arch"  ]]; then
@@ -1116,7 +1116,7 @@ verifyDepsOrInstall() {
 
       ! sudo pacman --noconfirm -Syu "$pkg" && exitInstaller
 
-      showOkMessage "Installed ($name) via pacman"
+      showOkMessage "${transl[verify_deps_installed_via_package_manager]/#name#/$name} pacman"
     fi
   fi
 }
