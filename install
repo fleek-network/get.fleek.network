@@ -722,12 +722,11 @@ dockerHealthCheck() {
 }
 
 requestPathnameForUrsaRepository() {
-  defaultPath="$defaultUrsaPath"
   # TODO: on translation, the selected path needs to be computed
   # that is that on runtime the defaultPath might need to be replaced
   # by the user selected choice, as we have these as precomputed text
   # TODO: close after test param expansion, see below
-  selectedPath=$defaultPath
+  selectedPath=$defaultUrsaPath
 
   printf -v prompt "\n🤖 %s\n\n%s?\n%s" "${transl[request_path_for_ursa_repo_save_to_location_use_default]/_selectedPath_/$selectedPath}" "${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}" "${transl[request_path_for_ursa_repo_save_to_location_happy_proceed]} ${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}"
   read -r -p "$prompt"$'\n> ' answer
@@ -735,9 +734,10 @@ requestPathnameForUrsaRepository() {
   if [[ ! "$answer" == "" && "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
     printf -v prompt "\n🙋‍♀️ %s" "${transl[request_path_for_ursa_repo_save_to_locattion_where_store]}"
     read -r -p "$prompt"$'\n> ' answer
+  
+    selectedPath="$answer"
   fi
 
-  selectedPath="$answer"
 
   if [[ -d "$selectedPath" ]]; then
     # TODO: test param expansion
