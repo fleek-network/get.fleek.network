@@ -966,9 +966,13 @@ initLetsEncrypt() {
     printf -v prompt "\n💡 %s\n\n🙋‍♀️ %s\n%s" "${transl[init_lets_encrypt_prompt_recommend_try_again]}" "${transl[init_lets_encrypt_prompt_recommend_try_again_ask]}" "${transl[init_lets_encrypt_prompt_recommend_try_again_y_or_quit]}"
     read -r -p "$prompt"$'\n> ' answer
 
-    answerToLc=$(toLowerCase "$answer")
+    if [[ "$answer" == [qQ] ]]; then
+      echo "🦖 ${transl[init_lets_encrypt_prompt_recommend_you_have_quit]}"
 
-    if [[ "$answerToLc" == "" || "$answerToLc" == [yY] || "$answerToLc" == [yY][eE][sS] ]]; then    
+      exit 1
+    fi
+
+    if [[ "$answer" == "" || "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then    
       echo
       echo "💡 ${transl[init_lets_encrypt_if_issue_persists]}"
       echo "${transl[init_lets_encrypt_linux_os_dns_config_location_1_of_2]}"
