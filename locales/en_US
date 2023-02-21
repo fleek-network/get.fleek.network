@@ -1,4 +1,4 @@
-#!/bin/bash
+_!/bin/bash
 
 declare -A en_US=()
 
@@ -10,9 +10,9 @@ en_US["common_prompt_are_you_sure_continue_y_or_n"]="Are you sure you want to co
 en_US["common_oops_linux_distro_not_supported"]="Oops! Your Linux distro is not supported yet by our install script, you can also contribute and help us provide support by opening a PR in $defaultGetFleekNetworkUrl, otherwise to install on your own read our guides at $defaultFleekNetworkDocsWebsite"
 en_US["common_oops_os_not_supported"]="Oops! Your operating system is not supported yet, to install on your own read our guides at $defaultFleekNetworkDocsWebsite"
 en_US["common_check_installed_we_can_start_install"]="We can start the installation process for you, are you happy to proceed"
-en_US["common_install_we_need_to"]="We need to install #application#, is that ok (${en_US[common_prompt_yes_as_y]}/${transl[common_prompt_no_as_n]})?"
+en_US["common_install_we_need_to"]="We need to install _application_, is that ok (${en_US[common_prompt_yes_as_y]}/${transl[common_prompt_no_as_n]})?"
 en_US["common_install_type_y_or_n"]="Type ${en_US[common_prompt_yes_as_y]} to continue. Otherwise, ${en_US[common_prompt_no_as_n]} to exit!"
-en_US["common_install_app_install_required"]="Oops! The #application# is required to be installed"
+en_US["common_install_app_install_required"]="Oops! The _application_ is required to be installed"
 
 en_US["ascii_art_no_os_support_alien_technosignature"]="Alien technosignature detected around our stars"
 
@@ -75,8 +75,8 @@ en_US["request_path_for_ursa_repo_save_to_location_use_default"]="We'll save the
 en_US["request_path_for_ursa_repo_save_to_location_happy_proceed"]="Are you happy to proceed?"
 en_US["request_path_for_ursa_repo_save_to_location_y_or_n_change"]="Type Y, or press ENTER to continue. Otherwise, N to change it!"
 en_US["request_path_for_ursa_repo_save_to_locattion_where_store"]="What path would you like to store the repository?"
-en_US["request_path_for_ursa_repo_save_to_locattion_oops_already_exists"]="Oops! The #selectedPath# already exists, ensure that the directory is cleared before trying again."
-en_US["request_path_for_ursa_repo_save_to_oops_failed_create_dir"]="Oops! Failed to create the directory #selectedPath#, make sure you have the right permissions."
+en_US["request_path_for_ursa_repo_save_to_locattion_oops_already_exists"]="Oops! The _selectedPath_ already exists, ensure that the directory is cleared before trying again."
+en_US["request_path_for_ursa_repo_save_to_oops_failed_create_dir"]="Oops! Failed to create the directory _selectedPath_, make sure you have the right permissions."
 
 en_US["clone_ursa_repo_to_path_oops_failed_to_clonse"]="Oops! Failed to clone the Ursa repository ($defaultUrsaHttpsRespository)"
 en_US["clone_ursa_repo_to_path_ok_msg"]="The Ursa repository located at $defaultUrsaHttpsRespository was cloned to $ursaPath!"
@@ -93,7 +93,7 @@ en_US["show_docker_stack_log_stack_logs_handy_commands"]="Here are some handy co
 en_US["show_docker_stack_log_stack_logs_handy_cmd_show_logs"]="If you have the Stack running and want to show the logs"
 en_US["show_docker_stack_log_stack_logs_handy_cmd_signit"]="Terminate by sending the interrupt signal (SIGNIT) to Docker using the hotkey"
 # TODO: the variable should be replaced, as its user selectable
-en_US["show_docker_stack_log_stack_logs_can_stop_start_docker"]="You can Stop or Start the Docker Stack at anytime, for that change the directory to the location where the source code of Ursa is stored (default is #selectedUrsaPath#)."
+en_US["show_docker_stack_log_stack_logs_can_stop_start_docker"]="You can Stop or Start the Docker Stack at anytime, for that change the directory to the location where the source code of Ursa is stored (default is _selectedUrsaPath_)."
 en_US["show_docker_stack_log_stack_logs_can_stop_start_docker_example"]="For example, if you accepted the installation recommendation that is ~/fleek-network/ursa"
 en_US["show_docker_stack_log_stack_logs_can_stop_then_after_start_or_stop"]="Then after, run the following commands, to either Start (up) or Stop (down)"
 en_US["show_docker_stack_log_stack_logs_can_stop_then_after_start"]="Start the Docker Stack"
@@ -117,9 +117,9 @@ en_US["init_lets_encrypt_create_dummy_certificates"]="Downloading recommended TL
 en_US["init_lets_encrypt_oops_failed_create_dummy_certificate"]="Oops! Failed to create dummy certificate for domain"
 en_US["init_lets_encrypt_starting_nginx"]="Starting Nginx, please be patient"
 en_US["init_lets_encrypt_failed_start_nginx"]="Oops! Failed to start nginx"
-en_US["init_lets_encrypt_deleting_dummy_certificate"]="Deleting dummy certificate for #domain#"
-en_US["init_lets_encrypt_oops_failed_delete_certificates"]="Oops! Failed to delete dummy certificates for #domain#"
-en_US["init_lets_encrypt_requesting_lets_encrypt_certificates"]="Requesting the Let's Encrypt certificates for #domain#"
+en_US["init_lets_encrypt_deleting_dummy_certificate"]="Deleting dummy certificate for _domain_"
+en_US["init_lets_encrypt_oops_failed_delete_certificates"]="Oops! Failed to delete dummy certificates for _domain_"
+en_US["init_lets_encrypt_requesting_lets_encrypt_certificates"]="Requesting the Let's Encrypt certificates for _domain_"
 en_US["init_lets_encrypt_oops_failed_create_tls_certificates"]="Oops! Failed to create the SSL/TLS certificates, your domain name hasn't been secured yet. Check our guide to troubleshoot"
 en_US["init_lets_encrypt_prompt_recommend_try_again"]="We recommend to try again, as some temporary issues might have occurred."
 en_US["init_lets_encrypt_prompt_recommend_try_again_ask"]="Would you like to retry securing the domain?"
@@ -131,7 +131,7 @@ en_US["init_lets_encrypt_restart_docker_stack"]="We're going to restart the Dock
 en_US["init_lets_encrypt_reloading_nginx"]="Reloading nginx"
 en_US["init_lets_encrypt_success_secured_message"]="Great! You have now secured your server with SSL/TLS."
 
-en_US["install_mandatory_distro_not_supported"]="Oh gosh! We're currently not providing support for #distro#."
+en_US["install_mandatory_distro_not_supported"]="Oh gosh! We're currently not providing support for _distro_."
 en_US["install_mandatory_if_bug_discord"]="If you find this to be a bug and we provide support to your OS, report it on our discord channel please"
 en_US["install_mandatory_installed"]="Installed"
 
@@ -139,7 +139,7 @@ en_US["verify_deps_installed_need_yes_or_no_answer"]="We need a Yes or a No, jus
 en_US["verify_deps_installed_config_has_missing_values"]="Oh no! Sorry, the installer configuration file is missing some values!"
 en_US["verify_deps_installed_help_us_improve_discord"]="Help us improve by reporting this issue in our discord channel $defaultDiscordUrl"
 en_US["verify_deps_installed_thanks_support"]="Thanks a lot for your support"
-en_US["verify_deps_installed_via_package_manager"]="Installed #name# via"
+en_US["verify_deps_installed_via_package_manager"]="Installed _name_ via"
 
 en_US["verify_user_has_domain_have_domain_ready"]="Do you have the domain settings ready (${transl[common_prompt_yes_as_y]}/${transl[common_prompt_no_as_n]})"
 en_US["verify_user_has_domain_have_domain_ready_yes_or_n"]="Type ${transl[common_prompt_yes_as_y]}, or press ENTER to confirm."
@@ -147,22 +147,22 @@ en_US["verify_user_has_domain_oops_best_have_domain"]="Oops! It would be best to
 en_US["verify_user_has_domain_provide_domain_without_http_1_of_2"]="Provide us your domain name without http:// or https:// e.g., www.example.com or my-node.fleek.network"
 en_US["verify_user_has_domain_provide_domain_without_http_2_of_2"]="Tell us, what's the domain name?"
 en_US["verify_user_has_domain_uh_oh_provide_valid_domain"]="Uh oh! Provide a valid domain name, please"
-en_US["verify_user_has_domain_provide_ip_of_machine_1_of_3"]="Provide us the IP address of the machine where you are installing the Node. We've noticed that this machine public IP address is ${txtPrefixForBold}#detectedIpAddress# ${txtPrefixForNormal}(we'll use it as the default)"
+en_US["verify_user_has_domain_provide_ip_of_machine_1_of_3"]="Provide us the IP address of the machine where you are installing the Node. We've noticed that this machine public IP address is ${txtPrefixForBold}_detectedIpAddress_ ${txtPrefixForNormal}(we'll use it as the default)"
 en_US["verify_user_has_domain_provide_ip_of_machine_3_of_3"]="Let us know, what's the IP address the domain answers with?"
 en_US["verify_user_has_domain_provide_ip_of_machine_3_of_3"]="Press ENTER to accept default, or type the IP Address"
 en_US["verify_user_has_domain_uh_oh_provide_valid_ip"]="Uh oh! Provide a valid ip address, please"
-en_US["verify_user_has_domain_oops_embarassing"]="Oops! This is embarrassing, but we failed to discover the default IP Address (#ERROR_IP_ADDRESS_NOT_AVAILABLE#)"
-en_US["verify_user_has_domain_oops_domain_no_dns_record_correct_ip_1_of_2"]="Oops! The domain name #userDomainName# doesn't have a DNS record type A pointing to"
-en_US["verify_user_has_domain_oops_domain_no_dns_record_correct_ip_2_of_2"]="the ip address #serverIpAddress#. Of course, if you've just made the changes, you might need to wait for the DNS settings to propagate. Learn how to setup your domain DNS Records by checking our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+en_US["verify_user_has_domain_oops_embarassing"]="Oops! This is embarrassing, but we failed to discover the default IP Address (_ERROR_IP_ADDRESS_NOT_AVAILABLE_)"
+en_US["verify_user_has_domain_oops_domain_no_dns_record_correct_ip_1_of_2"]="Oops! The domain name _userDomainName_ doesn't have a DNS record type A pointing to"
+en_US["verify_user_has_domain_oops_domain_no_dns_record_correct_ip_2_of_2"]="the ip address _serverIpAddress_. Of course, if you've just made the changes, you might need to wait for the DNS settings to propagate. Learn how to setup your domain DNS Records by checking our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 en_US["verify_user_has_domain_provide_valid_email_1_of_4"]="Provide us with a valid email address that you have access to,"
 en_US["verify_user_has_domain_provide_valid_email_2_of_4"]="rest ensured that we'll not contact you, but its required by Let's Encrypt (Certificate Authority)"
 en_US["verify_user_has_domain_provide_valid_email_3_of_4"]="If you'd like to know more about the Let's Encrypt organisation"
 en_US["verify_user_has_domain_provide_valid_email_4_of_4"]="visit their website at https://letsencrypt.org/\n\nTell us, what's your email address?"
 en_US["verify_user_has_domain_uh_oh_provide_valid_email"]="Uh oh! Provide a valid email address, please"
 en_US["verify_user_has_domain_details_confirmation_1_of_6"]="Here are the details you have provided, make sure the information is correct."
-en_US["verify_user_has_domain_details_confirmation_2_of_6"]="Domain name:       #userDomainName#"
-en_US["verify_user_has_domain_details_confirmation_3_of_6"]="IP Address:        #serverIpAddress#"
-en_US["verify_user_has_domain_details_confirmation_4_of_6"]="Email address:     #emailAddress#"
+en_US["verify_user_has_domain_details_confirmation_2_of_6"]="Domain name:       _userDomainName_"
+en_US["verify_user_has_domain_details_confirmation_3_of_6"]="IP Address:        _serverIpAddress_"
+en_US["verify_user_has_domain_details_confirmation_4_of_6"]="Email address:     _emailAddress_"
 en_US["verify_user_has_domain_details_confirmation_5_of_6"]="Is this correct (${transl[common_prompt_yes_as_y]}/${transl[common_prompt_no_as_n]})?"
 en_US["verify_user_has_domain_details_confirmation_6_of_6"]="Type ${transl[common_prompt_yes_as_y]} to confirm. Otherwise, ${transl[common_prompt_no_as_n]} to make changes!"
 
@@ -172,14 +172,14 @@ en_US["setup_ssl_tls_complete_step_before_proceeding"]="Make sure you complete t
 en_US["setup_ssl_tls_reason_to_secure_server"]="Also, this is important to secure the server communications with SSL/TLS. Take your time!"
 en_US["setup_ssl_tls_learn_more_about"]="If you'd like to learn more about this, check our guide ${txtPrefixForBold}How to secure${txtPrefixForNormal} a Network Node https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 en_US["setup_ssl_tls_oops_failed_clear_nginx"]="Oops! Failed to clear the nginx default config. Help us improve, report it in our discord channel"
-en_US["setup_ssl_tls_oops_failed_update_http_server_name"]="Oops! Failed to update the http server_name directive in the Nginx reverse proxy with your domain name #userDomainName#. Help us improve! Report to us in our Discord channel"
+en_US["setup_ssl_tls_oops_failed_update_http_server_name"]="Oops! Failed to update the http server_name directive in the Nginx reverse proxy with your domain name _userDomainName_. Help us improve! Report to us in our Discord channel"
 en_US["setup_ssl_tls_updated_file_permissions_lets_encrypt_execution"]="Updated the file permissions for Lets Encrypt initialisation script"
 en_US["setup_ssl_tls_uh_oh_cant_communicate_with_reverse_proxy"]="Uh oh! Can't seem to communicate with the reverse proxy. If you have a firewall, it allows web traffic on port 80 (HTTP) and port 443 (HTTPS)"
 en_US["setup_ssl_tls_lets_encrypt_likely_fail_if_continue"]="It's very likely that the Let's Encrypt step will fail, if you decide to proceed! Press ENTER to continue..."
-en_US["setup_ssl_tls_oops_failed_update_https_server_name_directive"]="Oops! Failed to update the https server_name directive in the Nginx reverse proxy with your domain name #userDomainName#. Help us improve! Report to us in our Discord channel"
+en_US["setup_ssl_tls_oops_failed_update_https_server_name_directive"]="Oops! Failed to update the https server_name directive in the Nginx reverse proxy with your domain name _userDomainName_. Help us improve! Report to us in our Discord channel"
 
 en_US["change_directory_to_path_oops_failed_change_dir_discord"]="Oops! Failed to change directory after cloning the repository. Help us improve! Report to us in our Discord channel"
-en_US["change_directory_to_path_oops_failed_change_dir_to_name"]="Oops! Our apologies but we've failed to change directory to #name#. Help us improve by reporting it to us in our Discord channel"
+en_US["change_directory_to_path_oops_failed_change_dir_to_name"]="Oops! Our apologies but we've failed to change directory to _name_. Help us improve by reporting it to us in our Discord channel"
 
 en_US["on_nightly_preference_when_running_stack_docker_build"]="When running the Stack, Docker will have to build the Ursa image from source."
 en_US["on_nightly_preference_our_recommendation"]="Our recommendation is to use our Nightly build, as otherwise the image build process can be quite long"
@@ -190,7 +190,7 @@ en_US["on_nightly_preference_mind_ursa_time_build_long"]="Ok! Remember, the Ursa
 en_US["on_nightly_preference_uh_oh_failed_modify_docker_compose_yaml"]="Uh oh! For some reason we failed to change the docker compose yaml to use nightly instead."
 en_US["on_nightly_preference_uh_oh_failed_modify_docker_compose_yaml_apologies"]="Our apologies but this shouldn't happen! Let us improve by reporting this issue to our discord $defaultDiscordUrl, please"
 en_US["on_nightly_preference_have_run_install_before_surprise"]="Gosh! Have you run the installation before?!"
-en_US["on_nightly_preference_directory_not_empty"]="The directory #ursaPath# is not empty and we'll have to skip the installation, as we don't want to do any overrides."
+en_US["on_nightly_preference_directory_not_empty"]="The directory _ursaPath_ is not empty and we'll have to skip the installation, as we don't want to do any overrides."
 en_US["on_nightly_preference_if_stuck_clear_location_1_of_2"]="If you are stuck on this, clear the desired location before retrying"
-en_US["on_nightly_preference_if_stuck_clear_location_2_of_2"]="e.g., if you chose to install in the default #defaultUrsaPath# clear it, as the assisted installer does not do deletes."
+en_US["on_nightly_preference_if_stuck_clear_location_2_of_2"]="e.g., if you chose to install in the default _defaultUrsaPath_ clear it, as the assisted installer does not do deletes."
 en_US["on_nightly_preference_success_install_completed"]="The installation process has completed!"

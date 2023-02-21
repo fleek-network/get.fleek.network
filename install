@@ -736,7 +736,7 @@ requestPathnameForUrsaRepository() {
 
   if [[ -d "$selectedPath" ]]; then
     # TODO: test param expansion
-    showErrorMessage "${transl[request_path_for_ursa_repo_save_to_locattion_oops_already_exists]/#selectedPath#/$selectedPath}"
+    showErrorMessage "${transl[request_path_for_ursa_repo_save_to_locattion_oops_already_exists]/_selectedPath_/$selectedPath}"
 
     read -r -p "${transl[common_press_enter_retry]}..." answer
 
@@ -745,7 +745,7 @@ requestPathnameForUrsaRepository() {
 
   if ! mkdir -p "$selectedPath"; then
     # TODO: test param expansion
-    showErrorMessage "${transl[request_path_for_ursa_repo_save_to_oops_failed_create_dir]/#selectedPath#/$selectedPath}"
+    showErrorMessage "${transl[request_path_for_ursa_repo_save_to_oops_failed_create_dir]/_selectedPath_/$selectedPath}"
 
     exitInstaller
   fi
@@ -899,7 +899,7 @@ initLetsEncrypt() {
   fi
 
   echo
-  echo "🤖 ${transl[init_lets_encrypt_create_dummy_certificates]/#domain#/$domain} 🙏"
+  echo "🤖 ${transl[init_lets_encrypt_create_dummy_certificates]/_domain_/$domain} 🙏"
   echo
 
   path="/etc/letsencrypt/live/$domain"
@@ -936,13 +936,13 @@ initLetsEncrypt() {
     rm -Rf /etc/letsencrypt/archive/$domain && \
     rm -Rf /etc/letsencrypt/renewal/$domain.conf" certbot; then
 
-    showErrorMessage "${transl[init_lets_encrypt_oops_failed_delete_certificates]/#domain#/$domain}..."
+    showErrorMessage "${transl[init_lets_encrypt_oops_failed_delete_certificates]/_domain_/$domain}..."
 
     exitInstaller
   fi
 
   echo
-  echo "🤖 ${transl[init_lets_encrypt_requesting_lets_encrypt_certificates]/#domain#/$domain}..."
+  echo "🤖 ${transl[init_lets_encrypt_requesting_lets_encrypt_certificates]/_domain_/$domain}..."
   echo
 
   # Enable staging mode if needed
@@ -994,14 +994,14 @@ initLetsEncrypt() {
 installMandatory() {
   hasCommand "$1" && return 0
 
-  printf -v prompt "\n\n🤖 %s\n%s" "${transl[common_install_we_need_to]/#application#/$1}" "${transl[common_install_type_y_or_n]}"
+  printf -v prompt "\n\n🤖 %s\n%s" "${transl[common_install_we_need_to]/_application_/$1}" "${transl[common_install_type_y_or_n]}"
   while read -rp "$prompt"$'\n> ' answer; do
     data=$(confirm "$answer")
 
     [[ ! $data ]] && continue
 
     if [[ "$data" -eq 1 ]]; then
-      showErrorMessage "${transl[install_mandatory_app_install_required]/#application#/$1}"
+      showErrorMessage "${transl[install_mandatory_app_install_required]/_application_/$1}"
       exitInstaller
     elif [[ "$data" -eq 0 ]]; then
       break
@@ -1017,7 +1017,7 @@ installMandatory() {
     elif [[ "$distro" =~ "arch"  ]]; then
       ! sudo pacman -Syu "$1" && exitInstaller
     else
-      echo "👹 ${transl[install_mandatory_distro_not_supported]/#distro#/$distro}"
+      echo "👹 ${transl[install_mandatory_distro_not_supported]/_distro_/$distro}"
       echo "${transl[install_mandatory_if_bug_discord]} 🙏"
       echo
 
@@ -1041,14 +1041,14 @@ verifyDepsOrInstall() {
 
   hasCommand "$bin" && return 0
 
-  printf -v prompt "\n\n🤖 %s\n%s" "${transl[common_install_we_need_to]/#application#/$bin}" "${transl[common_install_type_y_or_n]}"
+  printf -v prompt "\n\n🤖 %s\n%s" "${transl[common_install_we_need_to]/_application_/$bin}" "${transl[common_install_type_y_or_n]}"
   while read -rp "$prompt"$'\n> ' answer; do
     data=$(confirm "$answer")
 
     [[ ! $data ]] && continue
 
     if [[ "$data" -eq 1 ]]; then
-      showErrorMessage "${transl[install_mandatory_app_install_required]/#application#/$1}"
+      showErrorMessage "${transl[install_mandatory_app_install_required]/_application_/$1}"
       exitInstaller
     elif [[ "$data" -eq 0 ]]; then
       break
@@ -1090,7 +1090,7 @@ verifyDepsOrInstall() {
           exitInstaller
         fi
 
-        showOkMessage "${transl[verify_deps_installed_via_package_manager]/#name#/$name} snap"
+        showOkMessage "${transl[verify_deps_installed_via_package_manager]/_name_/$name} snap"
 
         # ensure snap is in the PATH and pkgs
         source /etc/profile.d/apps-bin-path.sh
@@ -1102,7 +1102,7 @@ verifyDepsOrInstall() {
         exitInstaller
       fi
 
-      showOkMessage "${transl[verify_deps_installed_via_package_manager]/#name#/$name} apt-get"
+      showOkMessage "${transl[verify_deps_installed_via_package_manager]/_name_/$name} apt-get"
 
       return 0
     elif [[ "$distro" =~ "arch"  ]]; then
@@ -1118,7 +1118,7 @@ verifyDepsOrInstall() {
 
       ! sudo pacman --noconfirm -Syu "$pkg" && exitInstaller
 
-      showOkMessage "${transl[verify_deps_installed_via_package_manager]/#name#/$name} pacman"
+      showOkMessage "${transl[verify_deps_installed_via_package_manager]/_name_/$name} pacman"
     fi
   fi
 }
@@ -1161,7 +1161,7 @@ verifyUserHasDomain() {
   ERROR_IP_ADDRESS_NOT_AVAILABLE="ERROR_IP_ADDRESS_NOT_AVAILABLE"
   detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "$ERROR_IP_ADDRESS_NOT_AVAILABLE")
 
-  printf -v prompt "\n💡 %s\n\n%s\n\n%s" "${transl[verify_user_has_domain_provide_ip_of_machine_1_of_3]}" "${transl[verify_user_has_domain_provide_ip_of_machine_2_of_3]/#detectedIpAddress#/$detectedIpAddress}" "${transl[verify_user_has_domain_provide_ip_of_machine_3_of_3]}"
+  printf -v prompt "\n💡 %s\n\n%s\n\n%s" "${transl[verify_user_has_domain_provide_ip_of_machine_1_of_3]}" "${transl[verify_user_has_domain_provide_ip_of_machine_2_of_3]/_detectedIpAddress_/$detectedIpAddress}" "${transl[verify_user_has_domain_provide_ip_of_machine_3_of_3]}"
   while read -rp "$prompt"$'\n> ' ans; do
     if confirmIpAddress "$ans"; then
       serverIpAddress="$ans"
@@ -1177,14 +1177,14 @@ verifyUserHasDomain() {
   serverIpAddress=${ans:="$detectedIpAddress"}
 
   if [[ $serverIpAddress = "$ERROR_IP_ADDRESS_NOT_AVAILABLE" ]]; then
-    showErrorMessage "${transl[verify_user_has_domain_oops_embarassing]/#ERROR_IP_ADDRESS_NOT_AVAILABLE#/$ERROR_IP_ADDRESS_NOT_AVAILABLE}"
+    showErrorMessage "${transl[verify_user_has_domain_oops_embarassing]/_ERROR_IP_ADDRESS_NOT_AVAILABLE_/$ERROR_IP_ADDRESS_NOT_AVAILABLE}"
 
     exitInstaller
   fi
 
   # given a name and an ip address, test whether there is a record for name pointing to address
   if ! dig "$userDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$serverIpAddress" >/dev/null 2>&1 ; then
-    showErrorMessage "${transl[verify_user_has_domain_oops_domain_no_dns_record_correct_ip_1_of_2]/#userDomainName#/$userDomainName} ${transl[verify_user_has_domain_oops_domain_no_dns_record_correct_ip_2_of_2]/#serverIpAddress#/$serverIpAddress}"
+    showErrorMessage "${transl[verify_user_has_domain_oops_domain_no_dns_record_correct_ip_1_of_2]/_userDomainName_/$userDomainName} ${transl[verify_user_has_domain_oops_domain_no_dns_record_correct_ip_2_of_2]/_serverIpAddress_/$serverIpAddress}"
 
     read -r -p "${transl[common_press_enter_retry]}..."
 
@@ -1204,9 +1204,9 @@ verifyUserHasDomain() {
 
   printf -v prompt "\n🤖 %s\n\n%s\n%s\n%s\n\n%s\n%s" \
     "${transl[verify_user_has_domain_details_confirmation_1_of_6]}" \
-    "${transl[verify_user_has_domain_details_confirmation_2_of_6]/#userDomainName#/$userDomainName}" \
-    "${transl[verify_user_has_domain_details_confirmation_3_of_6]/#serverIpAddress#/$serverIpAddress}" \
-    "${transl[verify_user_has_domain_details_confirmation_4_of_6]/#emailAddress#/$emailAddress}" \
+    "${transl[verify_user_has_domain_details_confirmation_2_of_6]/_userDomainName_/$userDomainName}" \
+    "${transl[verify_user_has_domain_details_confirmation_3_of_6]/_serverIpAddress_/$serverIpAddress}" \
+    "${transl[verify_user_has_domain_details_confirmation_4_of_6]/_emailAddress_/$emailAddress}" \
     "${transl[verify_user_has_domain_details_confirmation_5_of_6]}" \
     "${transl[verify_user_has_domain_details_confirmation_6_of_6]}"
 
@@ -1350,7 +1350,7 @@ setupSSLTLS() {
   fi
 
   if ! replaceNginxConfFileForHttp "$userDomainName"; then
-    showErrorMessage "${transl[setup_ssl_tls_oops_failed_update_http_server_name]/#userDomainName#/$userDomainName} 🙏"
+    showErrorMessage "${transl[setup_ssl_tls_oops_failed_update_http_server_name]/_userDomainName_/$userDomainName} 🙏"
 
     exitInstaller
   fi
@@ -1383,7 +1383,7 @@ setupSSLTLS() {
   printf "\n"
 
   if ! replaceNginxConfFileForHttps "$userDomainName"; then
-    showErrorMessage "${transl[setup_ssl_tls_oops_failed_update_https_server_name_directive]/#userDomainName#/$userDomainName} 🙏"
+    showErrorMessage "${transl[setup_ssl_tls_oops_failed_update_https_server_name_directive]/_userDomainName_/$userDomainName} 🙏"
 
     exitInstaller
   fi
@@ -1401,7 +1401,7 @@ changeDirectoryToPathOrFailure() {
 
   if [[ $(pwd) != "$targetPath" ]]; then
     if ! cd "$targetPath"; then
-      showErrorMessage "${transl[change_directory_to_path_oops_failed_change_dir_to_name]/#name#/$name} 🙏"
+      showErrorMessage "${transl[change_directory_to_path_oops_failed_change_dir_to_name]/_name_/$name} 🙏"
 
       exitInstaller
     fi
@@ -1498,9 +1498,9 @@ onNightlyPreference() {
     echo
     echo "😅 ${transl[on_nightly_preference_have_run_install_before_surprise]}"
     echo
-    echo "${transl[on_nightly_preference_directory_not_empty]/#ursaPath#/$ursaPath}"
+    echo "${transl[on_nightly_preference_directory_not_empty]/_ursaPath_/$ursaPath}"
     echo "${transl[on_nightly_preference_if_stuck_clear_location_1_of_2]}"
-    echo "${transl[on_nightly_preference_if_stuck_clear_location_2_of_2]/#defaultUrsaPath#/$defaultUrsaPath}"
+    echo "${transl[on_nightly_preference_if_stuck_clear_location_2_of_2]/_defaultUrsaPath_/$defaultUrsaPath}"
 
     exitInstaller
   fi
