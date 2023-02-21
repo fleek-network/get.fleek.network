@@ -186,6 +186,10 @@ mapLanguageYesNoQuitToSystem() {
       [nN]*)    typed="n";;
       # abandonar
       [aA]*)    typed="q";;
+      # sim / si
+      [sS]*)    typed="y";;
+      # saltar
+      [sS][aA][lL][tT][aA][rR]*)  typed="skip";;
       *)        typed="INVALID"
     esac
 
@@ -219,7 +223,9 @@ confirmEmailAddress() {
 }
 
 confirm() {
-  case $1 in
+  intlAnswer=$(mapLanguageYesNoQuitToSystem "$1" "$2")
+
+  case $intlAnswer in
     [yY])
       echo 0
       ;;
@@ -341,9 +347,9 @@ requestAuthorizationAndExec() {
   printf -v prompt "\n🤖 %s (y/n)?" "$1"
   read -r -p "$prompt"$'\n> ' answer
 
-  answerToLc=$(toLowerCase "$answer")
+  intlAnswer=$(mapLanguageYesNoQuitToSystem "$selectedLanguage" "$answer")
 
-  if [[ "$answerToLc" == [nN] || "$answerToLc" == [nN][oO] ]]; then
+  if [[ "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
     printf "\n\n"
 
     showErrorMessage "$2"
@@ -412,7 +418,7 @@ showDisclaimer() {
 
   printf -v prompt "\n\n🤖 %s?\n%s" "${transl[show_disclaimer_should_continue]}" "${transl[show_disclaimer_should_yes_or_no_quit]}"
   while read -rp "$prompt"$'\n> ' ans; do
-    data=$(confirm "$ans")
+    data=$(confirm "$selectedLanguage" "$ans")
 
     [[ ! $data ]] && continue
 
@@ -561,7 +567,9 @@ checkSystemHasRecommendedResources() {
     printf -v prompt "\n\n🤖 %s?" "${transl[common_prompt_are_you_sure_continue_y_or_n]}"
     read -r -p "$prompt"$'\n> ' answer
 
-    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+    intlAnswer=$(mapLanguageYesNoQuitToSystem "$answer")
+
+    if [[ "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
       exitInstaller
     fi
 
@@ -755,7 +763,9 @@ requestPathnameForUrsaRepository() {
   printf -v prompt "\n🤖 %s\n\n%s?\n%s" "${transl[request_path_for_ursa_repo_save_to_location_use_default]/_selectedPath_/$selectedPath}" "${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}" "${transl[request_path_for_ursa_repo_save_to_location_happy_proceed]} ${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}"
   read -r -p "$prompt"$'\n> ' answer
 
-  if [[ ! "$answer" == "" && "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+  intlAnswer=$(mapLanguageYesNoQuitToSystem "$answer")
+
+  if [[ ! "$intlAnswer" == "" && "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
     printf -v prompt "\n🙋‍♀️ %s" "${transl[request_path_for_ursa_repo_save_to_locattion_where_store]}"
     read -r -p "$prompt"$'\n> ' answer
   
@@ -767,7 +777,7 @@ requestPathnameForUrsaRepository() {
     # TODO: test param expansion
     showErrorMessage "${transl[request_path_for_ursa_repo_save_to_locattion_oops_already_exists]/_selectedPath_/$selectedPath}"
 
-    read -r -p "${transl[common_press_enter_retry]}..." answer
+    read -r -p "${transl[common_press_enter_retry]}..."
 
     requestPathnameForUrsaRepository
   fi
@@ -859,9 +869,9 @@ showDockerStackLog() {
   printf -v prompt "\n🙋‍♀️ %s\n%s" "${transl[show_docker_stack_log_stack_logs_prompt_see_output]}" "${transl[show_docker_stack_log_stack_logs_prompt_see_output_y_or_skip]}"
   read -r -p "$prompt"$'\n> ' answer
 
-  answerToLc=$(toLowerCase "$answer")
+  intlAnswer=$(mapLanguageYesNoQuitToSystem "$answer")
 
-  if [[ "$answerToLc" == [sS][kK][iI][pP] ]]; then
+  if [[ "$intlAnswer" == [sS][kK][iI][pP] ]]; then
     printf "\r\n"
 
     echo "🚀 ${transl[show_docker_stack_log_stack_logs_completed_process_thanks]}"
@@ -884,7 +894,7 @@ showDockerStackLog() {
   echo
   echo "${transl[show_docker_stack_log_stack_logs_about_log_messages_ignore]}"
 
-  read -r -p "${transl[common_press_enter_continue]}... " answer
+  read -r -p "${transl[common_press_enter_continue]}... "
 
   sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" logs -f
 }
@@ -988,13 +998,15 @@ initLetsEncrypt() {
     printf -v prompt "\n💡 %s\n\n🙋‍♀️ %s\n%s" "${transl[init_lets_encrypt_prompt_recommend_try_again]}" "${transl[init_lets_encrypt_prompt_recommend_try_again_ask]}" "${transl[init_lets_encrypt_prompt_recommend_try_again_y_or_quit]}"
     read -r -p "$prompt"$'\n> ' answer
 
-    if [[ "$answer" == [qQ] ]]; then
+    intlAnswer=$(mapLanguageYesNoQuitToSystem "$answer")
+
+    if [[ "$intlAnswer" == [qQ] ]]; then
       echo "🦖 ${transl[init_lets_encrypt_prompt_recommend_you_have_quit]}"
 
       exit 1
     fi
 
-    if [[ "$answer" == "" || "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then    
+    if [[ "$intlAnswer" == "" || "$intlAnswer" == [yY] || "$intlAnswer" == [yY][eE][sS] ]]; then    
       echo
       echo "💡 ${transl[init_lets_encrypt_if_issue_persists]}"
       echo "${transl[init_lets_encrypt_linux_os_dns_config_location_1_of_2]}"
@@ -1027,7 +1039,7 @@ installMandatory() {
 
   printf -v prompt "\n\n🤖 %s\n%s" "${transl[common_install_we_need_to]/_application_/$1}" "${transl[common_install_type_y_or_n]}"
   while read -rp "$prompt"$'\n> ' answer; do
-    data=$(confirm "$answer")
+    data=$(confirm "$selectedLanguage" "$answer")
 
     [[ ! $data ]] && continue
 
@@ -1074,7 +1086,7 @@ verifyDepsOrInstall() {
 
   printf -v prompt "\n\n🤖 %s\n%s" "${transl[common_install_we_need_to]/_application_/$bin}" "${transl[common_install_type_y_or_n]}"
   while read -rp "$prompt"$'\n> ' answer; do
-    data=$(confirm "$answer")
+    data=$(confirm "$selectedLanguage" "$answer")
 
     [[ ! $data ]] && continue
 
@@ -1167,13 +1179,15 @@ verifyUserHasDomain() {
   printf -v prompt "\n%s?\n%s" "${transl[verify_user_has_domain_have_domain_ready]}" "${transl[verify_user_has_domain_have_domain_ready_yes_or_n_or_q]}"
   read -r -p "$prompt"$'\n> ' ans
 
-  if [[ "$ans" == [qQ] ]]; then
+  intlAnswer=$(mapLanguageYesNoQuitToSystem "$selectedLanguage" "$ans")
+
+  if [[ "$intlAnswer" == [qQ] ]]; then
     showErrorMessage "🦖 ${transl[verify_user_has_domain_user_quit_message]}"
 
     exit 1
   fi
 
-  if [[ ! "$ans" == "" && "$ans" == [nN] || "$ans" == [nN][oO] ]]; then
+  if [[ ! "$intlAnswer" == "" && "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
     printf "\n"
 
     showErrorMessage "${transl[verify_user_has_domain_oops_best_have_domain]}"
@@ -1247,10 +1261,10 @@ verifyUserHasDomain() {
     "${transl[verify_user_has_domain_details_confirmation_5_of_6]}" \
     "${transl[verify_user_has_domain_details_confirmation_6_of_6]}"
 
-  # TODO: considering the translation terms
-  # this needs to be refactored
   while read -rp "$prompt"$'\n> ' ans; do
-    case $ans in
+    intlAnswer=$(mapLanguageYesNoQuitToSystem "$selectedLanguage" "$ans")
+
+    case $intlAnswer in
       [yY])
         break
         ;;
@@ -1267,12 +1281,6 @@ verifyUserHasDomain() {
         ;;
     esac;
   done;
-
-  shouldRedo=$(toLowerCase "$answer")
-
-  if [[ "$shouldRedo" == [nN] || "$shouldRedo" == [nN][oO] ]]; then
-    verifyUserHasDomain
-  fi
 
   echo "$userDomainName;$emailAddress"
 
@@ -1463,7 +1471,7 @@ onNightlyPreference() {
     "${transl[on_nightly_preference_prompt_happy_use_nightly]}" \
     "${transl[on_nightly_preference_prompt_happy_use_nightly_yes_or_no]}"
   while read -rp "$prompt"$'\n> ' ans; do
-    data=$(confirm "$ans")
+    data=$(confirm "$selectedLanguage" "$ans")
 
     [[ ! $data ]] && continue
 
