@@ -1131,35 +1131,35 @@ extactDomainName() {
 }
 
 verifyUserHasDomain() {
-  printf -v prompt "\nDo you have the domain settings ready (y/n)?\nType Y, or press ENTER to confirm."
+  printf -v prompt "\n%s?\n%s" "${transl[verify_user_has_domain_have_domain_ready]}" "${transl[verify_user_has_domain_have_domain_ready_yes_or_n]}"
   read -r -p "$prompt"$'\n> ' ans
 
   if [[ ! "$ans" == "" && "$ans" == [nN] || "$ans" == [nN][oO] ]]; then
     printf "\n"
 
-    showErrorMessage "Oops! It would be best to have a domain name and the DNS A Record type answer with the server IP address. If you'd like to learn more about it, check our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+    showErrorMessage "${transl[verify_user_has_domain_oops_best_have_domain]}"
 
-    read -r -p "Press ENTER to continue and try again..."
+    read -r -p "${transl[common_press_enter_retry]}..."
 
     verifyUserHasDomain
   fi
 
   # Domain name handling (start)
-  printf -v prompt "\n💡 Provide us your domain name without http:// or https:// e.g., www.example.com or my-node.fleek.network\n\nTell us, what's the domain name?"
+  printf -v prompt "\n💡 %s\n\n%s" "${transl[verify_user_has_domain_provide_domain_without_http_1_of_2]}" "${transl[verify_user_has_domain_provide_domain_without_http_2_of_2]}"
   while read -rp "$prompt"$'\n> ' ans; do
     if confirmDomainName "$ans"; then
       userDomainName="$ans"
       break
     fi
 
-    showPoopMessage "Uh oh! Provide a valid domain name, please..."
+    showPoopMessage "${transl[verify_user_has_domain_uh_oh_provide_valid_domain]}..."
   done
 
   # Ip address handling (start)
   ERROR_IP_ADDRESS_NOT_AVAILABLE="ERROR_IP_ADDRESS_NOT_AVAILABLE"
   detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "$ERROR_IP_ADDRESS_NOT_AVAILABLE")
 
-  printf -v prompt "\n💡 Provide us the IP address of the machine where you are installing the Node. We've noticed that this machine public IP address is ${txtPrefixForBold}%s ${txtPrefixForNormal}(we'll use it as the default)\n\nLet us know, what's the IP address the domain answers with?\n\nPress ENTER to accept default, or type the IP Address" "$detectedIpAddress"
+  printf -v prompt "\n💡 %s\n\n%s\n\n%s" "${transl[verify_user_has_domain_provide_ip_of_machine_1_of_3]}" "${transl[verify_user_has_domain_provide_ip_of_machine_2_of_3]/#detectedIpAddress#/$detectedIpAddress}" "${transl[verify_user_has_domain_provide_ip_of_machine_3_of_3]}"
   while read -rp "$prompt"$'\n> ' ans; do
     if confirmIpAddress "$ans"; then
       serverIpAddress="$ans"
@@ -1168,39 +1168,48 @@ verifyUserHasDomain() {
       break
     fi
 
-    showPoopMessage "Uh oh! Provide a valid ip address, please..."
+    showPoopMessage "${transl[verify_user_has_domain_uh_oh_provide_valid_ip]}..."
   done
 
   # Declare detected ip address as default server ip address
   serverIpAddress=${ans:="$detectedIpAddress"}
 
   if [[ $serverIpAddress = "$ERROR_IP_ADDRESS_NOT_AVAILABLE" ]]; then
-    showErrorMessage "Oops! This is embarrassing, but we failed to discover the default IP Address ($ERROR_IP_ADDRESS_NOT_AVAILABLE)"
+    showErrorMessage "${transl[verify_user_has_domain_oops_embarassing]/#ERROR_IP_ADDRESS_NOT_AVAILABLE#/$ERROR_IP_ADDRESS_NOT_AVAILABLE}"
 
     exitInstaller
   fi
 
   # given a name and an ip address, test whether there is a record for name pointing to address
   if ! dig "$userDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$serverIpAddress" >/dev/null 2>&1 ; then
-    showErrorMessage "Oops! The domain name $userDomainName doesn't have a DNS record type A pointing to the ip address $serverIpAddress. Of course, if you've just made the changes, you might need to wait for the DNS settings to propagate. Learn how to setup your domain DNS Records by checking our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+    showErrorMessage "${transl[verify_user_has_domain_oops_domain_no_dns_record_correct_ip_1_of_2]/#userDomainName#/$userDomainName} ${transl[verify_user_has_domain_oops_domain_no_dns_record_correct_ip_2_of_2]/#serverIpAddress#/$serverIpAddress}"
 
-    read -r -p "Press ENTER to continue and try again..."
+    read -r -p "${transl[common_press_enter_retry]}..."
 
     verifyUserHasDomain
   fi
 
   # Email handling (start)
-  printf -v prompt "💡 Provide us with a valid email address that you have access to,\nrest ensured that we'll not contact you, but its required by Let's Encrypt (Certificate Authority)\n\nIf you'd like to know more about the Let's Encrypt organisation\nvisit their website at https://letsencrypt.org/\n\nTell us, what's your email address?"
+  printf -v prompt "💡 %s\n%s\n\n%s\n%s" "${transl[verify_user_has_domain_provide_valid_email_1_of_4]}" "${transl[verify_user_has_domain_provide_valid_email_2_of_4]}" "${transl[verify_user_has_domain_provide_valid_email_3_of_4]}" "${transl[verify_user_has_domain_provide_valid_email_4_of_4]}"
   while read -rp "$prompt"$'\n> ' ans; do
     if confirmEmailAddress "$ans"; then
       emailAddress=$(toLowerCase "$ans")
       break
     fi
 
-    showPoopMessage "Uh oh! Provide a valid email address, please..."
+    showPoopMessage "${transl[verify_user_has_domain_uh_oh_provide_valid_email]}..."
   done
 
-  printf -v prompt "\n🤖 Here are the details you have provided, make sure the information is correct.\n\nDomain name:      %s\nIP Address:     %s\nEmail address:      %s\n\nIs this correct (y/n)?\nType Y or Yes to confirm. Otherwise, N or No to make changes!" "$userDomainName" "$serverIpAddress" "$emailAddress"
+  printf -v prompt "\n🤖 %s\n\n%s\n%s\n%s\n\n%s\n%s" \
+    "${transl[verify_user_has_domain_details_confirmation_1_of_6]}" \
+    "${transl[verify_user_has_domain_details_confirmation_2_of_6]/#userDomainName#/$userDomainName}" \
+    "${transl[verify_user_has_domain_details_confirmation_3_of_6]/#serverIpAddress#/$serverIpAddress}" \
+    "${transl[verify_user_has_domain_details_confirmation_4_of_6]/#emailAddress#/$emailAddress}" \
+    "${transl[verify_user_has_domain_details_confirmation_5_of_6]}" \
+    "${transl[verify_user_has_domain_details_confirmation_6_of_6]}"
+
+  # TODO: considering the translation terms
+  # this needs to be refactored
   while read -rp "$prompt"$'\n> ' ans; do
     case $ans in
       [yY])
