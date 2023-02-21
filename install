@@ -981,25 +981,25 @@ initLetsEncrypt() {
   fi
 
   echo
-  echo "🤖 Reloading nginx ..."
+  echo "🤖 ${transl[init_lets_encrypt_reloading_nginx]}..."
   echo
 
   docker-compose -f "$config_path" exec nginx nginx -s reload
 
-  showOkMessage "Great! You have now secured your server with SSL/TLS."
+  showOkMessage "${transl[init_lets_encrypt_success_secured_message]}"
 }
 
 installMandatory() {
   hasCommand "$1" && return 0
 
-  printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y to continue. Otherwise, N to exit!" "$1"
+  printf -v prompt "\n\n🤖 %s\n%s" "${transl[install_mandatory_we_need_to]/#application#/$1}" "${transl[install_mandatory_type_y_or_n]}"
   while read -rp "$prompt"$'\n> ' answer; do
     data=$(confirm "$answer")
 
     [[ ! $data ]] && continue
 
     if [[ "$data" -eq 1 ]]; then
-      showErrorMessage "Oops! The $1 is required to be installed."
+      showErrorMessage "${transl[install_mandatory_app_install_required]/#application#/$1}"
       exitInstaller
     elif [[ "$data" -eq 0 ]]; then
       break
@@ -1015,17 +1015,15 @@ installMandatory() {
     elif [[ "$distro" =~ "arch"  ]]; then
       ! sudo pacman -Syu "$1" && exitInstaller
     else
-      echo "👹 Oh gosh! We're currently not providing support for $distro."
-      echo "If you find this to be a bug and we provide support to your OS, report it on our discord channel please 🙏!"
+      echo "👹 ${transl[install_mandatory_distro_not_supported]/#distro#/$distro}"
+      echo "${transl[install_mandatory_if_bug_discord]} 🙏"
       echo
 
       exitInstaller
     fi
   fi
 
-  echo "os $os, distro $distro"
-
-  showOkMessage "Installed $1"
+  showOkMessage "${transl[install_mandatory_installed]} $1"
 
   # Add some space after the msg
   printf "\r\n"

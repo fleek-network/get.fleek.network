@@ -127,3 +127,6 @@ en_US["init_lets_encrypt_linux_os_dns_config_location_2_of_2"]="this file contai
 en_US["init_lets_encrypt_restart_docker_stack"]="We're going to restart the Docker Stack"
 en_US["init_lets_encrypt_reloading_nginx"]="Reloading nginx"
 en_US["init_lets_encrypt_success_secured_message"]="Great! You have now secured your server with SSL/TLS."
+
+en_US["install_mandatory_we_need_to"]="We need to install #application#, is that ok (${en_US[common_prompt_yes_as_y]}/${transl[common_prompt_no_as_n]})?"
+en_US["install_mandatory_type_y_or_n"]="Type ${en_US[common_prompt_yes_as_y]} to continue. Otherwise, ${en_US[common_prompt_no_as_n]} to exit!"
