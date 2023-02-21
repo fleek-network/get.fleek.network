@@ -1,4 +1,4 @@
-_!/bin/bash
+#!/bin/bash
 
 declare -A en_US=()
 
