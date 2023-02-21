@@ -1408,13 +1408,15 @@ changeDirectoryToPathOrFailure() {
 
 onNightlyPreference() {
   echo
-  echo "✋ When running the Stack, Docker will have to build the Ursa image from source."
-  echo "💡 Our recommendation is to use our Nightly build, as otherwise the image build process can be quite long 😴!"
+  echo "✋ ${transl[on_nightly_preference_when_running_stack_docker_build]}"
+  echo "💡 ${transl[on_nightly_preference_our_recommendation]} 😴!"
   echo
-  echo "In the future, you can check our documentation and guides to learn how to update this when required."
+  echo "${transl[on_nightly_preference_inf_future_check_documentation]}"
   echo
 
-  printf -v prompt "\n\n🤖 Are you happy to use the Nightly build (y/n)?\nType Y to accept. Otherwise, N to build from source!"
+  printf -v prompt "\n\n🤖 %s\n%s" \
+    "${transl[on_nightly_preference_prompt_happy_use_nightly]}" \
+    "${transl[on_nightly_preference_prompt_happy_use_nightly_yes_or_no]}"
   while read -rp "$prompt"$'\n> ' ans; do
     data=$(confirm "$ans")
 
@@ -1422,7 +1424,7 @@ onNightlyPreference() {
 
     if [[ "$data" -eq 1 ]]; then
       echo
-      echo "🦀 Ok! Rembember, the Ursa image may take some time to build depending on your machine..."
+      echo "🦀 ${transl[on_nightly_preference_mind_ursa_time_build_long]}..."
       echo
 
       break
@@ -1432,8 +1434,8 @@ onNightlyPreference() {
 
       if ! yq '.services.ursa.image' "$defaultDockerComposeYmlRelativePath" | grep -q "$defaultUrsaNightlyImage" || ! yq '.services.ursa.build' "$defaultDockerComposeYmlRelativePath" | grep -qE "null|no matches found"; then
         echo
-        echo "💩 Uh oh! For some reason we failed to change the docker compose yaml to use nightly instead."
-        echo "Our apologies but this shouldn't happen! Let us improve by reporting this issue to our discord https://discord.gg/fleekxyz, please 🙏"
+        echo "💩 ${transl[on_nightly_preference_uh_oh_failed_modify_docker_compose_yaml]}"
+        echo "${transl[on_nightly_preference_uh_oh_failed_modify_docker_compose_yaml_apologies]} 🙏"
         echo
 
         exitInstaller
@@ -1492,11 +1494,11 @@ onNightlyPreference() {
   # Check if directory does not exit or empty
   if [[ "$(ls -A "$ursaPath" >/dev/null 2>&1)" ]]; then
     echo
-    echo "😅 Gosh! Have you run the installation before?!"
+    echo "😅 ${transl[on_nightly_preference_have_run_install_before_surprise]}"
     echo
-    echo "The directory $ursaPath is not empty and we'll have to skip the installation, as we don't want to do any overrides."
-    echo "If you are stuck on this, clear the desired location before retrying"
-    echo "e.g., if you chose to install in the default $defaultUrsaPath clear it, as the assisted installer does not do deletes."
+    echo "${transl[on_nightly_preference_directory_not_empty]/#ursaPath#/$ursaPath}"
+    echo "${transl[on_nightly_preference_if_stuck_clear_location_1_of_2]}"
+    echo "${transl[on_nightly_preference_if_stuck_clear_location_2_of_2]/#defaultUrsaPath#/$defaultUrsaPath}"
 
     exitInstaller
   fi
@@ -1517,7 +1519,7 @@ onNightlyPreference() {
   # Optional, check if user would like to setup SSL/TLS
   setupSSLTLS
 
-  showOkMessage "The installation process has completed!"
+  showOkMessage "${transl[on_nightly_preference_success_install_completed]}"
 
   # Add some space after the "complete" message
   printf "\r\n"
