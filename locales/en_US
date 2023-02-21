@@ -165,3 +165,11 @@ en_US["verify_user_has_domain_details_confirmation_3_of_6"]="IP Address:        
 en_US["verify_user_has_domain_details_confirmation_4_of_6"]="Email address:     #emailAddress#"
 en_US["verify_user_has_domain_details_confirmation_5_of_6"]="Is this correct (${transl[common_prompt_yes_as_y]}/${transl[common_prompt_no_as_n]})?"
 en_US["verify_user_has_domain_details_confirmation_6_of_6"]="Type ${transl[common_prompt_yes_as_y]} to confirm. Otherwise, ${transl[common_prompt_no_as_n]} to make changes!"
+
+en_US["setup_ssl_tls_you_are_required"]="You're ${txtPrefixForBold}required ${txtPrefixForNormal}to have a Domain name point to your server IP address."
+en_US["setup_ssl_tls_visit_your_domain_name_registrar"]="Visit your domain name registrar's dashboard, create a new domain, and update the A record to have the hostname answer with the server IP address!"
+en_US["setup_ssl_tls_complete_step_before_proceeding"]="Make sure you complete this step before proceeding, as we'll verify it!"
+en_US["setup_ssl_tls_reason_to_secure_server"]="Also, this is important to secure the server communications with SSL/TLS. Take your time!"
+en_US["setup_ssl_tls_learn_more_about"]="If you'd like to learn more about this, check our guide ${txtPrefixForBold}How to secure${txtPrefixForNormal} a Network Node https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+en_US["setup_ssl_tls_oops_failed_clear_nginx"]="Oops! Failed to clear the nginx default config. Help us improve, report it in our discord channel"
+en_US["setup_ssl_tls_oops_failed_update_http_server_name"]="Oops! Failed to update the http server_name directive in the Nginx reverse proxy with your domain name #userDomainName#. Help us improve! Report to us in our Discord channel"

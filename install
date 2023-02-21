@@ -1325,15 +1325,15 @@ replaceNginxConfFileForHttps() {
 }
 
 setupSSLTLS() {
-  echo "⚠️ You're ${txtPrefixForBold}required ${txtPrefixForNormal}to have a Domain name point to your server IP address."
+  echo "⚠️ ${transl[setup_ssl_tls_you_are_required]}"
   echo
-  echo "Visit your domain name registrar's dashboard, create a new domain, and update the A record to have the hostname answer with the server IP address!"
+  echo "${transl[setup_ssl_tls_visit_your_domain_name_registrar]}"
   echo
   # The extra white space between the 🫡 and text is intentional for spacing
-  echo "🫡  Make sure you complete this step before proceeding, as we'll verify it!"
-  echo "Also, this is important to secure the server communications with SSL/TLS. Take your time!"
+  echo "🫡  ${transl[setup_ssl_tls_complete_step_before_proceeding]}"
+  echo "${transl[setup_ssl_tls_reason_to_secure_server]}"
   echo
-  echo "🙏 If you'd like to learn more about this, check our guide ${txtPrefixForBold}How to secure${txtPrefixForNormal} a Network Node https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+  echo "🙏 ${transl[setup_ssl_tls_learn_more_about]}"
   printf "\n"
 
   trimData=$(verifyUserHasDomain | xargs)
@@ -1342,20 +1342,20 @@ setupSSLTLS() {
   emailAddress=$(echo "$trimData" | cut -d ";" -f 2)
 
   if ! rm "$defaultDockerFullNodeRelativePath"/data/nginx/app.conf; then
-    showErrorMessage "Oops! Failed to clear the nginx default config. Help us improve, report it in our discord channel 🙏"
+    showErrorMessage "${transl[setup_ssl_tls_oops_failed_clear_nginx]} 🙏"
 
     exitInstaller
   fi
 
   if ! replaceNginxConfFileForHttp "$userDomainName"; then
-    showErrorMessage "Oops! Failed to update the http server_name directive in the Nginx reverse proxy with your domain name $userDomainName. Help us improve! Report to us in our Discord channel 🙏"
+    showErrorMessage "${transl[setup_ssl_tls_oops_failed_update_http_server_name]/#userDomainName#/$userDomainName} 🙏"
 
     exitInstaller
   fi
 
   chmod +x "$defaultDockerFullNodeRelativePath"/init-letsencrypt.sh
 
-  showOkMessage "Updated the file permissions for Lets Encrypt initialisation script (set +x)!"
+  showOkMessage "${transl[setup_ssl_tls_updated_file_permissions_lets_encrypt_execution]} (set +x)!"
 
   # Intentional, used to provide space after msg
   echo
@@ -1369,9 +1369,9 @@ setupSSLTLS() {
   statusCode=$(curl --write-out "%{http_code}" --silent --output /dev/null http://"$userDomainName"/ping)
 
   if [[ "$statusCode" -ne 200 ]]; then
-    showPoopMessage "Uh oh! Can't seem to communicate with the reverse proxy. If you have a firewall, it allows web traffic on port 80 (HTTP) and port 443 (HTTPS)"
+    showPoopMessage "${transl[setup_ssl_tls_uh_oh_cant_communicate_with_reverse_proxy]}"
 
-    read -r -p "😅 It's very likely that the Let's Encrypt step will fail, if you decide to proceed! Press ENTER to continue..."
+    read -r -p "😅 ${transl[setup_ssl_tls_lets_encrypt_likely_fail_if_continue]}..."
   fi
 
   if ! initLetsEncrypt "$emailAddress" "$userDomainName"; then
@@ -1381,7 +1381,7 @@ setupSSLTLS() {
   printf "\n"
 
   if ! replaceNginxConfFileForHttps "$userDomainName"; then
-    showErrorMessage "Oops! Failed to update the https server_name directive in the Nginx reverse proxy with your domain name $userDomainName. Help us improve! Report to us in our Discord channel 🙏"
+    showErrorMessage "${transl[setup_ssl_tls_oops_failed_update_https_server_name_directive]/#userDomainName#/$userDomainName} 🙏"
 
     exitInstaller
   fi
