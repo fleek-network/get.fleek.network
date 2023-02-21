@@ -237,7 +237,7 @@ launchAsciiArt() {
 cat << "ART"
 ★★★★★★★★★
 
-⚡️ The Fleek Network team presents ⚡️
+⚡️ ${transl[ascii_art_fleek_team_presents]} ⚡️
 
         _..._
       .'     '.     _

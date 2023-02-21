@@ -14,6 +14,7 @@ en_US["common_install_we_need_to"]="We need to install _application_, is that ok
 en_US["common_install_type_y_or_n"]="Type ${en_US[common_prompt_yes_as_y]} to continue. Otherwise, ${en_US[common_prompt_no_as_n]} to exit!"
 en_US["common_install_app_install_required"]="Oops! The _application_ is required to be installed"
 
+en_US["ascii_art_fleek_team_presents"]="The Fleek Network team presents"
 en_US["ascii_art_no_os_support_alien_technosignature"]="Alien technosignature detected around our stars"
 
 en_US["on_interruption_ouch_error"]="Ouch! The installation was interrupted, and applications or dependencies might be lying around! E.g., if the installation has already cloned the Ursa repository to your selected path, than you should clear it manually, etc."
