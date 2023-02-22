@@ -62,7 +62,12 @@ defaultMinDiskSpaceBytesRequired=10000000
 userSelectedLanguage=""
 
 # Localization
-declare -a supportedLanguages=("en_US")
+# declare -a supportedLanguages=("en_US")
+supportedLanguages=$(
+  for file in ./locales/*; do
+    echo "${file##*/}"
+  done | xargs
+)
 
 for lang in "${supportedLanguages[@]}"; do
   # use of ?dateRuntime intentional, prevent cache, do not modify
@@ -84,7 +89,13 @@ setLang() {
 }
 
 # Set default locale
-setLang en_US
+select opt in $supportedLanguages; do
+  if [[ -f "./locales/$opt" ]]; then
+    setLang "$opt"
+
+    break;
+  fi
+done
 
 # Installer state
 statusComplete="complete"
