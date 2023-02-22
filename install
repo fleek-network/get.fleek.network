@@ -294,8 +294,6 @@ cat << "ART"
 ART
 # 👆 ART (here tag) end positioned to the most left intentionally
 
-  sleep 2
-
   echo
   echo "⭐️ Ursa, a Decentralized Content Delivery Network (DCDN) ⭐️"
   echo
