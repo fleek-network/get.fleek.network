@@ -62,8 +62,7 @@ defaultMinDiskSpaceBytesRequired=10000000
 userSelectedLanguage=""
 
 # Localization
-# declare -a supportedLanguages=("en_US")
-supportedLanguages=$(en_US es_ES pt_PT ru vi zh-CN)
+declare -a supportedLanguages=$("en_US" "es_ES" "pt_PT" "ru" "vi" "zh_CN")
 
 for lang in "${supportedLanguages[@]}"; do
   # use of ?dateRuntime intentional, prevent cache, do not modify
