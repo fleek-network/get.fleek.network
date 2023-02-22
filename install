@@ -58,6 +58,9 @@ defaultDockerComposeYmlRelativePath="$defaultDockerFullNodeRelativePath/docker-c
 defaultMinMemoryBytesRequired=8000000
 defaultMinDiskSpaceBytesRequired=10000000
 
+# App state
+userSelectedLanguage=""
+
 # Localization
 declare -a supportedLanguages=("en_US")
 
@@ -76,10 +79,12 @@ setLang() {
   for key in "${!_selectedLang[@]}"; do
     transl["$key"]=${_selectedLang[$key]}
   done
+  
+  userSelectedLanguage="$1"
 }
 
 # Set default locale
-selectedLanguage=$(setLang en_US)
+setLang en_US
 
 # Installer state
 statusComplete="complete"
@@ -347,7 +352,7 @@ requestAuthorizationAndExec() {
   printf -v prompt "\n🤖 %s (y/n)?" "$1"
   read -r -p "$prompt"$'\n> ' answer
 
-  intlAnswer=$(mapLanguageYesNoQuitToSystem "$selectedLanguage" "$answer")
+  intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
 
   if [[ "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
     printf "\n\n"
@@ -418,7 +423,7 @@ showDisclaimer() {
 
   printf -v prompt "\n\n🤖 %s?\n%s" "${transl[show_disclaimer_should_continue]}" "${transl[show_disclaimer_should_yes_or_no_quit]}"
   while read -rp "$prompt"$'\n> ' ans; do
-    data=$(confirm "$selectedLanguage" "$ans")
+    data=$(confirm "$userSelectedLanguage" "$ans")
 
     [[ ! $data ]] && continue
 
@@ -567,7 +572,7 @@ checkSystemHasRecommendedResources() {
     printf -v prompt "\n\n🤖 %s?" "${transl[common_prompt_are_you_sure_continue_y_or_n]}"
     read -r -p "$prompt"$'\n> ' answer
 
-    intlAnswer=$(mapLanguageYesNoQuitToSystem "$selectedLanguage" "$answer")
+    intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
 
     if [[ "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
       exitInstaller
@@ -763,7 +768,7 @@ requestPathnameForUrsaRepository() {
   printf -v prompt "\n🤖 %s\n\n%s?\n%s" "${transl[request_path_for_ursa_repo_save_to_location_use_default]/_selectedPath_/$selectedPath}" "${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}" "${transl[request_path_for_ursa_repo_save_to_location_happy_proceed]} ${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}"
   read -r -p "$prompt"$'\n> ' answer
 
-  intlAnswer=$(mapLanguageYesNoQuitToSystem "$selectedLanguage" "$answer")
+  intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
 
   if [[ ! "$intlAnswer" == "" && "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
     printf -v prompt "\n🙋‍♀️ %s" "${transl[request_path_for_ursa_repo_save_to_locattion_where_store]}"
@@ -869,7 +874,7 @@ showDockerStackLog() {
   printf -v prompt "\n🙋‍♀️ %s\n%s" "${transl[show_docker_stack_log_stack_logs_prompt_see_output]}" "${transl[show_docker_stack_log_stack_logs_prompt_see_output_y_or_skip]}"
   read -r -p "$prompt"$'\n> ' answer
 
-  intlAnswer=$(mapLanguageYesNoQuitToSystem "$selectedLanguage" "$answer")
+  intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
 
   if [[ "$intlAnswer" == [sS][kK][iI][pP] ]]; then
     printf "\r\n"
@@ -998,7 +1003,7 @@ initLetsEncrypt() {
     printf -v prompt "\n💡 %s\n\n🙋‍♀️ %s\n%s" "${transl[init_lets_encrypt_prompt_recommend_try_again]}" "${transl[init_lets_encrypt_prompt_recommend_try_again_ask]}" "${transl[init_lets_encrypt_prompt_recommend_try_again_y_or_quit]}"
     read -r -p "$prompt"$'\n> ' answer
 
-    intlAnswer=$(mapLanguageYesNoQuitToSystem "$selectedLanguage" "$answer")
+    intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
 
     if [[ "$intlAnswer" == [qQ] ]]; then
       echo "🦖 ${transl[init_lets_encrypt_prompt_recommend_you_have_quit]}"
@@ -1039,7 +1044,7 @@ installMandatory() {
 
   printf -v prompt "\n\n🤖 %s\n%s" "${transl[common_install_we_need_to]/_application_/$1}" "${transl[common_install_type_y_or_n]}"
   while read -rp "$prompt"$'\n> ' answer; do
-    data=$(confirm "$selectedLanguage" "$answer")
+    data=$(confirm "$userSelectedLanguage" "$answer")
 
     [[ ! $data ]] && continue
 
@@ -1086,7 +1091,7 @@ verifyDepsOrInstall() {
 
   printf -v prompt "\n\n🤖 %s\n%s" "${transl[common_install_we_need_to]/_application_/$bin}" "${transl[common_install_type_y_or_n]}"
   while read -rp "$prompt"$'\n> ' answer; do
-    data=$(confirm "$selectedLanguage" "$answer")
+    data=$(confirm "$userSelectedLanguage" "$answer")
 
     [[ ! $data ]] && continue
 
@@ -1179,7 +1184,7 @@ verifyUserHasDomain() {
   printf -v prompt "\n%s?\n%s" "${transl[verify_user_has_domain_have_domain_ready]}" "${transl[verify_user_has_domain_have_domain_ready_yes_or_n_or_q]}"
   read -r -p "$prompt"$'\n> ' ans
 
-  intlAnswer=$(mapLanguageYesNoQuitToSystem "$selectedLanguage" "$ans")
+  intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$ans")
 
   if [[ "$intlAnswer" == [qQ] ]]; then
     showErrorMessage "🦖 ${transl[verify_user_has_domain_user_quit_message]}"
@@ -1262,7 +1267,7 @@ verifyUserHasDomain() {
     "${transl[verify_user_has_domain_details_confirmation_6_of_6]}"
 
   while read -rp "$prompt"$'\n> ' ans; do
-    intlAnswer=$(mapLanguageYesNoQuitToSystem "$selectedLanguage" "$ans")
+    intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$ans")
 
     case $intlAnswer in
       [yY])
@@ -1471,7 +1476,7 @@ onNightlyPreference() {
     "${transl[on_nightly_preference_prompt_happy_use_nightly]}" \
     "${transl[on_nightly_preference_prompt_happy_use_nightly_yes_or_no]}"
   while read -rp "$prompt"$'\n> ' ans; do
-    data=$(confirm "$selectedLanguage" "$ans")
+    data=$(confirm "$userSelectedLanguage" "$ans")
 
     [[ ! $data ]] && continue
 
