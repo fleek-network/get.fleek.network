@@ -62,7 +62,7 @@ defaultMinDiskSpaceBytesRequired=10000000
 userSelectedLanguage=""
 
 # Localization
-declare -a supportedLanguages=("en_US" "es_ES" "pt_PT" "ru" "vi" "zh_CN")
+declare -a supportedLanguages=("en" "es" "pt" "ru" "vi" "jp" "zh")
 
 for lang in "${supportedLanguages[@]}"; do
   # use of ?dateRuntime intentional, prevent cache, do not modify
@@ -85,6 +85,22 @@ setLang() {
 
 # Set default locale
 select opt in "${supportedLanguages[@]}"; do
+  if [[ "${supportedLanguages[*]}" =~ $opt ]]; then
+    setLang "$opt"
+
+    break;
+  fi
+done
+
+while true; do
+  echo "🇬🇧 en"
+  echo "🇪🇸 es"
+  echo "🇵🇹 pt"
+  echo "🇷🇺 ru"
+  echo "🇻🇳 vi"
+  echo "🇯🇵 jp"
+  echo "🇨🇳 ch"
+
   if [[ "${supportedLanguages[*]}" =~ $opt ]]; then
     setLang "$opt"
 
