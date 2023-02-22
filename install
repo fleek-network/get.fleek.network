@@ -63,11 +63,7 @@ userSelectedLanguage=""
 
 # Localization
 # declare -a supportedLanguages=("en_US")
-supportedLanguages=$(
-  for file in ./locales/*; do
-    echo "${file##*/}"
-  done | xargs
-)
+supportedLanguages=$(en_US es_ES pt_PT ru vi zh-CN)
 
 for lang in "${supportedLanguages[@]}"; do
   # use of ?dateRuntime intentional, prevent cache, do not modify

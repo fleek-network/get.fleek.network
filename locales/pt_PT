@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -A ./locales/pt_PT=()
+declare -A pt_PT=()
 
 pt_PT["verify_user_has_domain_provide_domain_without_http_1_of_2"]="Fornecer-nos o seu nome de domínio sem http:// ou https://, por exemplo, www.example.com ou my-node.fleek.network"
 pt_PT["on_nightly_preference_uh_oh_failed_modify_docker_compose_yaml"]="Uh oh! Por algum motivo, não conseguimos mudar o docker compor yaml para usar todas as noites."

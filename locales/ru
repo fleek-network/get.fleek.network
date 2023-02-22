@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -A ./locales/ru=()
+declare -A ru=()
 
 ru["verify_user_has_domain_provide_domain_without_http_1_of_2"]="Укажите свое доменное имя без http:// или https://, например, www.example.com или my-node.fleek.network."
 ru["on_nightly_preference_uh_oh_failed_modify_docker_compose_yaml"]="О, о! По какой-то причине нам не удалось изменить yaml для создания докеров, чтобы вместо этого использовать nightly."

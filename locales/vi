@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare -A ./locales/vi=()
+declare -A vi=()
 
 vi["verify_user_has_domain_provide_domain_without_http_1_of_2"]="Cung cấp cho chúng tôi tên miền của bạn không có http:// hoặc https://, ví dụ: www.example.com hoặc my-node.fleek.network"
 vi["on_nightly_preference_uh_oh_failed_modify_docker_compose_yaml"]="Ồ ồ! Vì một số lý do, chúng tôi không thể thay đổi docker soạn yaml để sử dụng hàng đêm thay thế."
