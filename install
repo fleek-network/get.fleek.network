@@ -408,8 +408,7 @@ onInterruption() {
     printf "\r\n"
     echo "😬 ${transl[on_interruption_ouch_error]}"
     echo
-    printf -v prompt "%s" \
-    "$(printf "%s" "${transl[on_interruption_if_require_support]}" | sed "s/_defaultDiscordUrl_/\"${defaultDiscordUrl}\"/g")"
+    printf "%s" "${transl[on_interruption_if_require_support]}" | sed "s/_defaultDiscordUrl_/\"${defaultDiscordUrl}\"/g"
 
     onExitInstallerTodos
     exit 1
