@@ -85,13 +85,19 @@ setLang() {
 
 # Set default locale
 while true; do
-  echo "🇬🇧 English"
-  echo "🇪🇸 Español"
-  echo "🇵🇹 Português"
-  echo "🇷🇺 Pусский"
-  echo "🇻🇳 Tiếng Việt"
-  echo "🇯🇵 日本語"
-  echo "🇨🇳 中文"
+  printf "\n\n%s\n\n" "👋 Hello / 你好 / Hola / Olá / Bonjour / Xin chào / こんにちは / 안녕하세요 / Hallo / नमस्ते / Привет"
+  printf "%s\n\n" "🙏 Choose language / 选择语言 / Elija el idioma / Escolha o idioma / Choisissez la langue / Chọn ngôn ngữ / 言語を選択 / 언어 선택 / Sprache wählen / भाषा चुनें / Выбрать язык"
+  printf "%s\n" "🇬🇧  English"
+  printf "%s\n" "🇨🇳  中文"
+  printf "%s\n" "🇪🇸  Español"
+  printf "%s\n" "🇵🇹  Português"
+  printf "%s\n" "🇫🇷  Français"
+  printf "%s\n" "🇻🇳  Tiếng Việt"
+  printf "%s\n" "🇯🇵  日本語"
+  printf "%s\n" "🇰🇷  안녕하세요"
+  printf "%s\n" "🇩🇪  Deutsch"
+  printf "%s\n" "🇮🇳  Hindi"
+  printf "%s\n" "🇷🇺  Pусский"
   echo ""
 
   read -r -p "> " ans
@@ -216,6 +222,20 @@ mapLanguageYesNoQuitToSystem() {
     return
   fi
 
+  if [[ "$1" == "ch" ]]; then
+    case "${2}" in
+      是的)    typed="y";;
+      不)    typed="n";;
+      辞职)    typed="q";;
+      [sS]kip)  typed="skip";;
+      *)        typed="INVALID"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
   if [[ "$1" == "pt" || "$1" == "es" ]]; then
     case "${2}" in
       [sS]í)    typed="y";;
@@ -232,25 +252,11 @@ mapLanguageYesNoQuitToSystem() {
     return
   fi
 
-  if [[ "$1" == "ru" ]]; then
+  if [[ "$1" == "fr" ]]; then
     case "${2}" in
-      да)    typed="y";;
-      нет)    typed="n";;
-      покидать)    typed="q";;
-      [sS]kip)  typed="skip";;
-      *)        typed="INVALID"
-    esac
-
-    echo "$typed"
-
-    return
-  fi
-
-  if [[ "$1" == "jp" ]]; then
-    case "${2}" in
-      はい)    typed="y";;
-      いいえ)    typed="n";;
-      やめる)    typed="q";;
+      Oui)    typed="y";;
+      Non)    typed="n";;
+      "arrêter")    typed="q";;
       [sS]kip)  typed="skip";;
       *)        typed="INVALID"
     esac
@@ -274,6 +280,20 @@ mapLanguageYesNoQuitToSystem() {
     return
   fi
 
+  if [[ "$1" == "jp" ]]; then
+    case "${2}" in
+      はい)    typed="y";;
+      いいえ)    typed="n";;
+      やめる)    typed="q";;
+      [sS]kip)  typed="skip";;
+      *)        typed="INVALID"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
   if [[ "$1" == "ko" ]]; then
     case "${2}" in
       예)    typed="y";;
@@ -288,11 +308,39 @@ mapLanguageYesNoQuitToSystem() {
     return
   fi
 
-  if [[ "$1" == "ch" ]]; then
+  if [[ "$1" == "de" ]]; then
     case "${2}" in
-      是的)    typed="y";;
-      不)    typed="n";;
-      辞职)    typed="q";;
+      ja)    typed="y";;
+      NEIN)    typed="n";;
+      aufhören)    typed="q";;
+      [sS]kip)  typed="skip";;
+      *)        typed="INVALID"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "hi" ]]; then
+    case "${2}" in
+      हाँ)    typed="y";;
+      नहीं)    typed="n";;
+      छोड़ना)    typed="q";;
+      [sS]kip)  typed="skip";;
+      *)        typed="INVALID"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "ru" ]]; then
+    case "${2}" in
+      да)    typed="y";;
+      нет)    typed="n";;
+      покидать)    typed="q";;
       [sS]kip)  typed="skip";;
       *)        typed="INVALID"
     esac
