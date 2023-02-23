@@ -218,11 +218,12 @@ mapLanguageYesNoQuitToSystem() {
 
   if [[ "$1" == "pt" || "$1" == "es" ]]; then
     case "${2}" in
-      [sS]*)    typed="y";;
-      [nN]*)    typed="n";;
-      [aA]*)    typed="q";;
-      [sS]*)    typed="y";;
-      [sS][aA][lL][tT][aA][rR]*)  typed="skip";;
+      [sS]í)    typed="y";;
+      [sS]i)    typed="y";;
+      [nN]o)    typed="n";;
+      [nN]ão)    typed="n";;
+      [aA]bandonar)    typed="q";;
+      [sS]altar)  typed="skip";;
       *)        typed="INVALID"
     esac
 
@@ -233,10 +234,10 @@ mapLanguageYesNoQuitToSystem() {
 
   if [[ "$1" == "ru" ]]; then
     case "${2}" in
-      да*)    typed="y";;
-      нет*)    typed="n";;
-      покидать*)    typed="q";;
-      [sS]kip*)  typed="skip";;
+      да)    typed="y";;
+      нет)    typed="n";;
+      покидать)    typed="q";;
+      [sS]kip)  typed="skip";;
       *)        typed="INVALID"
     esac
 
@@ -247,10 +248,10 @@ mapLanguageYesNoQuitToSystem() {
 
   if [[ "$1" == "jp" ]]; then
     case "${2}" in
-      はい*)    typed="y";;
-      いいえ*)    typed="n";;
-      やめる*)    typed="q";;
-      [sS]kip*)  typed="skip";;
+      はい)    typed="y";;
+      いいえ)    typed="n";;
+      やめる)    typed="q";;
+      [sS]kip)  typed="skip";;
       *)        typed="INVALID"
     esac
 
@@ -261,10 +262,10 @@ mapLanguageYesNoQuitToSystem() {
 
   if [[ "$1" == "vi" ]]; then
     case "${2}" in
-      Đúng*)    typed="y";;
-      KHÔNG*)    typed="n";;
-      [từ\ bỏ]*)    typed="q";;
-      [sS]kip*)  typed="skip";;
+      Đúng)    typed="y";;
+      KHÔNG)    typed="n";;
+      "từ\ bỏ")    typed="q";;
+      [sS]kip)  typed="skip";;
       *)        typed="INVALID"
     esac
 
@@ -275,10 +276,10 @@ mapLanguageYesNoQuitToSystem() {
 
   if [[ "$1" == "ko" ]]; then
     case "${2}" in
-      예*)    typed="y";;
-      아니요*)    typed="n";;
-      그만두다*)    typed="q";;
-      [sS]kip*)  typed="skip";;
+      예)    typed="y";;
+      아니요)    typed="n";;
+      그만두다)    typed="q";;
+      [sS]kip)  typed="skip";;
       *)        typed="INVALID"
     esac
 
@@ -289,10 +290,10 @@ mapLanguageYesNoQuitToSystem() {
 
   if [[ "$1" == "ch" ]]; then
     case "${2}" in
-      是的*)    typed="y";;
-      不*)    typed="n";;
-      辞职*)    typed="q";;
-      [sS]kip*)  typed="skip";;
+      是的)    typed="y";;
+      不)    typed="n";;
+      辞职)    typed="q";;
+      [sS]kip)  typed="skip";;
       *)        typed="INVALID"
     esac
 
