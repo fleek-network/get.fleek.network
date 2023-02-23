@@ -408,7 +408,7 @@ onInterruption() {
     printf "\r\n"
     echo "😬 ${transl[on_interruption_ouch_error]}"
     echo
-    printf "%s" "${transl[on_interruption_if_require_support]}" | sed "s/_defaultDiscordUrl_/\"${defaultDiscordUrl}\"/g"
+    printf "%s" "${transl[on_interruption_if_require_support]}" | sed "s|_defaultDiscordUrl_|\"${defaultDiscordUrl}\"|g"
 
     onExitInstallerTodos
     exit 1
@@ -447,15 +447,15 @@ showDisclaimer() {
   echo
   echo "${transl[show_disclaimer_if_happy]}"
   echo
-  printf "%s 👀." "${transl[show_disclaimer_script_repository]}" | sed "s/_defaultGetFleekNetworkRepository_/\"${defaultGetFleekNetworkRepository}\"/g"
+  printf "%s 👀." "${transl[show_disclaimer_script_repository]}" | sed "s|_defaultGetFleekNetworkRepository_|\"${defaultGetFleekNetworkRepository}\"|g"
   echo
   echo "🤓 ${transl[show_disclaimer_more]}"
   printf "%s" \
-    "$(printf "%s" "${transl[show_disclaimer_guides]}" | sed "s/_defaultFleekNetworkDocsWebsite_/\"${defaultFleekNetworkDocsWebsite}\"/g; s/_defaultGetFleekNetworkRepository_/${defaultGetFleekNetworkRepository}/g")"
+    "$(printf "%s" "${transl[show_disclaimer_guides]}" | sed "s|_defaultFleekNetworkDocsWebsite_|\"${defaultFleekNetworkDocsWebsite}\"|g; s|_defaultGetFleekNetworkRepository_|${defaultGetFleekNetworkRepository}|g")"
 
   printf -v prompt "\n\n🤖 %s?\n%s" \
-    "$(printf "%s" "${transl[show_disclaimer_should_continue]}" | sed "s/_yes_/\"${transl[common_prompt_yes_as_y]}\"/g; s/_no_/\"${transl[common_prompt_no_as_n]}\"/g")" \
-    "$(printf "%s" "${transl[show_disclaimer_should_yes_or_no_quit]}" | sed "s/_yes_/\"${transl[common_prompt_yes_as_y]}\"/g; s/_no_/\"${transl[common_prompt_no_as_n]}\"/g")"
+    "$(printf "%s" "${transl[show_disclaimer_should_continue]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
+    "$(printf "%s" "${transl[show_disclaimer_should_yes_or_no_quit]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
   while read -rp "$prompt"$'\n> ' ans; do
     data=$(confirm "$userSelectedLanguage" "$ans")
 
@@ -466,7 +466,7 @@ showDisclaimer() {
       echo "🦖 ${transl[show_disclaimer_terminates_here]}"
       echo
       printf "%s" \
-        "$(printf "%s" "${transl[show_disclaimer_terminates_otherwise]}" | sed "s/_defaultFleekNetworkWebsite_/\"${defaultFleekNetworkWebsite}\"/g")"    
+        "$(printf "%s" "${transl[show_disclaimer_terminates_otherwise]}" | sed "s|_defaultFleekNetworkWebsite_|\"${defaultFleekNetworkWebsite}\"|g")"    
       echo
 
       exitInstaller
@@ -479,12 +479,12 @@ showDisclaimer() {
 commonWarningMessage() {
   echo "${transl[common_warning_msg_try_support]}"
   printf "%s" \
-    "$(printf "%s" "${transl[common_warning_msg_information_declassified]}" | sed "s/_defaultFleekNetworkTwitterUrl_/\"${defaultFleekNetworkTwitterUrl}\"/g")"    
+    "$(printf "%s" "${transl[common_warning_msg_information_declassified]}" | sed "s|_defaultFleekNetworkTwitterUrl_|\"${defaultFleekNetworkTwitterUrl}\"|g")"    
   echo
   echo "${transl[common_warning_msg_check_guides]}"
   echo
   printf "%s" \
-    "$(printf "%s" "${transl[common_warning_msg_visit_docs]}" | sed "s/_defaultFleekNetworkDocsWebsite_/\"${defaultFleekNetworkDocsWebsite}\"/g")"    
+    "$(printf "%s" "${transl[common_warning_msg_visit_docs]}" | sed "s|_defaultFleekNetworkDocsWebsite_|\"${defaultFleekNetworkDocsWebsite}\"|g")"    
 }
 
 windowsUsersWarning() {
@@ -520,13 +520,13 @@ installGit() {
       sudo pacman -Syu git
     else
       showErrorMessage \
-        "$(printf "%s" "${transl[install_git_oops_os_and_distro]}" | sed "s/_os_/\"${os}\"/g; s/_distro_/\"${distro}\"/g; s/_defaultFleekNetworkDocsWebsite_/${defaultFleekNetworkDocsWebsite}/g")"
+        "$(printf "%s" "${transl[install_git_oops_os_and_distro]}" | sed "s|_os_|\"${os}\"|g; s|_distro_|\"${distro}\"|g; s|_defaultFleekNetworkDocsWebsite_|${defaultFleekNetworkDocsWebsite}|g")"
 
       exitInstaller
     fi
   else
     showErrorMessage \
-      "$(printf "%s" "${transl[install_git_oops_os]}" | sed "s/_os_/\"${os}\"/g; s/_defaultFleekNetworkDocsWebsite_/${defaultFleekNetworkDocsWebsite}/g")"
+      "$(printf "%s" "${transl[install_git_oops_os]}" | sed "s|_os_|\"${os}\"|g; s|_defaultFleekNetworkDocsWebsite_|${defaultFleekNetworkDocsWebsite}|g")"
 
     exitInstaller
   fi
@@ -609,7 +609,7 @@ checkSystemHasRecommendedResources() {
     echo "😬 ${transl[check_sys_has_recommended_resources_oh_no_need_at_least]}"
     echo
     printf -v prompt "\n\n🤖 %s?" \
-      "$(printf "%s" "${transl[common_prompt_are_you_sure_continue_y_or_n]}" | sed "s/_yes_/\"${transl[common_prompt_yes_as_y]}\"/g; s/_no_/\"${transl[common_prompt_no_as_n]}\"/g")"
+      "$(printf "%s" "${transl[common_prompt_are_you_sure_continue_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
     read -r -p "$prompt"$'\n> ' answer
 
     intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
@@ -735,7 +735,7 @@ installDocker() {
 
       if [[ "$latestKernel" != "$currentKernel" ]]; then
         echo "✋ ${transl[install_docker_need_reboot]}"
-        printf "%s" "${transl[install_docker_need_reboot_reason]}" | sed "s/_currentKernel_/\"${currentKernel}\"/g; s/_latestKernel_/${latestKernel}/g"
+        printf "%s" "${transl[install_docker_need_reboot_reason]}" | sed "s|_currentKernel_|\"${currentKernel}\"|g; s|_latestKernel_|${latestKernel}|g"
         echo
         echo "${transl[install_docker_need_reboot_if_failure]}"
         echo "${transl[install_docker_suggest_rebooting]}"
@@ -745,14 +745,14 @@ installDocker() {
       fi
     else
       printf -v common_oops_linux_distro_not_supported "%s" \
-      "$(printf "%s" "${transl[common_oops_linux_distro_not_supported]}" | sed "s/_defaultGetFleekNetworkUrl_/\"${defaultGetFleekNetworkUrl}\"/g; s/_defaultFleekNetworkDocsWebsite_/${defaultFleekNetworkDocsWebsite}/g")"
+      "$(printf "%s" "${transl[common_oops_linux_distro_not_supported]}" | sed "s|_defaultGetFleekNetworkUrl_|\"${defaultGetFleekNetworkUrl}\"|g; s|_defaultFleekNetworkDocsWebsite_|${defaultFleekNetworkDocsWebsite}|g")"
       showErrorMessage "${common_oops_linux_distro_not_supported}"
 
       exitInstaller
     fi
   else
     printf -v common_oops_os_not_supported "%s" \
-    "$(printf "%s" "${transl[common_oops_os_not_supported]}" | sed "s/_defaultFleekNetworkDocsWebsite_/\"${defaultFleekNetworkDocsWebsite}\"/g")"
+    "$(printf "%s" "${transl[common_oops_os_not_supported]}" | sed "s|_defaultFleekNetworkDocsWebsite_|\"${defaultFleekNetworkDocsWebsite}\"|g")"
     showErrorMessage "${common_oops_os_not_supported}"
 
     exitInstaller
@@ -811,9 +811,9 @@ requestPathnameForUrsaRepository() {
 
   printf -v prompt "\n🤖 %s\n\n%s?\n%s" \
     "${transl[request_path_for_ursa_repo_save_to_location_use_default]/_selectedPath_/$selectedPath}" \
-    "$(printf "%s" "${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}" | sed "s/_yes_/\"${transl[common_prompt_yes_as_y]}\"/g; s/_no_/\"${transl[common_prompt_no_as_n]}\"/g")" \
+    "$(printf "%s" "${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
     "${transl[request_path_for_ursa_repo_save_to_location_happy_proceed]}" \
-    "$(printf "%s" "${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}" | sed "s/_yes_/\"${transl[common_prompt_yes_as_y]}\"/g; s/_no_/\"${transl[common_prompt_no_as_n]}\"/g")"
+    "$(printf "%s" "${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
   read -r -p "$prompt"$'\n> ' answer
 
   intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
@@ -848,13 +848,13 @@ requestPathnameForUrsaRepository() {
 cloneUrsaRepositoryToPath() {
   if ! git clone $defaultUrsaHttpsRespository "$1"; then
     showErrorMessage \
-      "$(printf "%s" "${transl[clone_ursa_repo_to_path_oops_failed_to_clone]}" | sed "s/_defaultUrsaHttpsRespository_/\"${defaultUrsaHttpsRespository}\"/g")"
+      "$(printf "%s" "${transl[clone_ursa_repo_to_path_oops_failed_to_clone]}" | sed "s|_defaultUrsaHttpsRespository_|\"${defaultUrsaHttpsRespository}\"|g")"
 
     exitInstaller
   fi
 
   showOkMessage \
-    "$(printf "%s" "${transl[clone_ursa_repo_to_path_ok_msg]}" | sed "s/_defaultUrsaHttpsRespository_/\"${defaultUrsaHttpsRespository}\"/g; s/_ursaPath_/${1}/g")"
+    "$(printf "%s" "${transl[clone_ursa_repo_to_path_ok_msg]}" | sed "s|_defaultUrsaHttpsRespository_|\"${defaultUrsaHttpsRespository}\"|g; s|_ursaPath_|${1}|g")"
 
   printf "\r\n"
 }
@@ -915,9 +915,9 @@ showDockerStackLog() {
   echo
   echo "🥹 ${transl[show_docker_stack_log_stack_logs_seems_a_lot]}"
   # The extra white space between ✏️ and start of text is intentional and used for alignment
-  printf "🤓  %s" "${transl[show_docker_stack_log_stack_logs_learn_how_maintain]}" | sed "s/_defaultFleekNetworkDocsWebsite_/\"${defaultFleekNetworkDocsWebsite}\"/g"
+  printf "🤓  %s" "${transl[show_docker_stack_log_stack_logs_learn_how_maintain]}" | sed "s|_defaultFleekNetworkDocsWebsite_|\"${defaultFleekNetworkDocsWebsite}\"|g"
 
-  printf "🌈 %s" "${transl[show_docker_stack_log_stack_logs_got_feedback]}" | sed "s/_defaultDiscordUrl_/\"${defaultDiscordUrl}\"/g; s/_defaultFleekNetworkTwitterUrl_/${defaultFleekNetworkTwitterUrl}/g"
+  printf "🌈 %s" "${transl[show_docker_stack_log_stack_logs_got_feedback]}" | sed "s|_defaultDiscordUrl_|\"${defaultDiscordUrl}\"|g; s|_defaultFleekNetworkTwitterUrl_|${defaultFleekNetworkTwitterUrl}|g"
   echo
   echo "★★★★★★★★★"
   echo
@@ -931,7 +931,7 @@ showDockerStackLog() {
     printf "\r\n"
 
     echo "🚀 ${transl[show_docker_stack_log_stack_logs_completed_process_thanks]}"
-    printf "🤗 %s" "${transl[show_docker_stack_log_stack_logs_completed_process_remember]}" | sed "s/_defaultFleekNetworkWebsite_/\"${defaultFleekNetworkWebsite}\"/g"
+    printf "🤗 %s" "${transl[show_docker_stack_log_stack_logs_completed_process_remember]}" | sed "s|_defaultFleekNetworkWebsite_|\"${defaultFleekNetworkWebsite}\"|g"
 
     echo
 
@@ -1058,7 +1058,7 @@ initLetsEncrypt() {
     intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
 
     if [[ "$intlAnswer" == [qQ] ]]; then
-      printf "🦖 %s" "${transl[init_lets_encrypt_prompt_recommend_you_have_quit]}" | sed "s/_defaultFleekNetworkDocsWebsite_/\"${defaultFleekNetworkDocsWebsite}\"/g"
+      printf "🦖 %s" "${transl[init_lets_encrypt_prompt_recommend_you_have_quit]}" | sed "s|_defaultFleekNetworkDocsWebsite_|\"${defaultFleekNetworkDocsWebsite}\"|g"
 
       exit 1
     fi
@@ -1173,7 +1173,7 @@ verifyDepsOrInstall() {
       echo "💩 ${transl[verify_deps_installed_config_has_missing_values]}"
       echo "LOG: pkgm ($pkgManager), pkgmn ($pkgManagerName), pkg ($pkg)"
       echo
-      printf "%s" "${transl[verify_deps_installed_help_us_improve_discord]}" | sed "s/_defaultDiscordUrl_/\"${defaultDiscordUrl}\"/g"
+      printf "%s" "${transl[verify_deps_installed_help_us_improve_discord]}" | sed "s|_defaultDiscordUrl_|\"${defaultDiscordUrl}\"|g"
 
       echo "${transl[verify_deps_installed_thanks_support]} 🙏"
       echo
@@ -1236,14 +1236,14 @@ extactDomainName() {
 verifyUserHasDomain() {
   printf -v prompt "\n%s?\n%s" \
     "${transl[verify_user_has_domain_have_domain_ready]}" \
-    "$(printf "%s" "${transl[verify_user_has_domain_have_domain_ready_yes_or_n_or_q]}" | sed "s/_yes_/\"${transl[common_prompt_yes_as_y]}\"/g; s/_no_/\"${transl[common_prompt_no_as_n]}\"/g")"
+    "$(printf "%s" "${transl[verify_user_has_domain_have_domain_ready_yes_or_n_or_q]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
   read -r -p "$prompt"$'\n> ' ans
 
   intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$ans")
 
   if [[ "$intlAnswer" == [qQ] ]]; then
     showErrorMessage \
-      "$(printf "🦖 %s" "${transl[verify_user_has_domain_user_quit_message]}" | sed "s/_defaultFleekNetworkDocsWebsite_/\"${defaultFleekNetworkDocsWebsite}\"/g")"
+      "$(printf "🦖 %s" "${transl[verify_user_has_domain_user_quit_message]}" | sed "s|_defaultFleekNetworkDocsWebsite_|\"${defaultFleekNetworkDocsWebsite}\"|g")"
 
     exit 1
   fi
@@ -1530,7 +1530,7 @@ onNightlyPreference() {
 
   printf -v prompt "\n\n🤖 %s\n%s" \
     "${transl[on_nightly_preference_prompt_happy_use_nightly]}" \
-    "$(printf "%s" "${transl[on_nightly_preference_prompt_happy_use_nightly_yes_or_no]}" | sed "s/_yes_/\"${transl[common_prompt_yes_as_y]}\"/g; s/_no_/\"${transl[common_prompt_no_as_n]}\"/g")"
+    "$(printf "%s" "${transl[on_nightly_preference_prompt_happy_use_nightly_yes_or_no]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
   while read -rp "$prompt"$'\n> ' ans; do
     data=$(confirm "$userSelectedLanguage" "$ans")
 
@@ -1550,7 +1550,7 @@ onNightlyPreference() {
         echo
         echo "💩 ${transl[on_nightly_preference_uh_oh_failed_modify_docker_compose_yaml]}"
 
-        printf "%s 🙏" "${transl[on_nightly_preference_uh_oh_failed_modify_docker_compose_yaml_apologies]}" | sed "s/_defaultDiscordUrl_/\"${defaultDiscordUrl}\"/g"
+        printf "%s 🙏" "${transl[on_nightly_preference_uh_oh_failed_modify_docker_compose_yaml_apologies]}" | sed "s|_defaultDiscordUrl_|\"${defaultDiscordUrl}\"|g"
         echo
 
         exitInstaller
