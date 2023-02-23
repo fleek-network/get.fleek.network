@@ -210,13 +210,13 @@ txtPrefixForBold=$(tput bold)
 txtPrefixForNormal=$(tput sgr0)
 
 mapLanguageYesNoQuitToSystem() {
-  if [[ "$1" == "en_US" ]]; then
+  if [[ "$1" == "en" ]]; then
     echo "$2"
 
     return
   fi
 
-  if [[ "$1" == "pt_PT" || "$1" == "es_ES" ]]; then
+  if [[ "$1" == "pt" || "$1" == "es" ]]; then
     case "${2}" in
       # sim / si
       [sS]*)    typed="y";;
