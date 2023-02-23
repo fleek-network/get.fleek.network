@@ -218,16 +218,81 @@ mapLanguageYesNoQuitToSystem() {
 
   if [[ "$1" == "pt" || "$1" == "es" ]]; then
     case "${2}" in
-      # sim / si
       [sS]*)    typed="y";;
-      # nao / no
       [nN]*)    typed="n";;
-      # abandonar
       [aA]*)    typed="q";;
-      # sim / si
       [sS]*)    typed="y";;
-      # saltar
       [sS][aA][lL][tT][aA][rR]*)  typed="skip";;
+      *)        typed="INVALID"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "ru" ]]; then
+    case "${2}" in
+      да*)    typed="y";;
+      нет*)    typed="n";;
+      покидать*)    typed="q";;
+      [sS]kip*)  typed="skip";;
+      *)        typed="INVALID"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "jp" ]]; then
+    case "${2}" in
+      はい*)    typed="y";;
+      いいえ*)    typed="n";;
+      やめる*)    typed="q";;
+      [sS]kip*)  typed="skip";;
+      *)        typed="INVALID"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "vi" ]]; then
+    case "${2}" in
+      Đúng*)    typed="y";;
+      KHÔNG*)    typed="n";;
+      [từ\ bỏ]*)    typed="q";;
+      [sS]kip*)  typed="skip";;
+      *)        typed="INVALID"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "ko" ]]; then
+    case "${2}" in
+      예*)    typed="y";;
+      아니요*)    typed="n";;
+      그만두다*)    typed="q";;
+      [sS]kip*)  typed="skip";;
+      *)        typed="INVALID"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "ch" ]]; then
+    case "${2}" in
+      是的*)    typed="y";;
+      不*)    typed="n";;
+      辞职*)    typed="q";;
+      [sS]kip*)  typed="skip";;
       *)        typed="INVALID"
     esac
 
@@ -812,8 +877,7 @@ requestPathnameForUrsaRepository() {
   printf -v prompt "\n🤖 %s\n\n%s?\n%s" \
     "${transl[request_path_for_ursa_repo_save_to_location_use_default]/_selectedPath_/$selectedPath}" \
     "$(printf "%s" "${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
-    "${transl[request_path_for_ursa_repo_save_to_location_happy_proceed]}" \
-    "$(printf "%s" "${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
+    "${transl[request_path_for_ursa_repo_save_to_location_happy_proceed]}"
   read -r -p "$prompt"$'\n> ' answer
 
   intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
@@ -922,7 +986,9 @@ showDockerStackLog() {
   echo "★★★★★★★★★"
   echo
 
-  printf -v prompt "\n🙋‍♀️ %s\n%s" "${transl[show_docker_stack_log_stack_logs_prompt_see_output]}" "${transl[show_docker_stack_log_stack_logs_prompt_see_output_y_or_skip]}"
+  printf -v prompt "\n🙋‍♀️ %s\n%s" \
+    "${transl[show_docker_stack_log_stack_logs_prompt_see_output]}" \
+    "$(printf "%s" "${transl[show_docker_stack_log_stack_logs_prompt_see_output_y_or_skip]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_skip_|skip|g")"
   read -r -p "$prompt"$'\n> ' answer
 
   intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
@@ -1021,7 +1087,7 @@ initLetsEncrypt() {
   fi
   
   echo
-  echo "🤖 ${transl[init_lets_encrypt_deleting_dummy_certificate]}..."
+  echo "🤖 ${transl[init_lets_encrypt_deleting_dummy_certificate]/_domain_/$domain}..."
   echo
 
   if ! docker-compose -f "$config_path" \
@@ -1235,8 +1301,8 @@ extactDomainName() {
 
 verifyUserHasDomain() {
   printf -v prompt "\n%s?\n%s" \
-    "${transl[verify_user_has_domain_have_domain_ready]}" \
-    "$(printf "%s" "${transl[verify_user_has_domain_have_domain_ready_yes_or_n_or_q]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
+    "$(printf "%s" "${transl[verify_user_has_domain_have_domain_ready]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
+    "$(printf "%s" "${transl[verify_user_has_domain_have_domain_ready_yes_or_n_or_q]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g; s|_quit_|\"${transl[common_prompt_quit_as_q]}\"|g")"
   read -r -p "$prompt"$'\n> ' ans
 
   intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$ans")
@@ -1319,8 +1385,8 @@ verifyUserHasDomain() {
     "${transl[verify_user_has_domain_details_confirmation_2_of_6]/_userDomainName_/$userDomainName}" \
     "${transl[verify_user_has_domain_details_confirmation_3_of_6]/_serverIpAddress_/$serverIpAddress}" \
     "${transl[verify_user_has_domain_details_confirmation_4_of_6]/_emailAddress_/$emailAddress}" \
-    "${transl[verify_user_has_domain_details_confirmation_5_of_6]}" \
-    "${transl[verify_user_has_domain_details_confirmation_6_of_6]}"
+    "$(printf "%s" "${transl[verify_user_has_domain_details_confirmation_5_of_6]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
+    "$(printf "%s" "${transl[verify_user_has_domain_details_confirmation_6_of_6]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
 
   while read -rp "$prompt"$'\n> ' ans; do
     intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$ans")
@@ -1529,7 +1595,7 @@ onNightlyPreference() {
   echo
 
   printf -v prompt "\n\n🤖 %s\n%s" \
-    "${transl[on_nightly_preference_prompt_happy_use_nightly]}" \
+    "$(printf "%s" "${transl[on_nightly_preference_prompt_happy_use_nightly]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
     "$(printf "%s" "${transl[on_nightly_preference_prompt_happy_use_nightly_yes_or_no]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
   while read -rp "$prompt"$'\n> ' ans; do
     data=$(confirm "$userSelectedLanguage" "$ans")
