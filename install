@@ -83,8 +83,7 @@ setLang() {
   userSelectedLanguage="$1"
 }
 
-# Set default locale
-while true; do
+multiLanguageChoice() {
   echo ""
   printf "\n\n%s\n\n" "👋 Hello / 你好 / Hola / Olá / Bonjour / Xin chào / こんにちは / 안녕하세요 / Hallo / नमस्ते / Привет"
   printf "%s\n\n" "🙏 Choose language / 选择语言 / Elija el idioma / Escolha o idioma / Choisissez la langue / Chọn ngôn ngữ / 言語を選択 / 언어 선택 / Sprache wählen / भाषा चुनें / Выбрать язык"
@@ -118,17 +117,17 @@ while true; do
       opt="ch"
     fi
 
-    if [[ $opt ]]; then
-      break
+    if [[ ! $opt ]]; then
+      continue
+    fi
+
+    if [[ "${supportedLanguages[*]}" =~ $opt ]]; then
+      setLang "$opt"
+
+      break;
     fi
   done
-
-  if [[ "${supportedLanguages[*]}" =~ $opt ]]; then
-    setLang "$opt"
-
-    break;
-  fi
-done
+}
 
 # Installer state
 statusComplete="complete"
@@ -1719,6 +1718,9 @@ onNightlyPreference() {
 
   # SIGINT listener
   trap onInterruption INT
+
+  # Set default locale
+  multiLanguageChoice
 
   # Identity the OS
   os=$(identifyOS)
