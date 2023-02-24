@@ -50,7 +50,7 @@ defaultFleekNetworkDocsWebsite="https://docs.fleek.network"
 defaultDiscordUrl="https://discord.gg/fleekxyz"
 defaultFleekNetworkTwitterUrl="https://twitter.com/fleek_net"
 defaultGetFleekNetworkRepository="https://github.com/fleek-network/get.fleek.network"
-defaultUrsaHttpsRespository="https://github.com/fleek-network/ursa.git"
+defaultUrsaHttpsRepository="https://github.com/fleek-network/ursa.git"
 defaultUrsaPath="$HOME/fleek-network/ursa"
 defaultUrsaNightlyImage="ghcr.io/fleek-network/ursa:nightly"
 defaultDockerFullNodeRelativePath="./docker/full-node"
@@ -989,15 +989,15 @@ requestPathnameForUrsaRepository() {
 }
 
 cloneUrsaRepositoryToPath() {
-  if ! git clone $defaultUrsaHttpsRespository "$1"; then
+  if ! git clone $defaultUrsaHttpsRepository "$1"; then
     showErrorMessage \
-      "$(printf "%s" "${transl[clone_ursa_repo_to_path_oops_failed_to_clone]}" | sed "s|_defaultUrsaHttpsRespository_|\"${defaultUrsaHttpsRespository}\"|g")"
+      "$(printf "%s" "${transl[clone_ursa_repo_to_path_oops_failed_to_clone]}" | sed "s|_defaultUrsaHttpsRepository_|\"${defaultUrsaHttpsRepository}\"|g")"
 
     exitInstaller
   fi
 
   showOkMessage \
-    "$(printf "%s" "${transl[clone_ursa_repo_to_path_ok_msg]}" | sed "s|_defaultUrsaHttpsRespository_|\"${defaultUrsaHttpsRespository}\"|g; s|_ursaPath_|${1}|g")"
+    "$(printf "%s" "${transl[clone_ursa_repo_to_path_ok_msg]}" | sed "s|_defaultUrsaHttpsRepository_|\"${defaultUrsaHttpsRepository}\"|g; s|_ursaPath_|${1}|g")"
 
   printf "\r\n"
 }
