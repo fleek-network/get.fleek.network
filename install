@@ -101,23 +101,27 @@ while true; do
   printf "%s\n" "🇷🇺  Pусский"
   echo ""
 
-  read -r -p "> " ans
+  while read -r -p "> " ans; do  
+    if [[ $ans == [eE]nglish ]]; then
+      opt="en"
+    elif [[ $ans == [eE]spañol ]]; then
+      opt="es"
+    elif [[ $ans == [pP]ortuguês ]]; then
+      opt="pt"
+    elif [[ $ans == [pP]усский ]]; then
+      opt="ru"
+    elif [[ $ans =~ [tT]iếng ]]; then
+      opt="vi"
+    elif [[ $ans =~ 日本語 ]]; then
+      opt="jp"
+    elif [[ $ans =~ 中文 ]]; then
+      opt="ch"
+    fi
 
-  if [[ $ans == [eE]nglish ]]; then
-    opt="en"
-  elif [[ $ans == [eE]spañol ]]; then
-    opt="es"
-  elif [[ $ans == [pP]ortuguês ]]; then
-    opt="pt"
-  elif [[ $ans == [pP]усский ]]; then
-    opt="ru"
-  elif [[ $ans =~ [tT]iếng ]]; then
-    opt="vi"
-  elif [[ $ans =~ 日本語 ]]; then
-    opt="jp"
-  elif [[ $ans =~ 中文 ]]; then
-    opt="ch"
-  fi
+    if [[ $opt ]]; then
+      break
+    fi
+  done
 
   if [[ "${supportedLanguages[*]}" =~ $opt ]]; then
     setLang "$opt"
@@ -229,7 +233,7 @@ mapLanguageYesNoQuitToSystem() {
       不)    typed="n";;
       辞职)    typed="q";;
       [sS]kip)  typed="skip";;
-      *)        typed="INVALID"
+      *)        typed="$2"
     esac
 
     echo "$typed"
@@ -247,7 +251,7 @@ mapLanguageYesNoQuitToSystem() {
       [aA]bandonar)    typed="q";;
       [sS]altar)  typed="skip";;
       [sS]kip)  typed="skip";;
-      *)        typed="INVALID"
+      *)        typed="$2"
     esac
 
     echo "$typed"
@@ -264,7 +268,7 @@ mapLanguageYesNoQuitToSystem() {
       [nN]ao)    typed="n";;
       [dD]esistir)    typed="q";;
       [sS]kip)  typed="skip";;
-      *)        typed="INVALID"
+      *)        typed="$2"
     esac
 
     echo "$typed"
@@ -278,7 +282,7 @@ mapLanguageYesNoQuitToSystem() {
       Non)    typed="n";;
       "arrêter")    typed="q";;
       [sS]kip)  typed="skip";;
-      *)        typed="INVALID"
+      *)        typed="$2"
     esac
 
     echo "$typed"
@@ -292,7 +296,7 @@ mapLanguageYesNoQuitToSystem() {
       KHÔNG)    typed="n";;
       "từ bỏ")    typed="q";;
       [sS]kip)  typed="skip";;
-      *)        typed="INVALID"
+      *)        typed="$2"
     esac
 
     echo "$typed"
@@ -306,7 +310,7 @@ mapLanguageYesNoQuitToSystem() {
       いいえ)    typed="n";;
       やめる)    typed="q";;
       [sS]kip)  typed="skip";;
-      *)        typed="INVALID"
+      *)        typed="$2"
     esac
 
     echo "$typed"
@@ -320,7 +324,7 @@ mapLanguageYesNoQuitToSystem() {
       아니요)    typed="n";;
       그만두다)    typed="q";;
       [sS]kip)  typed="skip";;
-      *)        typed="INVALID"
+      *)        typed="$2"
     esac
 
     echo "$typed"
@@ -334,7 +338,7 @@ mapLanguageYesNoQuitToSystem() {
       NEIN)    typed="n";;
       aufhören)    typed="q";;
       [sS]kip)  typed="skip";;
-      *)        typed="INVALID"
+      *)        typed="$2"
     esac
 
     echo "$typed"
@@ -348,7 +352,7 @@ mapLanguageYesNoQuitToSystem() {
       नहीं)    typed="n";;
       छोड़ना)    typed="q";;
       [sS]kip)  typed="skip";;
-      *)        typed="INVALID"
+      *)        typed="$2"
     esac
 
     echo "$typed"
@@ -362,7 +366,7 @@ mapLanguageYesNoQuitToSystem() {
       нет)    typed="n";;
       покидать)    typed="q";;
       [sS]kip)  typed="skip";;
-      *)        typed="INVALID"
+      *)        typed="$2"
     esac
 
     echo "$typed"
