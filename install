@@ -239,9 +239,11 @@ mapLanguageYesNoQuitToSystem() {
 
   if [[ "$1" == "pt" || "$1" == "es" ]]; then
     case "${2}" in
+      [sS])    typed="y";;
       [sS]í)    typed="y";;
       [sS]i)    typed="y";;
       [sS]im)    typed="y";;
+      [nN])    typed="n";;
       [nN]o)    typed="n";;
       [nN]ão)    typed="n";;
       [nN]ao)    typed="n";;
