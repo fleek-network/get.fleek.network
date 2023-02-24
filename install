@@ -237,18 +237,33 @@ mapLanguageYesNoQuitToSystem() {
     return
   fi
 
-  if [[ "$1" == "pt" || "$1" == "es" ]]; then
+  if [[ "$1" == "es" ]]; then
     case "${2}" in
       [sS])    typed="y";;
       [sS]í)    typed="y";;
       [sS]i)    typed="y";;
-      [sS]im)    typed="y";;
       [nN])    typed="n";;
       [nN]o)    typed="n";;
+      [aA]bandonar)    typed="q";;
+      [sS]altar)  typed="skip";;
+      [sS]kip)  typed="skip";;
+      *)        typed="INVALID"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "pt" || "$1" == "es" ]]; then
+    case "${2}" in
+      [sS])    typed="y";;
+      [sS]im)    typed="y";;
+      [nN])    typed="n";;
       [nN]ão)    typed="n";;
       [nN]ao)    typed="n";;
       [aA]bandonar)    typed="q";;
-      [sS]altar)  typed="skip";;
+      [sS]kip)  typed="skip";;
       *)        typed="INVALID"
     esac
 
