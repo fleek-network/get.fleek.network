@@ -1193,10 +1193,17 @@ initLetsEncrypt() {
       --force-renewal" certbot; then
     showErrorMessage "${transl[init_lets_encrypt_oops_failed_create_tls_certificates]} https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
-    printf -v prompt "\n💡 %s\n\n🙋‍♀️ %s\n%s" "${transl[init_lets_encrypt_prompt_recommend_try_again]}" "${transl[init_lets_encrypt_prompt_recommend_try_again_ask]}" "${transl[init_lets_encrypt_prompt_recommend_try_again_y_or_quit]}"
-    read -r -p "$prompt"$'\n> ' answer
-
-    intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
+    printf -v prompt "\n💡 %s\n\n🙋‍♀️ %s\n%s" \
+      "${transl[init_lets_encrypt_prompt_recommend_try_again]}" \
+      "${transl[init_lets_encrypt_prompt_recommend_try_again_ask]}" \
+      "$(printf "%s" "${transl[init_lets_encrypt_prompt_recommend_try_again_y_or_quit]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_quit_|${transl[common_prompt_quit_as_q]}|g")"
+    while read -r -p "$prompt"$'\n> ' answer; do
+      intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
+    
+      if [[ "$intlAnswer" == "" || "$intlAnswer" == [yY] || "$intlAnswer" == [qQ] ]]; then
+        break
+      fi
+    done
 
     if [[ "$intlAnswer" == [qQ] ]]; then
       printf "🦖 %s" "${transl[init_lets_encrypt_prompt_recommend_you_have_quit]}" | sed "s|_defaultFleekNetworkDocsWebsite_|\"${defaultFleekNetworkDocsWebsite}\"|g"
