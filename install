@@ -62,7 +62,7 @@ defaultMinDiskSpaceBytesRequired=10000000
 userSelectedLanguage=""
 
 # Localization
-declare -a supportedLanguages=("en" "es" "pt" "ru" "vi" "jp" "ch" "ko")
+declare -a supportedLanguages=("en" "ch" "es" "pt" "fr" "vi" "jp" "ko" "de" "hi" "ru")
 
 for lang in "${supportedLanguages[@]}"; do
   # use of ?dateRuntime intentional, prevent cache, do not modify
@@ -85,6 +85,7 @@ setLang() {
 
 # Set default locale
 while true; do
+  echo ""
   printf "\n\n%s\n\n" "👋 Hello / 你好 / Hola / Olá / Bonjour / Xin chào / こんにちは / 안녕하세요 / Hallo / नमस्ते / Привет"
   printf "%s\n\n" "🙏 Choose language / 选择语言 / Elija el idioma / Escolha o idioma / Choisissez la langue / Chọn ngôn ngữ / 言語を選択 / 언어 선택 / Sprache wählen / भाषा चुनें / Выбрать язык"
   printf "%s\n" "🇬🇧  English"
