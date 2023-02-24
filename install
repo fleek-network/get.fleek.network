@@ -241,8 +241,10 @@ mapLanguageYesNoQuitToSystem() {
     case "${2}" in
       [sS]í)    typed="y";;
       [sS]i)    typed="y";;
+      [sS]im)    typed="y";;
       [nN]o)    typed="n";;
       [nN]ão)    typed="n";;
+      [nN]ao)    typed="n";;
       [aA]bandonar)    typed="q";;
       [sS]altar)  typed="skip";;
       *)        typed="INVALID"
@@ -928,9 +930,15 @@ requestPathnameForUrsaRepository() {
     "${transl[request_path_for_ursa_repo_save_to_location_use_default]/_selectedPath_/$selectedPath}" \
     "$(printf "%s" "${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
     "${transl[request_path_for_ursa_repo_save_to_location_happy_proceed]}"
-  read -r -p "$prompt"$'\n> ' answer
+  
+  while read -r -p "$prompt"$'\n> ' answer; do
+    intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
+  
+    if [[ "$intlAnswer" == "" || "$intlAnswer" == [yY] || "$intlAnswer" == [nN] ]]; then
+      break
+    fi
+  done
 
-  intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
 
   if [[ ! "$intlAnswer" == "" && "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
     printf -v prompt "\n🙋‍♀️ %s" "${transl[request_path_for_ursa_repo_save_to_locattion_where_store]}"
