@@ -542,7 +542,7 @@ ART
 }
 
 requestAuthorizationAndExec() {
-  printf -v prompt "\n🤖 %s (%s/%n)?" \
+  printf -v prompt "\n🤖 %s (%s/%s)?" \
     "$1" \
     "${transl[common_prompt_yes_as_y]}" \
     "${transl[common_prompt_no_as_n]}"
