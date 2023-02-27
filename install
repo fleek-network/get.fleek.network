@@ -542,7 +542,10 @@ ART
 }
 
 requestAuthorizationAndExec() {
-  printf -v prompt "\n🤖 %s (y/n)?" "$1"
+  printf -v prompt "\n🤖 %s (%s/%n)?" \
+    "$1" \
+    "${transl[common_prompt_yes_as_y]}" \
+    "${transl[common_prompt_no_as_n]}"
   read -r -p "$prompt"$'\n> ' answer
 
   intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
