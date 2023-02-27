@@ -62,7 +62,7 @@ defaultMinDiskSpaceBytesRequired=10000000
 userSelectedLanguage=""
 
 # Localization
-declare -a supportedLanguages=("en" "ch" "es" "pt" "fr" "vi" "jp" "ko" "de" "hi" "ru")
+declare -a supportedLanguages=("en" "ch" "es" "pt" "fr" "it" "vi" "jp" "ko" "de" "hi" "ru")
 
 for lang in "${supportedLanguages[@]}"; do
   # use of ?dateRuntime intentional, prevent cache, do not modify
@@ -85,36 +85,47 @@ setLang() {
 
 multiLanguageChoice() {
   echo ""
-  printf "\n\n%s\n\n" "👋 Hello / 你好 / Hola / Olá / Bonjour / Xin chào / こんにちは / 안녕하세요 / Hallo / नमस्ते / Привет"
-  printf "%s\n\n" "🙏 Choose language / 选择语言 / Elija el idioma / Escolha o idioma / Choisissez la langue / Chọn ngôn ngữ / 言語を選択 / 언어 선택 / Sprache wählen / भाषा चुनें / Выбрать язык"
+  printf "\n\n%s\n\n" "👋 Hello / 你好 / Hola / Olá / Bonjour / Ciao / Xin chào / こんにちは / 안녕하세요 / Hallo / नमस्ते / Привет"
+  printf "%s\n\n" "🙏 Choose language / 选择语言 / Elija el idioma / Escolha o idioma / Choisissez la langue / Scegli la lingua / Chọn ngôn ngữ / 言語を選択 / 언어 선택 / Sprache wählen / भाषा चुनें / Выбрать язык"
   printf "%s\n" "🇬🇧  English"
   printf "%s\n" "🇨🇳  中文"
   printf "%s\n" "🇪🇸  Español"
   printf "%s\n" "🇵🇹  Português"
   printf "%s\n" "🇫🇷  Français"
+  printf "%s\n" "🇮🇹  Italiano"
   printf "%s\n" "🇻🇳  Tiếng Việt"
   printf "%s\n" "🇯🇵  日本語"
   printf "%s\n" "🇰🇷  안녕하세요"
   printf "%s\n" "🇩🇪  Deutsch"
-  printf "%s\n" "🇮🇳  Hindi"
+  printf "%s\n" "🇮🇳  हिंदी"
   printf "%s\n" "🇷🇺  Pусский"
   echo ""
 
   while read -r -p "> " ans; do  
     if [[ $ans == [eE]nglish ]]; then
       opt="en"
+    elif [[ $ans =~ 中文 ]]; then
+      opt="ch"
     elif [[ $ans == [eE]spañol ]]; then
       opt="es"
     elif [[ $ans == [pP]ortuguês ]]; then
       opt="pt"
-    elif [[ $ans == [pP]усский ]]; then
-      opt="ru"
+    elif [[ $ans == [fF]rançais ]]; then
+      opt="fr"
+    elif [[ $ans == [iI]taliano ]]; then
+      opt="it"
     elif [[ $ans =~ [tT]iếng ]]; then
       opt="vi"
     elif [[ $ans =~ 日本語 ]]; then
       opt="jp"
-    elif [[ $ans =~ 中文 ]]; then
-      opt="ch"
+    elif [[ $ans =~ 안녕하세요 ]]; then
+      opt="ko"
+    elif [[ $ans =~ [dD]eutsch ]]; then
+      opt="de"
+    elif [[ $ans =~ हिंदी ]]; then
+      opt="hi"
+    elif [[ $ans == [pP]усский ]]; then
+      opt="ru"
     fi
 
     if [[ ! $opt ]]; then
