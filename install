@@ -300,6 +300,20 @@ mapLanguageYesNoQuitToSystem() {
     return
   fi
 
+  if [[ "$1" == "it" ]]; then
+    case "${2}" in
+      [sS][ìÌ])    typed="y";;
+      [nN][oO])    typed="n";;
+      "esentata")    typed="q";;
+      [sS]kip)  typed="skip";;
+      *)        typed="$2"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
   if [[ "$1" == "vi" ]]; then
     case "${2}" in
       Đúng)    typed="y";;
