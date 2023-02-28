@@ -68,8 +68,7 @@ for lang in "${supportedLanguages[@]}"; do
   # use of ?dateRuntime intentional, prevent cache, do not modify
   # set `USE_BRANCH_NAME_FOR_GH_RAW` to use the Github raw locales for testing
   # e.g., USE_BRANCH_NAME_FOR_GH_RAW="feat/localization" ./install
-  if [[ -z ${USE_BRANCH_NAME_FOR_GH_RAW+x} ]]; then
-    echo "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$USE_BRANCH_NAME_FOR_GH_RAW/locales/$lang?$dateRuntime"
+  if [[ -n ${USE_BRANCH_NAME_FOR_GH_RAW+x} ]]; then
     . <(curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$USE_BRANCH_NAME_FOR_GH_RAW/locales/$lang?$dateRuntime")
 
     continue;
