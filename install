@@ -63,7 +63,6 @@ defaultMinDiskSpaceBytesRequired=10000000
 
 # App state
 userSelectedLanguage=""
-# selectedPath=""
 selectedUrsaPath=""
 
 # Localization
