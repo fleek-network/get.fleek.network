@@ -65,10 +65,8 @@ userSelectedLanguage=""
 declare -a supportedLanguages=("en" "ch" "es" "pt" "fr" "it" "vi" "jp" "ko" "de" "hi" "ru")
 
 for lang in "${supportedLanguages[@]}"; do
-  # use of ?dateRuntime intentional, prevent cache, do not modify
-  # TODO: disabled temporarily to test in branch `feat/localization`
-  # . <(curl -s "$defaultGetFleekNetworkUrl/locales/$lang?$dateRuntime")
-  . <(curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/feat/localization/locales/$lang?$dateRuntime")
+  # Use of ?dateRuntime intentional, prevent cache, do not modify
+  . <(curl -s "$defaultGetFleekNetworkUrl/locales/$lang?$dateRuntime")
 done
 
 # App text translations
