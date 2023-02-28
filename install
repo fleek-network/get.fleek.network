@@ -34,6 +34,9 @@
 # - Run the Docker stack
 # - Do a health check to confirm the Fleek Network Node is running
 #
+# Contributing?
+# - If you'd like to test changes locally use the env var `USE_BRANCH_NAME_FOR_GH_RAW`, for remote locales pulls
+#
 # Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
 
 # 🚑 Check if running in Bash and supported version
@@ -68,7 +71,7 @@ declare -a supportedLanguages=("en" "ch" "es" "pt" "fr" "it" "vi" "jp" "ko" "de"
 
 for lang in "${supportedLanguages[@]}"; do
   # use of ?dateRuntime intentional, prevent cache, do not modify
-  # set `USE_BRANCH_NAME_FOR_GH_RAW` to use the Github raw locales for testing
+  # INFO: set `USE_BRANCH_NAME_FOR_GH_RAW` to use the Github raw locales for testing
   # e.g., USE_BRANCH_NAME_FOR_GH_RAW="feat/localization" ./install
   if [[ -n ${USE_BRANCH_NAME_FOR_GH_RAW+x} ]]; then
     . <(curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$USE_BRANCH_NAME_FOR_GH_RAW/locales/$lang?$dateRuntime")
@@ -1798,14 +1801,14 @@ onNightlyPreference() {
   checkIfDockerInstalled "$os"
 
   # Request a pathname where to store the Ursa repository, otherwise provide a default
-  ursaPath=$(requestPathnameForUrsaRepository)
+  selectedUrsaPath=$(requestPathnameForUrsaRepository)
 
   # Check if directory does not exit or empty
-  if [[ "$(ls -A "$ursaPath" >/dev/null 2>&1)" ]]; then
+  if [[ "$(ls -A "$selectedUrsaPath" >/dev/null 2>&1)" ]]; then
     echo
     echo "😅 ${transl[on_nightly_preference_have_run_install_before_surprise]}"
     echo
-    echo "${transl[on_nightly_preference_directory_not_empty]/_ursaPath_/$ursaPath}"
+    echo "${transl[on_nightly_preference_directory_not_empty]/_ursaPath_/$selectedUrsaPath}"
     echo "${transl[on_nightly_preference_if_stuck_clear_location_1_of_2]}"
     echo "${transl[on_nightly_preference_if_stuck_clear_location_2_of_2]/_defaultUrsaPath_/$defaultUrsaPath}"
 
@@ -1813,8 +1816,8 @@ onNightlyPreference() {
   fi
 
   # Pull the `ursa` project repository to the preferred target directory via HTTPS
-  cloneUrsaRepositoryToPath "$ursaPath"
-  changeDirectoryToPathOrFailure "Ursa" "$ursaPath"
+  cloneUrsaRepositoryToPath "$selectedUrsaPath"
+  changeDirectoryToPathOrFailure "Ursa" "$selectedUrsaPath"
 
   # Await a few seconds to let the user read...
   sleep 5
