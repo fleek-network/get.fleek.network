@@ -1078,8 +1078,7 @@ showDockerStackLog() {
   echo
   echo "    ${txtPrefixForBold}Ctrl-c${txtPrefixForNormal}"
   echo
-  # echo "${transl[show_docker_stack_log_stack_logs_can_stop_start_docker]}"
-  "$(printf "%s" "${transl[show_docker_stack_log_stack_logs_can_stop_start_docker]}" | sed "s|_selectedUrsaPath_|\"${selectedUrsaPath}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
+  printf "%s" "${transl[show_docker_stack_log_stack_logs_can_stop_start_docker]}" | sed "s|_selectedUrsaPath_|\"${selectedUrsaPath}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g"
   echo "${transl[show_docker_stack_log_stack_logs_can_stop_start_docker_example]}"
   echo
   echo "${transl[show_docker_stack_log_stack_logs_can_stop_then_after_start_or_stop]}"
