@@ -22,6 +22,7 @@ jobs:
           cp install ./build/index.html
           cp ./static/CNAME ./build
           chmod 755 ./build/index.html
+          cp -R ./locales ./build
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

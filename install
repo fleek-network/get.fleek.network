@@ -40,14 +40,112 @@
 [ "$BASH" ] || { printf >&2 '🙏 Run the script with Bash, please!\n'; exit 1; }
 (( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
 
+# Date
+dateRuntime=$(date '+%Y%m%d%H%M%S')
+
 # Default
-defaultUrsaHttpsRespository="https://github.com/fleek-network/ursa.git"
+defaultGetFleekNetworkUrl="https://get.fleek.network"
+defaultFleekNetworkWebsite="https://fleek.network"
+defaultFleekNetworkDocsWebsite="https://docs.fleek.network"
+defaultDiscordUrl="https://discord.gg/fleekxyz"
+defaultFleekNetworkTwitterUrl="https://twitter.com/fleek_net"
+defaultGetFleekNetworkRepository="https://github.com/fleek-network/get.fleek.network"
+defaultUrsaHttpsRepository="https://github.com/fleek-network/ursa.git"
 defaultUrsaPath="$HOME/fleek-network/ursa"
 defaultUrsaNightlyImage="ghcr.io/fleek-network/ursa:nightly"
 defaultDockerFullNodeRelativePath="./docker/full-node"
 defaultDockerComposeYmlRelativePath="$defaultDockerFullNodeRelativePath/docker-compose.yml"
 defaultMinMemoryBytesRequired=8000000
 defaultMinDiskSpaceBytesRequired=10000000
+
+# App state
+userSelectedLanguage=""
+
+# Localization
+declare -a supportedLanguages=("en" "ch" "es" "pt" "fr" "it" "vi" "jp" "ko" "de" "hi" "ru")
+
+for lang in "${supportedLanguages[@]}"; do
+  # use of ?dateRuntime intentional, prevent cache, do not modify
+  # set `USE_BRANCH_NAME_FOR_GH_RAW` to use the Github raw locales for testing
+  # e.g., USE_BRANCH_NAME_FOR_GH_RAW="feat/localization" ./install
+  if [[ -z ${USE_BRANCH_NAME_FOR_GH_RAW+x} ]]; then
+    echo "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$USE_BRANCH_NAME_FOR_GH_RAW/locales/$lang?$dateRuntime"
+    . <(curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$USE_BRANCH_NAME_FOR_GH_RAW/locales/$lang?$dateRuntime")
+
+    continue;
+  fi
+
+  . <(curl -s "$defaultGetFleekNetworkUrl/locales/$lang?$dateRuntime")
+done
+
+# App text translations
+declare -A transl=()
+
+setLang() {
+  declare -n _selectedLang="$1"
+  for key in "${!_selectedLang[@]}"; do
+    transl["$key"]=${_selectedLang[$key]}
+  done
+  
+  userSelectedLanguage="$1"
+}
+
+multiLanguageChoice() {
+  echo ""
+  printf "\n\n%s\n\n" "👋 Hello / 你好 / Hola / Olá / Bonjour / Ciao / Xin chào / こんにちは / 안녕하세요 / Hallo / नमस्ते / Привет"
+  printf "%s\n\n" "🙏 Choose language / 选择语言 / Elija el idioma / Escolha o idioma / Choisissez la langue / Scegli la lingua / Chọn ngôn ngữ / 言語を選択 / 언어 선택 / Sprache wählen / भाषा चुनें / Выбрать язык"
+  printf "%s\n" "🇬🇧  English"
+  printf "%s\n" "🇨🇳  中文"
+  printf "%s\n" "🇪🇸  Español"
+  printf "%s\n" "🇵🇹  Português"
+  printf "%s\n" "🇫🇷  Français"
+  printf "%s\n" "🇮🇹  Italiano"
+  printf "%s\n" "🇻🇳  Tiếng Việt"
+  printf "%s\n" "🇯🇵  日本語"
+  printf "%s\n" "🇰🇷  안녕하세요"
+  printf "%s\n" "🇩🇪  Deutsch"
+  printf "%s\n" "🇮🇳  हिंदी"
+  printf "%s\n" "🇷🇺  Pусский"
+  echo ""
+
+  while read -r -p "> " ans; do  
+    if [[ $ans == [eE]nglish ]]; then
+      opt="en"
+    elif [[ $ans =~ 中文 ]]; then
+      opt="ch"
+    elif [[ $ans == [eE]spañol ]]; then
+      opt="es"
+    elif [[ $ans == [pP]ortuguês ]]; then
+      opt="pt"
+    elif [[ $ans == [fF]rançais ]]; then
+      opt="fr"
+    elif [[ $ans == [iI]taliano ]]; then
+      opt="it"
+    elif [[ $ans =~ [tT]iếng ]]; then
+      opt="vi"
+    elif [[ $ans =~ 日本語 ]]; then
+      opt="jp"
+    elif [[ $ans =~ 안녕하세요 ]]; then
+      opt="ko"
+    elif [[ $ans =~ [dD]eutsch ]]; then
+      opt="de"
+    elif [[ $ans =~ हिंदी ]]; then
+      opt="hi"
+    elif [[ $ans == [pP]усский ]]; then
+      opt="ru"
+    fi
+
+    if [[ ! $opt ]]; then
+      continue
+    fi
+
+    if [[ "${supportedLanguages[*]}" =~ $opt ]]; then
+      setLang "$opt"
+
+      break;
+    fi
+  done
+}
 
 # Installer state
 statusComplete="complete"
@@ -139,6 +237,175 @@ config='{
 txtPrefixForBold=$(tput bold)
 txtPrefixForNormal=$(tput sgr0)
 
+mapLanguageYesNoQuitToSystem() {
+  if [[ "$1" == "en" ]]; then
+    echo "$2"
+
+    return
+  fi
+
+  if [[ "$1" == "ch" ]]; then
+    case "${2}" in
+      是的)    typed="y";;
+      不)    typed="n";;
+      辞职)    typed="q";;
+      [sS]kip)  typed="skip";;
+      *)        typed="$2"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "es" ]]; then
+    case "${2}" in
+      [sS])    typed="y";;
+      [sS]í)    typed="y";;
+      [sS]i)    typed="y";;
+      [nN])    typed="n";;
+      [nN]o)    typed="n";;
+      [aA]bandonar)    typed="q";;
+      [sS]altar)  typed="skip";;
+      [sS]kip)  typed="skip";;
+      *)        typed="$2"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "pt" ]]; then
+    case "${2}" in
+      [sS])    typed="y";;
+      [sS]im)    typed="y";;
+      [nN])    typed="n";;
+      [nN]ão)    typed="n";;
+      [nN]ao)    typed="n";;
+      [dD]esistir)    typed="q";;
+      [sS]kip)  typed="skip";;
+      *)        typed="$2"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "fr" ]]; then
+    case "${2}" in
+      Oui)    typed="y";;
+      Non)    typed="n";;
+      "arrêter")    typed="q";;
+      [sS]kip)  typed="skip";;
+      *)        typed="$2"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "it" ]]; then
+    case "${2}" in
+      [sS][ìÌ])    typed="y";;
+      [nN][oO])    typed="n";;
+      "esentata")    typed="q";;
+      [sS]kip)  typed="skip";;
+      *)        typed="$2"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "vi" ]]; then
+    case "${2}" in
+      Đúng)    typed="y";;
+      KHÔNG)    typed="n";;
+      "từ bỏ")    typed="q";;
+      [sS]kip)  typed="skip";;
+      *)        typed="$2"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "jp" ]]; then
+    case "${2}" in
+      はい)    typed="y";;
+      いいえ)    typed="n";;
+      やめる)    typed="q";;
+      [sS]kip)  typed="skip";;
+      *)        typed="$2"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "ko" ]]; then
+    case "${2}" in
+      예)    typed="y";;
+      아니요)    typed="n";;
+      그만두다)    typed="q";;
+      [sS]kip)  typed="skip";;
+      *)        typed="$2"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "de" ]]; then
+    case "${2}" in
+      ja)    typed="y";;
+      NEIN)    typed="n";;
+      aufhören)    typed="q";;
+      [sS]kip)  typed="skip";;
+      *)        typed="$2"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "hi" ]]; then
+    case "${2}" in
+      हाँ)    typed="y";;
+      नहीं)    typed="n";;
+      छोड़ना)    typed="q";;
+      [sS]kip)  typed="skip";;
+      *)        typed="$2"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+
+  if [[ "$1" == "ru" ]]; then
+    case "${2}" in
+      да)    typed="y";;
+      нет)    typed="n";;
+      покидать)    typed="q";;
+      [sS]kip)  typed="skip";;
+      *)        typed="$2"
+    esac
+
+    echo "$typed"
+
+    return
+  fi
+}
+
 # Confirm validators
 confirmDomainName() {
   local validate="^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\.)+[a-zA-Z]{2,}$"
@@ -163,7 +430,9 @@ confirmEmailAddress() {
 }
 
 confirm() {
-  case $1 in
+  intlAnswer=$(mapLanguageYesNoQuitToSystem "$1" "$2")
+
+  case $intlAnswer in
     [yY])
       echo 0
       ;;
@@ -199,14 +468,15 @@ clearScr() {
 launchAsciiArt() {
   printf "\r\n"
 
+  echo "★★★★★★★★★"
+  echo
+  echo "⚡️ ${transl[ascii_art_fleek_team_presents]} ⚡️"
+  echo
+
 # the cat and ascii art (ART, as `here tag``)
 # is intentionally positioned to the most left
 # do not change
 cat << "ART"
-★★★★★★★★★
-
-⚡️ The Fleek Network team presents ⚡️
-
         _..._
       .'     '.     _
     /    .-""-\   _/ \
@@ -225,8 +495,6 @@ cat << "ART"
           `-._/._/
 ART
 # 👆 ART (here tag) end positioned to the most left intentionally
-
-  sleep 2
 
   echo
   echo "⭐️ Ursa, a Decentralized Content Delivery Network (DCDN) ⭐️"
@@ -274,19 +542,22 @@ ART
 # 👆 ART (here tag) end positioned to the most left intentionally
 
   echo
-  echo "👾 Alien technosignature detected around our stars 👾"
+  echo "👾 ${transl[ascii_art_no_os_support_alien_technosignature]} 👾"
   echo
 
   sleep 3
 }
 
 requestAuthorizationAndExec() {
-  printf -v prompt "\n🤖 %s (y/n)?" "$1"
+  printf -v prompt "\n🤖 %s (%s/%s)?" \
+    "$1" \
+    "${transl[common_prompt_yes_as_y]}" \
+    "${transl[common_prompt_no_as_n]}"
   read -r -p "$prompt"$'\n> ' answer
 
-  answerToLc=$(toLowerCase "$answer")
+  intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
 
-  if [[ "$answerToLc" == [nN] || "$answerToLc" == [nN][oO] ]]; then
+  if [[ "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
     printf "\n\n"
 
     showErrorMessage "$2"
@@ -307,9 +578,9 @@ onInterruption() {
   # Only show warning message if install NOT complete
   if [[ "$installationStatus" != "$statusComplete" ]]; then
     printf "\r\n"
-    echo "😬 Ouch! The installation was interrupted, and applications or dependencies might be lying around! E.g., if the installation has already cloned the Ursa repository to your selected path, than you should clear it manually, etc."
+    echo "😬 ${transl[on_interruption_ouch_error]}"
     echo
-    echo "If you're finding issues and need support, share your experience in our Discord at https://discord.gg/fleekxyz"
+    printf "%s" "${transl[on_interruption_if_require_support]}" | sed "s|_defaultDiscordUrl_|\"${defaultDiscordUrl}\"|g"
 
     onExitInstallerTodos
     exit 1
@@ -344,26 +615,30 @@ showDisclaimer() {
   launchAsciiArt
 
   printf "\r\n\n"
-  echo "⭐️ The assisted installer follows the steps in our guide ${txtPrefixForBold}Running a Node in a Docker container${txtPrefixForNormal}."
+  echo "⭐️ ${transl[show_disclaimer_title]}"
   echo
-  echo "If you are happy to have the script assist you in the installation, there's a certain level of trust that you have to consider. It instructs commands on your behalf, such as installing Git, Docker or other third-party-related dependencies. With that considered, we'll ask when dependencies are missing and if you are happy to proceed with the installation before executing any commands."
+  echo "${transl[show_disclaimer_if_happy]}"
   echo
-  echo "Our script source is open to everybody and can be verified at https://github.com/fleek-network/get.fleek.network, give it a look 👀."
+  printf "%s 👀." "${transl[show_disclaimer_script_repository]}" | sed "s|_defaultGetFleekNetworkRepository_|\"${defaultGetFleekNetworkRepository}\"|g"
   echo
-  echo "🤓 One more thing, your system ${txtPrefixForBold}User ${txtPrefixForNormal}should have ${txtPrefixForBold}write permissions ${txtPrefixForNormal}to install applications. Also, some advanced users might find it better to follow the documentation in our official guides or borrow from the installation script source code."
-  echo "If that's your preference, then go ahead and check our guides at https://docs.fleek.network, or our repository https://github.com/fleek-network/get.fleek.network"
+  echo "🤓 ${transl[show_disclaimer_more]}"
+  printf "%s" \
+    "$(printf "%s" "${transl[show_disclaimer_guides]}" | sed "s|_defaultFleekNetworkDocsWebsite_|\"${defaultFleekNetworkDocsWebsite}\"|g; s|_defaultGetFleekNetworkRepository_|${defaultGetFleekNetworkRepository}|g")"
 
-  printf -v prompt "\n\n🤖 Are you happy to continue (y/n)?\nType Y to continue. Otherwise, N to quit!"
+  printf -v prompt "\n\n🤖 %s?\n%s" \
+    "$(printf "%s" "${transl[show_disclaimer_should_continue]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
+    "$(printf "%s" "${transl[show_disclaimer_should_yes_or_no_quit]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
   while read -rp "$prompt"$'\n> ' ans; do
-    data=$(confirm "$ans")
+    data=$(confirm "$userSelectedLanguage" "$ans")
 
     [[ ! $data ]] && continue
 
     if [[ "$data" -eq 1 ]]; then
       echo
-      echo "🦖 The installation assistant terminates here, as you must accept the agreement to have the assisted installer guide you. If you've changed your mind, try again!"
+      echo "🦖 ${transl[show_disclaimer_terminates_here]}"
       echo
-      echo "Otherwise, if you'd like to learn a bit more visit our website at https://fleek.network"
+      printf "%s" \
+        "$(printf "%s" "${transl[show_disclaimer_terminates_otherwise]}" | sed "s|_defaultFleekNetworkWebsite_|\"${defaultFleekNetworkWebsite}\"|g")"    
       echo
 
       exitInstaller
@@ -374,27 +649,29 @@ showDisclaimer() {
 }
 
 commonWarningMessage() {
-  echo "While we hope to provide support for a wide range of devices and systems in the future, there are countless theories and reported sightings of life from other galaxies that we'll visit first..."
-  echo "Information could be declassified by officials as a means of preparing the public for the impending disclosure of the Node presence on Earth, so follow us on Twitter to stay informed https://twitter.com/fleek_net"
+  echo "${transl[common_warning_msg_try_support]}"
+  printf "%s" \
+    "$(printf "%s" "${transl[common_warning_msg_information_declassified]}" | sed "s|_defaultFleekNetworkTwitterUrl_|\"${defaultFleekNetworkTwitterUrl}\"|g")"    
   echo
-  echo "Check our guides to learn how to run it yourself through Docker or natively for testing. Although, if you are serious about running a Network Node, then you'll need a dedicated machine to run the Node in the long term, which is why a Linux server is the recommended and supported choice!"
+  echo "${transl[common_warning_msg_check_guides]}"
   echo
-  echo "If you'd like to learn more visit our documentation site at https://docs.fleek.network"
+  printf "%s" \
+    "$(printf "%s" "${transl[common_warning_msg_visit_docs]}" | sed "s|_defaultFleekNetworkDocsWebsite_|\"${defaultFleekNetworkDocsWebsite}\"|g")"    
 }
 
 windowsUsersWarning() {
   asciiArtNoOSSupport
-  echo "⚠️ Windows is not supported by our installer! We recommend linux Server edition, such as Ubuntu or Debian."
-  echo "If not, enable ${txtPrefixForBold}Windows Subsystem Linux (WSL)${txtPrefixForNormal} and install Ubuntu or Debian."
+  echo "⚠️ ${transl[windows_users_warning_not_supported]}"
+  echo "${transl[windows_users_warning_if_not_enable_wsl]}"
   echo
   commonWarningMessage
 }
 
 macOsUsersWarning() {
   asciiArtNoOSSupport
-  echo "⚠️ MacOS is not supported by our installer! We recommend linux Server edition, such as Ubuntu or Debian."
+  echo "⚠️ ${transl[macos_users_warning_not_supported]}"
   echo
-  echo "The macOS is a graphical OS, and as of 21 April 2022, Apple has discontinued macOS Server."
+  echo "${transl[macos_users_warning_has_discontinued]}"
   echo
   commonWarningMessage
 }
@@ -414,12 +691,14 @@ installGit() {
     elif [[ "$distro" =~ "arch"  ]]; then
       sudo pacman -Syu git
     else
-      showErrorMessage "Oops! Your operating system ($os, $distro) is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
+      showErrorMessage \
+        "$(printf "%s" "${transl[install_git_oops_os_and_distro]}" | sed "s|_os_|\"${os}\"|g; s|_distro_|\"${distro}\"|g; s|_defaultFleekNetworkDocsWebsite_|${defaultFleekNetworkDocsWebsite}|g")"
 
       exitInstaller
     fi
   else
-    showErrorMessage "Oops! Your operating system ($os) is not supported yet by our install script, to install on your own read our guides at https://docs.fleek.network"
+    showErrorMessage \
+      "$(printf "%s" "${transl[install_git_oops_os]}" | sed "s|_os_|\"${os}\"|g; s|_defaultFleekNetworkDocsWebsite_|${defaultFleekNetworkDocsWebsite}|g")"
 
     exitInstaller
   fi
@@ -463,7 +742,7 @@ isOSSupported() {
 
     if [[ "$currVersion" -lt "2204" ]]; then
       echo
-      echo "👹 Oops! You'll need Ubuntu 22.04 at least."
+      echo "👹 ${transl[is_os_supported_oops_need_ubuntu]}"
       echo
 
       exitInstaller
@@ -475,7 +754,7 @@ isOSSupported() {
 
     if [[ "$currVersion" -lt "11" ]]; then
       echo
-      echo "👹 Oops! You'll need Debian 11 at least."
+      echo "👹 ${transl[is_os_supported_oops_need_debian]}"
       echo
 
       exitInstaller
@@ -499,48 +778,51 @@ checkSystemHasRecommendedResources() {
   partDiskSpace=$(df --output=avail -B 1 "$PWD" |tail -n 1)
 
   if [[ ("$mem" -lt "$defaultMinMemoryBytesRequired") ]] || [[ ( "$partDiskSpace" -lt "$defaultMinDiskSpaceBytesRequired" ) ]]; then
-    echo "😬 Oh no! We're afraid you need at least 8 GB of RAM and 10 GB of available disk space."
+    echo "😬 ${transl[check_sys_has_recommended_resources_oh_no_need_at_least]}"
     echo
-    printf -v prompt "\n\n🤖 Are you sure you want to continue (y/n)?"
+    printf -v prompt "\n\n🤖 %s?" \
+      "$(printf "%s" "${transl[common_prompt_are_you_sure_continue_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
     read -r -p "$prompt"$'\n> ' answer
 
-    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+    intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
+
+    if [[ "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
       exitInstaller
     fi
 
-    echo "😅 Alright, let's try that, but your system is below our recommendations, so don't expect it to work correctly..."
+    echo "😅 ${transl[check_sys_has_recommended_resources_warning_below_recommendation]}"
 
     sleep 5
 
     return 0
   fi
   
-  showOkMessage "Great! Your system has enough resources (disk space and memory)"
+  showOkMessage "${transl[check_sys_has_recommended_resources_great_enought_resources]}"
 }
 
 checkIfGitInstalled() {
   if ! hasCommand git; then
-    echo "😅 Oops! Git is required and was not found!"
+    echo "😅 ${transl[check_if_git_installed_oops]}"
     echo
 
     requestAuthorizationAndExec \
-      "We can start the installation process for you, are you happy to proceed" \
-      "You need to have git installed to clone the Fleek Network Ursa repository." \
+      "${transl[common_check_installed_we_can_start_install]}" \
+      "${transl[check_if_git_installed_need_git_installed]}" \
       installGit
 
     if [[ "$?" = 1 ]]; then
-      showErrorMessage "Oops! Failed to install git."
+      showErrorMessage "${transl[check_if_git_installed_oops_failed_install]}"
 
       exitInstaller
     fi
   fi
 
-  showOkMessage "Nice! Git is installed!"
+  showOkMessage "${transl[check_if_git_installed_success_install]}"
 }
 
 gitHealthCheck() {
   if ! hasCommand git; then
-    showErrorMessage "Oops! For some odd reason, git doesn't seem to be installed!"
+    showErrorMessage "${transl[git_health_check_oops_odd_reason]}"
 
     exitInstaller
   fi
@@ -624,22 +906,26 @@ installDocker() {
       currentKernel=$(uname -r)
 
       if [[ "$latestKernel" != "$currentKernel" ]]; then
-        echo "✋ We just found that you need to reboot!"
-        echo "The reason is that you have a pending kernel upgrade as your system is $currentKernel and pacman's query has $latestKernel"
+        echo "✋ ${transl[install_docker_need_reboot]}"
+        printf "%s" "${transl[install_docker_need_reboot_reason]}" | sed "s|_currentKernel_|\"${currentKernel}\"|g; s|_latestKernel_|${latestKernel}|g"
         echo
-        echo "If docker fails to start, then it is very likely that it is related to this."
-        echo "We suggest rebooting your system first and only afterwards running the installer."
+        echo "${transl[install_docker_need_reboot_if_failure]}"
+        echo "${transl[install_docker_suggest_rebooting]}"
         echo
 
-        read -rp "Press ENTER to continue... "
+        read -rp "${transl[common_press_enter_continue]} "
       fi
     else
-      showErrorMessage "Oops! Your Linux distro is not supported yet by our install script, you can also contribute and help us provide support by opening a PR in https://github.com/fleek-network/get.fleek.network, otherwise to install on your own read our guides at https://docs.fleek.network"
+      printf -v common_oops_linux_distro_not_supported "%s" \
+      "$(printf "%s" "${transl[common_oops_linux_distro_not_supported]}" | sed "s|_defaultGetFleekNetworkUrl_|\"${defaultGetFleekNetworkUrl}\"|g; s|_defaultFleekNetworkDocsWebsite_|${defaultFleekNetworkDocsWebsite}|g")"
+      showErrorMessage "${common_oops_linux_distro_not_supported}"
 
       exitInstaller
     fi
   else
-    showErrorMessage "Oops! Your operating system is not supported yet, to install on your own read our guides at https://docs.fleek.network"
+    printf -v common_oops_os_not_supported "%s" \
+    "$(printf "%s" "${transl[common_oops_os_not_supported]}" | sed "s|_defaultFleekNetworkDocsWebsite_|\"${defaultFleekNetworkDocsWebsite}\"|g")"
+    showErrorMessage "${common_oops_os_not_supported}"
 
     exitInstaller
   fi
@@ -652,26 +938,26 @@ checkIfDockerInstalled() {
   # check if docker compose is available. Some users are still
   # using legacy e.g., preinstalled docker or archlinux, etc
   if ! hasCommand docker || ! hasCommand docker-compose; then
-    printf "😅 Oops! Docker is required and was not found!\n"
+    printf "😅 %s\n" "${transl[check_if_docker_installed]}"
 
     requestAuthorizationAndExec \
-      "We can start the installation process for you, are you happy to proceed" \
-      "You need to have Docker installed to run the Fleek Network Ursa repository container stack!" \
+      "${transl[common_check_installed_we_can_start_install]}" \
+      "${transl[check_if_docker_need_docker_installed]}" \
       installDocker
 
     if [[ "$?" = 1 ]]; then
-      showErrorMessage "Oops! Failed to install docker."
+      showErrorMessage "${transl[check_if_docker_oops_failed_install_docker]}"
 
       exitInstaller
     fi
   fi
 
-  showOkMessage "Awesome! Docker is installed!"
+  showOkMessage "${transl[check_if_docker_success]}"
 }
 
 dockerHealthCheck() {
   if ! hasCommand docker-compose; then
-    showErrorMessage "Oops! For some odd reason, docker-compose doesn't seem to be installed!"
+    showErrorMessage "${transl[docker_health_check_oops_docker_compose]}"
 
     exitInstaller
   fi
@@ -680,38 +966,55 @@ dockerHealthCheck() {
   res=$(docker run -i --log-driver=none -a stdout hello-world)
 
   if ! echo "$res" | grep "$expectedMessage" &> /dev/null; then
-    showErrorMessage "Oops! The docker daemon should create a container for the hello-world image and output a message, but it failed! Check if your internet connection, docker installation, or it might be that the docker hub might be down, etc."
+    showErrorMessage "${transl[docker_health_check_oops_docker_daemon_hello_world]}"
 
     exitInstaller
   fi
 
-  showOkMessage "Docker health-check passed!"
+  showOkMessage "${transl[docker_health_check_passed]}"
 }
 
 requestPathnameForUrsaRepository() {
-  defaultPath="$defaultUrsaPath"
-  selectedPath=$defaultPath
+  # TODO: on translation, the selected path needs to be computed
+  # that is that on runtime the defaultPath might need to be replaced
+  # by the user selected choice, as we have these as precomputed text
+  # TODO: close after test param expansion, see below
+  selectedPath=$defaultUrsaPath
 
-  printf -v prompt "\n🤖 We'll save the Ursa source code in the recommended path ${txtPrefixForBold}%s${txtPrefixForNormal}. If you don't have a reason to change the location, stick to the default, keep it easy! \n\nAre you happy to proceed?\nType Y, or press ENTER to continue. Otherwise, N to change it!" "$defaultPath"
-  read -r -p "$prompt"$'\n> ' answer
+  printf -v prompt "\n🤖 %s\n\n%s?\n%s" \
+    "${transl[request_path_for_ursa_repo_save_to_location_use_default]/_selectedPath_/$selectedPath}" \
+    "$(printf "%s" "${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
+    "${transl[request_path_for_ursa_repo_save_to_location_happy_proceed]}"
+  
+  while read -r -p "$prompt"$'\n> ' answer; do
+    intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
+  
+    if [[ "$intlAnswer" == "" || "$intlAnswer" == [yY] || "$intlAnswer" == [nN] ]]; then
+      break
+    fi
+  done
 
-  answerToLc=$(toLowerCase "$answer")
 
-  if [[ ! "$answerToLc" == "" && "$answerToLc" == [nN] || "$answerToLc" == [nN][oO] ]]; then
-    printf -v prompt "\n🙋‍♀️ What path would you like to store the repository?"
+  if [[ ! "$intlAnswer" == "" && "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
+    printf -v prompt "\n🙋‍♀️ %s" "${transl[request_path_for_ursa_repo_save_to_locattion_where_store]}"
     read -r -p "$prompt"$'\n> ' answer
+  
+    selectedPath="$answer"
   fi
 
-  if [[ -d "$selectedPath" ]]; then
-    showErrorMessage "Oops! The $selectedPath already exists, ensure that the directory is cleared before trying again."
 
-    read -r -p "Press ENTER to retry..." answer
+  if [[ -d "$selectedPath" ]]; then
+    # TODO: test param expansion
+    showErrorMessage "${transl[request_path_for_ursa_repo_save_to_locattion_oops_already_exists]/_selectedPath_/$selectedPath}"
+
+    read -r -p "${transl[common_press_enter_retry]}..."
 
     requestPathnameForUrsaRepository
   fi
 
   if ! mkdir -p "$selectedPath"; then
-    showErrorMessage "Oops! Failed to create the directory $selectedPath, make sure you have the right permissions."
+    # TODO: test param expansion
+    showErrorMessage "${transl[request_path_for_ursa_repo_save_to_oops_failed_create_dir]/_selectedPath_/$selectedPath}"
 
     exitInstaller
   fi
@@ -720,91 +1023,95 @@ requestPathnameForUrsaRepository() {
 }
 
 cloneUrsaRepositoryToPath() {
-  if ! git clone $defaultUrsaHttpsRespository "$1"; then
-    showErrorMessage "Oops! Failed to clone the Ursa repository ($defaultUrsaHttpsRespository)"
+  if ! git clone $defaultUrsaHttpsRepository "$1"; then
+    showErrorMessage \
+      "$(printf "%s" "${transl[clone_ursa_repo_to_path_oops_failed_to_clone]}" | sed "s|_defaultUrsaHttpsRepository_|\"${defaultUrsaHttpsRepository}\"|g")"
 
     exitInstaller
   fi
 
-  showOkMessage "The Ursa repository located at $defaultUrsaHttpsRespository was cloned to $ursaPath!"
+  showOkMessage \
+    "$(printf "%s" "${transl[clone_ursa_repo_to_path_ok_msg]}" | sed "s|_defaultUrsaHttpsRepository_|\"${defaultUrsaHttpsRepository}\"|g; s|_ursaPath_|${1}|g")"
 
   printf "\r\n"
 }
 
 restartDockerStack() {
-  echo "🤖 The Docker Stack is going to restart. Be patient, please!"
+  echo "🤖 ${transl[restart_docker_stack_is_going_to_restart]}"
   echo
 
   # TODO: Use health check instead
   sleep 10
   sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" stop
 
-  showOkMessage "The Docker Stack will now going to start. Be patient, please!"
+  showOkMessage "${transl[restart_docker_stack_is_going_to_start]}"
 
   # TODO: Use health check instead
   sleep 10
   sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" up -d
 
-  showOkMessage "Great! The Docker Stack has restarted."
+  showOkMessage "${transl[restart_docker_stack_has_restarted]}"
 
   sleep 3
 }
 
 showDockerStackLog() {
-  echo "★★★★★★★★★"
-  echo "★★★★★★★★★"
+  echo
   echo "★★★★★★★★★"
   echo
-  echo "🥳 Great! We have ${txtPrefixForBold}completed${txtPrefixForNormal} the installation!"
+  echo "🥳 ${transl[show_docker_stack_log_great]}"
   echo
-  echo "The Stack should be running now, and you can show or hide the log output anytime."
+  echo "${transl[show_docker_stack_log_stack_should_be_running]}"
   echo
-  echo "Our Stack logs can be quite verbose, as it shows WARNINGS, INFO, ERRORS, etc."
-  echo "It's essential to understand what they mean by simply reading our Node Health-check guide"
+  echo "${transl[show_docker_stack_log_stack_logs_can_be_verbose_1_of_2]}"
+  echo "${transl[show_docker_stack_log_stack_logs_can_be_verbose_2_of_2]}"
   echo "https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
   echo
-  echo "Here are some handy commands to show or hide the logs"
+  echo "${transl[show_docker_stack_log_stack_logs_handy_commands]}"
   echo
-  echo "  - If you have the Stack running and want to show the logs:"
+  echo "  - ${transl[show_docker_stack_log_stack_logs_handy_cmd_show_logs]}:"
   echo
   echo "    ${txtPrefixForBold}docker-compose -f ./docker/full-node/docker-compose.yml logs -f${txtPrefixForNormal}"
   echo
-  echo "  - Terminate by sending the interrupt signal (SIGNIT) to Docker using the hotkey:"
+  echo "  - ${transl[show_docker_stack_log_stack_logs_handy_cmd_signit]}:"
   echo
   echo "    ${txtPrefixForBold}Ctrl-c${txtPrefixForNormal}"
   echo
-  echo "You can Stop or Start the Docker Stack at anytime, for that change the directory to the location where the source code of Ursa is stored (default is $defaultUrsaPath)."
-  echo "For example, if you accepted the installation recommendation that is ~/fleek-network/ursa"
+  echo "${transl[show_docker_stack_log_stack_logs_can_stop_start_docker]}"
+  echo "${transl[show_docker_stack_log_stack_logs_can_stop_start_docker_example]}"
   echo
-  echo "Then after, run the following commands, to either Start (up) or Stop (down)"
+  echo "${transl[show_docker_stack_log_stack_logs_can_stop_then_after_start_or_stop]}"
   echo
-  echo "  - Start the Docker Stack"
+  echo "  - ${transl[show_docker_stack_log_stack_logs_can_stop_then_after_start]}"
   echo
   echo "    ${txtPrefixForBold}docker-compose -f ./docker/full-node/docker-compose.yml up${txtPrefixForNormal}"
   echo
-  echo "  - Stop the Docker Stack"
+  echo "  - ${transl[show_docker_stack_log_stack_logs_can_stop_then_after_stop]}"
   echo
   echo "    ${txtPrefixForBold}docker-compose -f ./docker/full-node/docker-compose.yml down${txtPrefixForNormal}"
   echo
-  echo "🥹 Seems a lot? All the commands and much more are available in our documentation site!"
+  echo "🥹 ${transl[show_docker_stack_log_stack_logs_seems_a_lot]}"
   # The extra white space between ✏️ and start of text is intentional and used for alignment
-  echo "🤓 Learn how to maintain your Node by visiting our documentation at https://docs.fleek.network"
-  echo "🌈 Got feedback? Find our ${txtPrefixForBold}Discord ${txtPrefixForNormal}at https://discord.gg/fleekxyz and ${txtPrefixForBold}Twitter ${txtPrefixForNormal}at https://twitter.com/fleek_net"
+  printf "🤓  %s" "${transl[show_docker_stack_log_stack_logs_learn_how_maintain]}" | sed "s|_defaultFleekNetworkDocsWebsite_|\"${defaultFleekNetworkDocsWebsite}\"|g"
+
+  printf "🌈 %s" "${transl[show_docker_stack_log_stack_logs_got_feedback]}" | sed "s|_defaultDiscordUrl_|\"${defaultDiscordUrl}\"|g; s|_defaultFleekNetworkTwitterUrl_|${defaultFleekNetworkTwitterUrl}|g"
   echo
   echo "★★★★★★★★★"
-  echo "★★★★★★★★★"
-  echo "★★★★★★★★★"
+  echo
 
-  printf -v prompt "\n🙋‍♀️ Want to see the output for the Docker Stack? Bear in mind that the Network Node Docker Stack is currently running as a background process, displaying logs messages is optional!\nType Y or press ENTER to confirm. Otherwise, type SKIP!"
+  printf -v prompt "\n🙋‍♀️ %s\n%s" \
+    "${transl[show_docker_stack_log_stack_logs_prompt_see_output]}" \
+    "$(printf "%s" "${transl[show_docker_stack_log_stack_logs_prompt_see_output_y_or_skip]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_skip_|skip|g")"
   read -r -p "$prompt"$'\n> ' answer
 
-  answerToLc=$(toLowerCase "$answer")
+  intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
 
-  if [[ "$answerToLc" == [sS][kK][iI][pP] ]]; then
+  if [[ "$intlAnswer" == [sS][kK][iI][pP] ]]; then
     printf "\r\n"
 
-    echo "🚀 We've now completed the installation process, thanks for your support!"
-    echo "🤗 Remember to visit our website ${txtPrefixForBold}https://fleek.network${txtPrefixForNormal} to find documentation, our Discord, Twitter and more to stay updated!"
+    echo "🚀 ${transl[show_docker_stack_log_stack_logs_completed_process_thanks]}"
+    printf "🤗 %s" "${transl[show_docker_stack_log_stack_logs_completed_process_remember]}" | sed "s|_defaultFleekNetworkWebsite_|\"${defaultFleekNetworkWebsite}\"|g"
+
     echo
 
     onExitInstallerTodos
@@ -815,15 +1122,15 @@ showDockerStackLog() {
   # whitespace to improve   
   printf "\r\n"
   
-  echo "👋 Hey! Just a quick hint!"
+  echo "👋 ${transl[show_docker_stack_log_stack_logs_quick_hint]}!"
   echo
-  echo "The Stack Logs can be quite long and verbose, but ${txtPrefixForBold}it's normal!"
+  echo "${transl[show_docker_stack_log_stack_logs_stack_logs_verbose]}"
   echo
-  echo "If that keeps you awake at night, or if you find something interesting present in the Logs, feel free to talk about it in our Discord 🙏"
+  echo "${transl[show_docker_stack_log_stack_logs_stack_keeps_awake_discord]}"
   echo
-  echo "In any case, you'll find that most Log messages ${txtPrefixForBold}can be ignored ${txtPrefixForNormal}at this time."
+  echo "${transl[show_docker_stack_log_stack_logs_about_log_messages_ignore]}"
 
-  read -r -p "Press ENTER to continue... " answer
+  read -r -p "${transl[common_press_enter_continue]}... "
 
   sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" logs -f
 }
@@ -833,7 +1140,7 @@ initLetsEncrypt() {
   domain="$2"
 
   if [[ -z "$1" || -z "$2" ]]; then
-    showErrorMessage "Gosh, this is embarrassing! We're missing arguments to initialise the Lets Encrypt call. If this issue persists, report it to our Discord channel, please! 🙏"
+    showErrorMessage "${transl[init_lets_encrypt_gosh_embarrassing_missing_args]} 🙏"
 
     exitInstaller
   fi
@@ -847,14 +1154,14 @@ initLetsEncrypt() {
   # TODO: Move this checkup much earlier, in the init of installer
   # Do we have the required files, if not interrupt the process?
   if [[ ! -d "$base_path" || ! "$(ls -A $base_path)" ]]; then
-    showErrorMessage "Oops! Missing required files, this might be due to changes in our main Ursa repository! Help us improve by letting us know in our Discord channel 🙏"
+    showErrorMessage "${transl[init_lets_encrypt_oops_missing_required_files]} 🙏"
 
     exitInstaller
   fi
 
   if [[ ! -e "$data_path/conf/options-ssl-nginx.conf" || ! -e "$data_path/conf/ssl-dhparams.pem" ]]; then
     echo
-    echo "🤖 Downloading recommended TLS parameters..."
+    echo "🤖 ${transl[init_lets_encrypt_download_recommended_tls]}..."
     echo
 
     mkdir -p "$data_path/conf"
@@ -865,7 +1172,7 @@ initLetsEncrypt() {
   fi
 
   echo
-  echo "🤖 We'll now create dummy certificates for the domain $domain, be patient 🙏 please..."
+  echo "🤖 ${transl[init_lets_encrypt_create_dummy_certificates]/_domain_/$domain} 🙏"
   echo
 
   path="/etc/letsencrypt/live/$domain"
@@ -877,23 +1184,23 @@ initLetsEncrypt() {
       -keyout '$path/privkey.pem' \
       -out '$path/fullchain.pem' \
       -subj '/CN=localhost'" certbot; then    
-    showErrorMessage "Oops! Failed to create dummy certificate for domain"
+    showErrorMessage "${transl[init_lets_encrypt_oops_failed_create_dummy_certificate]}"
 
     exitInstaller
   fi
 
   echo
-  echo "🤖 Starting Nginx, please be patient 🙏"
+  echo "🤖 ${transl[init_lets_encrypt_starting_nginx]} 🙏"
   echo
 
   if ! docker-compose -f "$config_path" up --force-recreate -d nginx; then
-    showErrorMessage "Oops! Failed to start nginx..."
+    showErrorMessage "${transl[init_lets_encrypt_failed_start_nginx]}..."
 
     exitInstaller
   fi
   
   echo
-  echo "🤖 Deleting dummy certificate for $domain..."
+  echo "🤖 ${transl[init_lets_encrypt_deleting_dummy_certificate]/_domain_/$domain}..."
   echo
 
   if ! docker-compose -f "$config_path" \
@@ -902,13 +1209,13 @@ initLetsEncrypt() {
     rm -Rf /etc/letsencrypt/archive/$domain && \
     rm -Rf /etc/letsencrypt/renewal/$domain.conf" certbot; then
 
-    showErrorMessage "Oops! Failed to delete dummy certificates for $domain..."
+    showErrorMessage "${transl[init_lets_encrypt_oops_failed_delete_certificates]/_domain_/$domain}..."
 
     exitInstaller
   fi
 
   echo
-  echo "🤖 Requesting the Let's Encrypt certificates for $domain..."
+  echo "🤖 ${transl[init_lets_encrypt_requesting_lets_encrypt_certificates]/_domain_/$domain}..."
   echo
 
   # Enable staging mode if needed
@@ -922,20 +1229,33 @@ initLetsEncrypt() {
       --rsa-key-size $rsa_key_size \
       --agree-tos -n \
       --force-renewal" certbot; then
-    showErrorMessage "Oops! Failed to create the SSL/TLS certificates, your domain name hasn't been secured yet. Check our guide to troubleshoot https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+    showErrorMessage "${transl[init_lets_encrypt_oops_failed_create_tls_certificates]} https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
 
-    printf -v prompt "\n💡 We recommend to try again, as some temporary issues might have occurred.\n\n🙋‍♀️ Would you like to retry securing the domain?\nType Y, or press ENTER to continue. Otherwise N, to quit!"
-    read -r -p "$prompt"$'\n> ' answer
+    printf -v prompt "\n💡 %s\n\n🙋‍♀️ %s\n%s" \
+      "${transl[init_lets_encrypt_prompt_recommend_try_again]}" \
+      "${transl[init_lets_encrypt_prompt_recommend_try_again_ask]}" \
+      "$(printf "%s" "${transl[init_lets_encrypt_prompt_recommend_try_again_y_or_quit]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_quit_|${transl[common_prompt_quit_as_q]}|g")"
+    while read -r -p "$prompt"$'\n> ' answer; do
+      intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
+    
+      if [[ "$intlAnswer" == "" || "$intlAnswer" == [yY] || "$intlAnswer" == [qQ] ]]; then
+        break
+      fi
+    done
 
-    answerToLc=$(toLowerCase "$answer")
+    if [[ "$intlAnswer" == [qQ] ]]; then
+      printf "🦖 %s" "${transl[init_lets_encrypt_prompt_recommend_you_have_quit]}" | sed "s|_defaultFleekNetworkDocsWebsite_|\"${defaultFleekNetworkDocsWebsite}\"|g"
 
-    if [[ "$answerToLc" == "" || "$answerToLc" == [yY] || "$answerToLc" == [yY][eE][sS] ]]; then    
+      exit 1
+    fi
+
+    if [[ "$intlAnswer" == "" || "$intlAnswer" == [yY] || "$intlAnswer" == [yY][eE][sS] ]]; then    
       echo
-      echo "💡 If the issues persists then it might be related to the DNS, that you might want to update."
-      echo "In most Linux Operating systems, these DNS servers are specified in the file /etc/resolv.conf"
-      echo "this file contains at least one nameserver line that defines the DNS server."
+      echo "💡 ${transl[init_lets_encrypt_if_issue_persists]}"
+      echo "${transl[init_lets_encrypt_linux_os_dns_config_location_1_of_2]}"
+      echo "${transl[init_lets_encrypt_linux_os_dns_config_location_2_of_2]}"
       echo
-      echo "🤖 We're going to restart the Docker Stack..."
+      echo "🤖 ${transl[init_lets_encrypt_restart_docker_stack]}..."
       echo
       sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" down      
       sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" start
@@ -949,25 +1269,27 @@ initLetsEncrypt() {
   fi
 
   echo
-  echo "🤖 Reloading nginx ..."
+  echo "🤖 ${transl[init_lets_encrypt_reloading_nginx]}..."
   echo
 
   docker-compose -f "$config_path" exec nginx nginx -s reload
 
-  showOkMessage "Great! You have now secured your server with SSL/TLS."
+  showOkMessage "${transl[init_lets_encrypt_success_secured_message]}"
 }
 
 installMandatory() {
   hasCommand "$1" && return 0
 
-  printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y to continue. Otherwise, N to exit!" "$1"
+  printf -v prompt "\n\n🤖 %s\n%s" \
+    "$(printf "%s" "${transl[common_install_we_need_to]}" | sed "s|_application_|\"${1}\"|g; s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
+    "$(printf "%s" "${transl[common_install_type_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
   while read -rp "$prompt"$'\n> ' answer; do
-    data=$(confirm "$answer")
+    data=$(confirm "$userSelectedLanguage" "$answer")
 
     [[ ! $data ]] && continue
 
     if [[ "$data" -eq 1 ]]; then
-      showErrorMessage "Oops! The $1 is required to be installed."
+      showErrorMessage "${transl[install_mandatory_app_install_required]/_application_/$1}"
       exitInstaller
     elif [[ "$data" -eq 0 ]]; then
       break
@@ -983,17 +1305,15 @@ installMandatory() {
     elif [[ "$distro" =~ "arch"  ]]; then
       ! sudo pacman -Syu "$1" && exitInstaller
     else
-      echo "👹 Oh gosh! We're currently not providing support for $distro."
-      echo "If you find this to be a bug and we provide support to your OS, report it on our discord channel please 🙏!"
+      echo "👹 ${transl[install_mandatory_distro_not_supported]/_distro_/$distro}"
+      echo "${transl[install_mandatory_if_bug_discord]} 🙏"
       echo
 
       exitInstaller
     fi
   fi
 
-  echo "os $os, distro $distro"
-
-  showOkMessage "Installed $1"
+  showOkMessage "${transl[install_mandatory_installed]} $1"
 
   # Add some space after the msg
   printf "\r\n"
@@ -1009,14 +1329,16 @@ verifyDepsOrInstall() {
 
   hasCommand "$bin" && return 0
 
-  printf -v prompt "\n\n🤖 We need to install %s, is that ok (y/n)?\nType Y to continue. Otherwise, N to exit!" "$bin"
+  printf -v prompt "\n\n🤖 %s\n%s" \
+    "$(printf "%s" "${transl[common_install_we_need_to]}" | sed "s|_application_|\"${bin}\"|g; s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
+    "$(printf "%s" "${transl[common_install_type_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
   while read -rp "$prompt"$'\n> ' answer; do
-    data=$(confirm "$answer")
+    data=$(confirm "$userSelectedLanguage" "$answer")
 
     [[ ! $data ]] && continue
 
     if [[ "$data" -eq 1 ]]; then
-      showErrorMessage "Oops! The $1 is required to be installed."
+      showErrorMessage "${transl[install_mandatory_app_install_required]/_application_/$1}"
       exitInstaller
     elif [[ "$data" -eq 0 ]]; then
       break
@@ -1024,9 +1346,9 @@ verifyDepsOrInstall() {
   done
 
   if [[ "$ans" == "" ]]; then
-    echo "😅 We need a Yes or a No, just to make sure you're happy to proceed."
+    echo "😅 ${transl[verify_deps_installed_need_yes_or_no_answer]}"
     
-    read -r -p "Press ENTER to try again..."
+    read -r -p "${transl[common_press_enter_retry]}..."
 
     verifyDepsOrInstall "$os" "$name" "$bin" "$pkgManager"
   fi
@@ -1038,11 +1360,12 @@ verifyDepsOrInstall() {
     pkg=$(echo "$pkgManager" | jq -r ".pkg")
 
     if [[ $pkgManager =~ "null" || $pkgManagerName =~ "null" || $pkg =~ "null" ]]; then
-      echo "💩 Oh no! Sorry, the installer configuration file is missing some values!"
+      echo "💩 ${transl[verify_deps_installed_config_has_missing_values]}"
       echo "LOG: pkgm ($pkgManager), pkgmn ($pkgManagerName), pkg ($pkg)"
       echo
-      echo "Help us improve by reporting this issue in our discord channel https://discord.gg/fleekxyz"
-      echo "Thanks a lot for your support 🙏"
+      printf "%s" "${transl[verify_deps_installed_help_us_improve_discord]}" | sed "s|_defaultDiscordUrl_|\"${defaultDiscordUrl}\"|g"
+
+      echo "${transl[verify_deps_installed_thanks_support]} 🙏"
       echo
 
       exitInstaller
@@ -1058,7 +1381,7 @@ verifyDepsOrInstall() {
           exitInstaller
         fi
 
-        showOkMessage "Installed ($name) via snap"
+        showOkMessage "${transl[verify_deps_installed_via_package_manager]/_name_/$name} snap"
 
         # ensure snap is in the PATH and pkgs
         source /etc/profile.d/apps-bin-path.sh
@@ -1070,7 +1393,7 @@ verifyDepsOrInstall() {
         exitInstaller
       fi
 
-      showOkMessage "Installed ($name) via apt-get"
+      showOkMessage "${transl[verify_deps_installed_via_package_manager]/_name_/$name} apt-get"
 
       return 0
     elif [[ "$distro" =~ "arch"  ]]; then
@@ -1086,7 +1409,7 @@ verifyDepsOrInstall() {
 
       ! sudo pacman --noconfirm -Syu "$pkg" && exitInstaller
 
-      showOkMessage "Installed ($name) via pacman"
+      showOkMessage "${transl[verify_deps_installed_via_package_manager]/_name_/$name} pacman"
     fi
   fi
 }
@@ -1101,35 +1424,46 @@ extactDomainName() {
 }
 
 verifyUserHasDomain() {
-  printf -v prompt "\nDo you have the domain settings ready (y/n)?\nType Y, or press ENTER to confirm."
+  printf -v prompt "\n%s?\n%s" \
+    "$(printf "%s" "${transl[verify_user_has_domain_have_domain_ready]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
+    "$(printf "%s" "${transl[verify_user_has_domain_have_domain_ready_yes_or_n_or_q]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g; s|_quit_|\"${transl[common_prompt_quit_as_q]}\"|g")"
   read -r -p "$prompt"$'\n> ' ans
 
-  if [[ ! "$ans" == "" && "$ans" == [nN] || "$ans" == [nN][oO] ]]; then
+  intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$ans")
+
+  if [[ "$intlAnswer" == [qQ] ]]; then
+    showErrorMessage \
+      "$(printf "🦖 %s" "${transl[verify_user_has_domain_user_quit_message]}" | sed "s|_defaultFleekNetworkDocsWebsite_|\"${defaultFleekNetworkDocsWebsite}\"|g")"
+
+    exit 1
+  fi
+
+  if [[ ! "$intlAnswer" == "" && "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
     printf "\n"
 
-    showErrorMessage "Oops! It would be best to have a domain name and the DNS A Record type answer with the server IP address. If you'd like to learn more about it, check our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+    showErrorMessage "${transl[verify_user_has_domain_oops_best_have_domain]}"
 
-    read -r -p "Press ENTER to continue and try again..."
+    read -r -p "${transl[common_press_enter_retry]}..."
 
     verifyUserHasDomain
   fi
 
   # Domain name handling (start)
-  printf -v prompt "\n💡 Provide us your domain name without http:// or https:// e.g., www.example.com or my-node.fleek.network\n\nTell us, what's the domain name?"
+  printf -v prompt "\n💡 %s\n\n%s" "${transl[verify_user_has_domain_provide_domain_without_http_1_of_2]}" "${transl[verify_user_has_domain_provide_domain_without_http_2_of_2]}"
   while read -rp "$prompt"$'\n> ' ans; do
     if confirmDomainName "$ans"; then
       userDomainName="$ans"
       break
     fi
 
-    showPoopMessage "Uh oh! Provide a valid domain name, please..."
+    showPoopMessage "${transl[verify_user_has_domain_uh_oh_provide_valid_domain]}..."
   done
 
   # Ip address handling (start)
   ERROR_IP_ADDRESS_NOT_AVAILABLE="ERROR_IP_ADDRESS_NOT_AVAILABLE"
   detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "$ERROR_IP_ADDRESS_NOT_AVAILABLE")
 
-  printf -v prompt "\n💡 Provide us the IP address of the machine where you are installing the Node. We've noticed that this machine public IP address is ${txtPrefixForBold}%s ${txtPrefixForNormal}(we'll use it as the default)\n\nLet us know, what's the IP address the domain answers with?\n\nPress ENTER to accept default, or type the IP Address" "$detectedIpAddress"
+  printf -v prompt "\n💡 %s\n\n%s\n\n%s" "${transl[verify_user_has_domain_provide_ip_of_machine_1_of_3]/_detectedIpAddress_/$detectedIpAddress}" "${transl[verify_user_has_domain_provide_ip_of_machine_2_of_3]}" "${transl[verify_user_has_domain_provide_ip_of_machine_3_of_3]}"
   while read -rp "$prompt"$'\n> ' ans; do
     if confirmIpAddress "$ans"; then
       serverIpAddress="$ans"
@@ -1138,41 +1472,50 @@ verifyUserHasDomain() {
       break
     fi
 
-    showPoopMessage "Uh oh! Provide a valid ip address, please..."
+    showPoopMessage "${transl[verify_user_has_domain_uh_oh_provide_valid_ip]}..."
   done
 
   # Declare detected ip address as default server ip address
   serverIpAddress=${ans:="$detectedIpAddress"}
 
   if [[ $serverIpAddress = "$ERROR_IP_ADDRESS_NOT_AVAILABLE" ]]; then
-    showErrorMessage "Oops! This is embarrassing, but we failed to discover the default IP Address ($ERROR_IP_ADDRESS_NOT_AVAILABLE)"
+    showErrorMessage "${transl[verify_user_has_domain_oops_embarassing]/_ERROR_IP_ADDRESS_NOT_AVAILABLE_/$ERROR_IP_ADDRESS_NOT_AVAILABLE}"
 
     exitInstaller
   fi
 
   # given a name and an ip address, test whether there is a record for name pointing to address
   if ! dig "$userDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$serverIpAddress" >/dev/null 2>&1 ; then
-    showErrorMessage "Oops! The domain name $userDomainName doesn't have a DNS record type A pointing to the ip address $serverIpAddress. Of course, if you've just made the changes, you might need to wait for the DNS settings to propagate. Learn how to setup your domain DNS Records by checking our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+    showErrorMessage "${transl[verify_user_has_domain_oops_domain_no_dns_record_correct_ip_1_of_2]/_userDomainName_/$userDomainName} ${transl[verify_user_has_domain_oops_domain_no_dns_record_correct_ip_2_of_2]/_serverIpAddress_/$serverIpAddress}"
 
-    read -r -p "Press ENTER to continue and try again..."
+    read -r -p "${transl[common_press_enter_retry]}..."
 
     verifyUserHasDomain
   fi
 
   # Email handling (start)
-  printf -v prompt "💡 Provide us with a valid email address that you have access to,\nrest ensured that we'll not contact you, but its required by Let's Encrypt (Certificate Authority)\n\nIf you'd like to know more about the Let's Encrypt organisation\nvisit their website at https://letsencrypt.org/\n\nTell us, what's your email address?"
+  printf -v prompt "💡 %s\n%s\n\n%s\n%s\n\n%s" "${transl[verify_user_has_domain_provide_valid_email_1_of_5]}" "${transl[verify_user_has_domain_provide_valid_email_2_of_5]}" "${transl[verify_user_has_domain_provide_valid_email_3_of_5]}" "${transl[verify_user_has_domain_provide_valid_email_4_of_5]}" "${transl[verify_user_has_domain_provide_valid_email_5_of_5]}"
   while read -rp "$prompt"$'\n> ' ans; do
     if confirmEmailAddress "$ans"; then
       emailAddress=$(toLowerCase "$ans")
       break
     fi
 
-    showPoopMessage "Uh oh! Provide a valid email address, please..."
+    showPoopMessage "${transl[verify_user_has_domain_uh_oh_provide_valid_email]}..."
   done
 
-  printf -v prompt "\n🤖 Here are the details you have provided, make sure the information is correct.\n\nDomain name:      %s\nIP Address:     %s\nEmail address:      %s\n\nIs this correct (y/n)?\nType Y or Yes to confirm. Otherwise, N or No to make changes!" "$userDomainName" "$serverIpAddress" "$emailAddress"
+  printf -v prompt "\n🤖 %s\n\n%s\n%s\n%s\n\n%s\n%s" \
+    "${transl[verify_user_has_domain_details_confirmation_1_of_6]}" \
+    "${transl[verify_user_has_domain_details_confirmation_2_of_6]/_userDomainName_/$userDomainName}" \
+    "${transl[verify_user_has_domain_details_confirmation_3_of_6]/_serverIpAddress_/$serverIpAddress}" \
+    "${transl[verify_user_has_domain_details_confirmation_4_of_6]/_emailAddress_/$emailAddress}" \
+    "$(printf "%s" "${transl[verify_user_has_domain_details_confirmation_5_of_6]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
+    "$(printf "%s" "${transl[verify_user_has_domain_details_confirmation_6_of_6]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
+
   while read -rp "$prompt"$'\n> ' ans; do
-    case $ans in
+    intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$ans")
+
+    case $intlAnswer in
       [yY])
         break
         ;;
@@ -1189,12 +1532,6 @@ verifyUserHasDomain() {
         ;;
     esac;
   done;
-
-  shouldRedo=$(toLowerCase "$answer")
-
-  if [[ "$shouldRedo" == [nN] || "$shouldRedo" == [nN][oO] ]]; then
-    verifyUserHasDomain
-  fi
 
   echo "$userDomainName;$emailAddress"
 
@@ -1286,37 +1623,43 @@ replaceNginxConfFileForHttps() {
 }
 
 setupSSLTLS() {
-  echo "⚠️ You're ${txtPrefixForBold}required ${txtPrefixForNormal}to have a Domain name point to your server IP address."
+  echo "⚠️ ${transl[setup_ssl_tls_you_are_required]}"
   echo
-  echo "Visit your domain name registrar's dashboard, create a new domain, and update the A record to have the hostname answer with the server IP address!"
+  echo "${transl[setup_ssl_tls_visit_your_domain_name_registrar]}"
   echo
   # The extra white space between the 🫡 and text is intentional for spacing
-  echo "🫡  Make sure you complete this step before proceeding, as we'll verify it!"
-  echo "Also, this is important to secure the server communications with SSL/TLS. Take your time!"
+  echo "🫡  ${transl[setup_ssl_tls_complete_step_before_proceeding]}"
+  echo "${transl[setup_ssl_tls_reason_to_secure_server]}"
   echo
-  echo "🙏 If you'd like to learn more about this, check our guide ${txtPrefixForBold}How to secure${txtPrefixForNormal} a Network Node https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
+  echo "🙏 ${transl[setup_ssl_tls_learn_more_about]}"
   printf "\n"
 
   trimData=$(verifyUserHasDomain | xargs)
+
+  if [[ ! "$trimData" ]]; then
+    showErrorMessage "🦖 ${transl[setup_ssl_tls_failed_verify_user_domain_and_email]}..."
+
+    exit 1
+  fi
 
   userDomainName=$(echo "$trimData" | cut -d ";" -f 1)
   emailAddress=$(echo "$trimData" | cut -d ";" -f 2)
 
   if ! rm "$defaultDockerFullNodeRelativePath"/data/nginx/app.conf; then
-    showErrorMessage "Oops! Failed to clear the nginx default config. Help us improve, report it in our discord channel 🙏"
+    showErrorMessage "${transl[setup_ssl_tls_oops_failed_clear_nginx]} 🙏"
 
     exitInstaller
   fi
 
   if ! replaceNginxConfFileForHttp "$userDomainName"; then
-    showErrorMessage "Oops! Failed to update the http server_name directive in the Nginx reverse proxy with your domain name $userDomainName. Help us improve! Report to us in our Discord channel 🙏"
+    showErrorMessage "${transl[setup_ssl_tls_oops_failed_update_http_server_name]/_userDomainName_/$userDomainName} 🙏"
 
     exitInstaller
   fi
 
   chmod +x "$defaultDockerFullNodeRelativePath"/init-letsencrypt.sh
 
-  showOkMessage "Updated the file permissions for Lets Encrypt initialisation script (set +x)!"
+  showOkMessage "${transl[setup_ssl_tls_updated_file_permissions_lets_encrypt_execution]} (set +x)!"
 
   # Intentional, used to provide space after msg
   echo
@@ -1330,9 +1673,9 @@ setupSSLTLS() {
   statusCode=$(curl --write-out "%{http_code}" --silent --output /dev/null http://"$userDomainName"/ping)
 
   if [[ "$statusCode" -ne 200 ]]; then
-    showPoopMessage "Uh oh! Can't seem to communicate with the reverse proxy. If you have a firewall, it allows web traffic on port 80 (HTTP) and port 443 (HTTPS)"
+    showPoopMessage "${transl[setup_ssl_tls_uh_oh_cant_communicate_with_reverse_proxy]}"
 
-    read -r -p "😅 It's very likely that the Let's Encrypt step will fail, if you decide to proceed! Press ENTER to continue..."
+    read -r -p "😅 ${transl[setup_ssl_tls_lets_encrypt_likely_fail_if_continue]}..."
   fi
 
   if ! initLetsEncrypt "$emailAddress" "$userDomainName"; then
@@ -1342,7 +1685,7 @@ setupSSLTLS() {
   printf "\n"
 
   if ! replaceNginxConfFileForHttps "$userDomainName"; then
-    showErrorMessage "Oops! Failed to update the https server_name directive in the Nginx reverse proxy with your domain name $userDomainName. Help us improve! Report to us in our Discord channel 🙏"
+    showErrorMessage "${transl[setup_ssl_tls_oops_failed_update_https_server_name_directive]/_userDomainName_/$userDomainName} 🙏"
 
     exitInstaller
   fi
@@ -1353,14 +1696,14 @@ changeDirectoryToPathOrFailure() {
   local targetPath=$2
 
   if [[ -z "$name" || -z "$targetPath" ]]; then
-    showErrorMessage "Oops! Failed to change directory after cloning the repository. Help us improve! Report to us in our Discord channel 🙏"
+    showErrorMessage "${transl[change_directory_to_path_oops_failed_change_dir_discord]} 🙏"
 
     exitInstaller
   fi
 
   if [[ $(pwd) != "$targetPath" ]]; then
     if ! cd "$targetPath"; then
-      showErrorMessage "Oops! Our apologies but we've failed to change directory to $name. Help us improve by reporting it to us in our Discord channel 🙏"
+      showErrorMessage "${transl[change_directory_to_path_oops_failed_change_dir_to_name]/_name_/$name} 🙏"
 
       exitInstaller
     fi
@@ -1369,21 +1712,23 @@ changeDirectoryToPathOrFailure() {
 
 onNightlyPreference() {
   echo
-  echo "✋ When running the Stack, Docker will have to build the Ursa image from source."
-  echo "💡 Our recommendation is to use our Nightly build, as otherwise the image build process can be quite long 😴!"
+  echo "✋ ${transl[on_nightly_preference_when_running_stack_docker_build]}"
+  echo "💡 ${transl[on_nightly_preference_our_recommendation]} 😴!"
   echo
-  echo "In the future, you can check our documentation and guides to learn how to update this when required."
+  echo "${transl[on_nightly_preference_inf_future_check_documentation]}"
   echo
 
-  printf -v prompt "\n\n🤖 Are you happy to use the Nightly build (y/n)?\nType Y to accept. Otherwise, N to build from source!"
+  printf -v prompt "\n\n🤖 %s\n%s" \
+    "$(printf "%s" "${transl[on_nightly_preference_prompt_happy_use_nightly]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
+    "$(printf "%s" "${transl[on_nightly_preference_prompt_happy_use_nightly_yes_or_no]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
   while read -rp "$prompt"$'\n> ' ans; do
-    data=$(confirm "$ans")
+    data=$(confirm "$userSelectedLanguage" "$ans")
 
     [[ ! $data ]] && continue
 
     if [[ "$data" -eq 1 ]]; then
       echo
-      echo "🦀 Ok! Rembember, the Ursa image may take some time to build depending on your machine..."
+      echo "🦀 ${transl[on_nightly_preference_mind_ursa_time_build_long]}..."
       echo
 
       break
@@ -1393,8 +1738,9 @@ onNightlyPreference() {
 
       if ! yq '.services.ursa.image' "$defaultDockerComposeYmlRelativePath" | grep -q "$defaultUrsaNightlyImage" || ! yq '.services.ursa.build' "$defaultDockerComposeYmlRelativePath" | grep -qE "null|no matches found"; then
         echo
-        echo "💩 Uh oh! For some reason we failed to change the docker compose yaml to use nightly instead."
-        echo "Our apologies but this shouldn't happen! Let us improve by reporting this issue to our discord https://discord.gg/fleekxyz, please 🙏"
+        echo "💩 ${transl[on_nightly_preference_uh_oh_failed_modify_docker_compose_yaml]}"
+
+        printf "%s 🙏" "${transl[on_nightly_preference_uh_oh_failed_modify_docker_compose_yaml_apologies]}" | sed "s|_defaultDiscordUrl_|\"${defaultDiscordUrl}\"|g"
         echo
 
         exitInstaller
@@ -1412,6 +1758,9 @@ onNightlyPreference() {
   # SIGINT listener
   trap onInterruption INT
 
+  # Set default locale
+  multiLanguageChoice
+
   # Identity the OS
   os=$(identifyOS)
 
@@ -1427,8 +1776,7 @@ onNightlyPreference() {
   checkSystemHasRecommendedResources "$os"
 
   # Check if has dependencies installed
-  for dep in "${dependencies[@]}"
-  do
+  for dep in "${dependencies[@]}"; do
     installMandatory "$dep"
   done
 
@@ -1454,11 +1802,11 @@ onNightlyPreference() {
   # Check if directory does not exit or empty
   if [[ "$(ls -A "$ursaPath" >/dev/null 2>&1)" ]]; then
     echo
-    echo "😅 Gosh! Have you run the installation before?!"
+    echo "😅 ${transl[on_nightly_preference_have_run_install_before_surprise]}"
     echo
-    echo "The directory $ursaPath is not empty and we'll have to skip the installation, as we don't want to do any overrides."
-    echo "If you are stuck on this, clear the desired location before retrying"
-    echo "e.g., if you chose to install in the default $defaultUrsaPath clear it, as the assisted installer does not do deletes."
+    echo "${transl[on_nightly_preference_directory_not_empty]/_ursaPath_/$ursaPath}"
+    echo "${transl[on_nightly_preference_if_stuck_clear_location_1_of_2]}"
+    echo "${transl[on_nightly_preference_if_stuck_clear_location_2_of_2]/_defaultUrsaPath_/$defaultUrsaPath}"
 
     exitInstaller
   fi
@@ -1479,7 +1827,7 @@ onNightlyPreference() {
   # Optional, check if user would like to setup SSL/TLS
   setupSSLTLS
 
-  showOkMessage "The installation process has completed!"
+  showOkMessage "${transl[on_nightly_preference_success_install_completed]}"
 
   # Add some space after the "complete" message
   printf "\r\n"
