@@ -65,8 +65,11 @@ userSelectedLanguage=""
 declare -a supportedLanguages=("en" "ch" "es" "pt" "fr" "it" "vi" "jp" "ko" "de" "hi" "ru")
 
 for lang in "${supportedLanguages[@]}"; do
-  # Use of ?dateRuntime intentional, prevent cache, do not modify
-  . <(curl -s "$defaultGetFleekNetworkUrl/locales/$lang?$dateRuntime")
+  # use of ?dateRuntime intentional, prevent cache, do not modify
+  # TODO: the github raw version seems to be better
+  # the reason is that can use the branch name, allowing to test anywhere
+  # . <(curl -s "$defaultGetFleekNetworkUrl/locales/$lang?$dateRuntime")
+  . <(curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$branch_name/locales/$lang?$dateRuntime")
 done
 
 # App text translations
