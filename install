@@ -67,7 +67,9 @@ declare -a supportedLanguages=("en" "ch" "es" "pt" "fr" "it" "vi" "jp" "ko" "de"
 for lang in "${supportedLanguages[@]}"; do
   # use of ?dateRuntime intentional, prevent cache, do not modify
   # set `USE_BRANCH_NAME_FOR_GH_RAW` to use the Github raw locales for testing
-  if [[  -z ${USE_BRANCH_NAME_FOR_GH_RAW+x} ]]; then
+  # e.g., USE_BRANCH_NAME_FOR_GH_RAW="feat/localization" ./install
+  if [[ -z ${USE_BRANCH_NAME_FOR_GH_RAW+x} ]]; then
+    echo "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$USE_BRANCH_NAME_FOR_GH_RAW/locales/$lang?$dateRuntime"
     . <(curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$USE_BRANCH_NAME_FOR_GH_RAW/locales/$lang?$dateRuntime")
 
     continue;
