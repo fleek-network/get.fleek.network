@@ -60,6 +60,8 @@ defaultMinDiskSpaceBytesRequired=10000000
 
 # App state
 userSelectedLanguage=""
+# selectedPath=""
+selectedUrsaPath=""
 
 # Localization
 declare -a supportedLanguages=("en" "ch" "es" "pt" "fr" "it" "vi" "jp" "ko" "de" "hi" "ru")
@@ -978,10 +980,10 @@ requestPathnameForUrsaRepository() {
   # that is that on runtime the defaultPath might need to be replaced
   # by the user selected choice, as we have these as precomputed text
   # TODO: close after test param expansion, see below
-  selectedPath=$defaultUrsaPath
+  selectedUrsaPath=$defaultUrsaPath
 
   printf -v prompt "\n🤖 %s\n\n%s?\n%s" \
-    "${transl[request_path_for_ursa_repo_save_to_location_use_default]/_selectedPath_/$selectedPath}" \
+    "${transl[request_path_for_ursa_repo_save_to_location_use_default]/_selectedUrsaPath_/$selectedUrsaPath}" \
     "$(printf "%s" "${transl[request_path_for_ursa_repo_save_to_location_y_or_n_change]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
     "${transl[request_path_for_ursa_repo_save_to_location_happy_proceed]}"
   
@@ -998,27 +1000,27 @@ requestPathnameForUrsaRepository() {
     printf -v prompt "\n🙋‍♀️ %s" "${transl[request_path_for_ursa_repo_save_to_locattion_where_store]}"
     read -r -p "$prompt"$'\n> ' answer
   
-    selectedPath="$answer"
+    selectedUrsaPath="$answer"
   fi
 
 
-  if [[ -d "$selectedPath" ]]; then
+  if [[ -d "$selectedUrsaPath" ]]; then
     # TODO: test param expansion
-    showErrorMessage "${transl[request_path_for_ursa_repo_save_to_locattion_oops_already_exists]/_selectedPath_/$selectedPath}"
+    showErrorMessage "${transl[request_path_for_ursa_repo_save_to_locattion_oops_already_exists]/_selectedUrsaPath_/$selectedUrsaPath}"
 
     read -r -p "${transl[common_press_enter_retry]}..."
 
     requestPathnameForUrsaRepository
   fi
 
-  if ! mkdir -p "$selectedPath"; then
+  if ! mkdir -p "$selectedUrsaPath"; then
     # TODO: test param expansion
-    showErrorMessage "${transl[request_path_for_ursa_repo_save_to_oops_failed_create_dir]/_selectedPath_/$selectedPath}"
+    showErrorMessage "${transl[request_path_for_ursa_repo_save_to_oops_failed_create_dir]/_selectedUrsaPath_/$selectedUrsaPath}"
 
     exitInstaller
   fi
 
-  echo "$selectedPath"
+  echo "$selectedUrsaPath"
 }
 
 cloneUrsaRepositoryToPath() {
@@ -1076,7 +1078,8 @@ showDockerStackLog() {
   echo
   echo "    ${txtPrefixForBold}Ctrl-c${txtPrefixForNormal}"
   echo
-  echo "${transl[show_docker_stack_log_stack_logs_can_stop_start_docker]}"
+  # echo "${transl[show_docker_stack_log_stack_logs_can_stop_start_docker]}"
+  "$(printf "%s" "${transl[show_docker_stack_log_stack_logs_can_stop_start_docker]}" | sed "s|_selectedUrsaPath_|\"${selectedUrsaPath}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
   echo "${transl[show_docker_stack_log_stack_logs_can_stop_start_docker_example]}"
   echo
   echo "${transl[show_docker_stack_log_stack_logs_can_stop_then_after_start_or_stop]}"
