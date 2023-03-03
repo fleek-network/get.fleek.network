@@ -48,8 +48,8 @@ printf "🤖%s\n" "Install Sccache is a ccache-like compiler caching tool"
 cargo install sccache
 
 printf "🤖%s\n" "Update and upgrade apt-get"
-sudo apt-get update
-sudo apt-get upgrade
+sudo apt-get update -y
+sudo apt-get upgrade -y
 
 printf "🤖%s\n" "Install the build-essentials packages, necessary for compiling general software and for our use-case Ursa CLI"
 sudo apt-get install build-essential -y
