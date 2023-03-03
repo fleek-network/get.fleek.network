@@ -1,0 +1,120 @@
+#!/bin/bash
+
+# <!-- IGNORE: This line is intentional DO NOT MODIFY --><pre><script>document.querySelector('body').firstChild.textContent = '#!/bin/bash'</script>
+
+# "Get Fleek Network" is an attempt to make our software more accessible.
+# By providing scripts to automate the installation process of our software,
+# we believe that it can help improve the onboarding experience of our users.
+#
+# Quick install: `curl https://get.fleek.network/install_native | bash`
+#
+# This script automates the process illustrated in our guide "how to install rust and the dependencies for ursa cli"
+# advanced users might find it better to follow the instructions in the guide
+# If that's your preference, go ahead and check our guides https://docs.fleek.network
+#
+# For the users happy to have the script assist in the installation process of Fleek Network
+# and the required dependencies, run the script at your own risk. 
+#
+# Contributing?
+# - If you'd like to test changes locally use the env var `USE_BRANCH_NAME_FOR_GH_RAW`, for remote locales pulls
+#
+# Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
+
+# 🚑 Check if running in Bash and supported version
+[ "$BASH" ] || { printf >&2 '🙏 Run the script with Bash, please!\n'; exit 1; }
+(( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
+
+# Defaults
+defaultUrsaPath="$HOME/fleek-network/ursa"
+
+if ! command -vp "cargo" &> /dev/null && ! command -vp "rustc" &> /dev/null; then
+  printf "🤖 Install the Rustup tool\n"
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+  printf "🤖 Reload PATH environments to include Cargo\n"
+  source "$HOME/.cargo/env"
+  
+  printf "✅ Rust is installed!\n"
+
+  printf "Cargo version is %s\n" "$(cargo --version)"
+else
+  printf "🤖 Install the Rustup tool\n"
+  rustup update
+fi
+
+printf "🤖%s\n" "Install Sccache is a ccache-like compiler caching tool"
+cargo install sccache
+
+printf "🤖%s\n" "Update and upgrade apt-get"
+sudo apt-get update
+sudo apt-get upgrade
+
+printf "🤖%s\n" "Install the build-essentials packages, necessary for compiling general software and for our use-case Ursa CLI"
+sudo apt-get install build-essential -y
+
+printf "🤖%s\n" "Install required to compile the application (cmake, clang, pkg-config and libssl-dev)"
+sudo apt-get install cmake clang pkg-config libssl-dev -y
+
+printf "🤖%s\n" "Install the Protobufer Compiler"
+sudo apt-get install protobuf-compiler -y
+
+if ! hasCommand git &> /dev/null; then
+  printf "🤖%s\n" "Install Git"
+  sudo apt-get install git -y
+fi
+
+printf -v prompt "🤖 The Ursa source-code is going to be git cloned to recommended path %s, type \"n\" to modify path. Should proceed with installing to default path? (y/n)\n" "$defaultUrsaPath"
+while read -r -p "$prompt"$'\n> ' answer; do
+  if [[ "$answer" == [nN] ]]; then
+    printf -v prompt "\n🙋‍♀️ What path should we clone the Ursa source-code to?"
+    read -r -p "$prompt"$'\n> ' userPath
+
+    if [[ -d "$userPath" ]]; then
+      printf "👹 Oops! The path %s already exists! Clear the path and try again...\n" "$userPath"
+
+      exit 1
+    fi
+
+    if ! mkdir -p "$selectedUrsaPath"; then
+      printf "👹 Oops! Failed to create the path $userPath %s\n" "$userPath"
+
+      exit 1
+    fi
+
+    selectedUrsaPath="$userPath"
+
+    break
+  fi
+
+  if [[ "$answer" == [yY] ]]; then
+    selectedUrsaPath="$defaultUrsaPath"
+    
+    break
+  fi
+done
+
+printf "🤖 Clone the Ursa project to %s\n" "$selectedUrsaPath"
+git clone https://github.com/fleek-network/ursa.git "$selectedUrsaPath"
+
+printf "🤖%s\n" "Change directory to ursa"
+if ! cd "$selectedUrsaPath"; then
+  printf "👹 Oops! Failed to change directory to %s\n" "$selectedUrsaPath"
+
+  exit 1
+fi
+
+if ! hasCommand make &> /dev/null; then
+  sudo apt-get install make -y
+fi
+
+printf "🤖%s\n" "Build and install the Ursa CLI"
+
+if ! make install; then
+  printf "👹 Oops! Failed to build and install the Ursa CLI. If you are experience issues, help us improve by letting us know in our Discord channel\n"
+
+  exit 1
+fi
+
+printf "Great 👌! You have successfully installed all the required packages, libraries and have compiled and installed Ursa\n"
+
+printf "If you'd like to have the Ursa CLI command available globally, add the bin ($selectedUrsaPath) to your PATH e.g., edit your shell profile file, save and restart the current shell e.g., .bashrc, .zshrc, .profile to include export PATH=\"${selectedUrsaPath}:${PATH}\"\n"
