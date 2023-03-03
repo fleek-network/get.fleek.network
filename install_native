@@ -27,6 +27,8 @@
 # Defaults
 defaultUrsaPath="$HOME/fleek-network/ursa"
 
+read -rp "👷 This is in work-in-progress and currently only supporting Ubuntu\nPress ENTER to continue..."
+
 if ! command -vp "cargo" &> /dev/null && ! command -vp "rustc" &> /dev/null; then
   printf "🤖 Install the Rustup tool\n"
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
