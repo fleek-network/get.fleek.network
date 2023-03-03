@@ -65,7 +65,7 @@ if ! hasCommand git &> /dev/null; then
   sudo apt-get install git -y
 fi
 
-printf -v prompt "🤖 The Ursa source-code is going to be git cloned to recommended path %s, type \"n\" to modify path. Should proceed with installing to default path? (y/n)\n" "$defaultUrsaPath"
+printf -v prompt "🤖 The Ursa source-code is going to be git cloned to recommended path %s (otherwise, type \"n\" to modify path). Should proceed with installing to default path? (y/n)\n" "$defaultUrsaPath"
 while read -r -p "$prompt"$'\n> ' answer; do
   if [[ "$answer" == [nN] ]]; then
     printf -v prompt "\n🙋‍♀️ What path should we clone the Ursa source-code to?"
