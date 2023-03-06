@@ -26,6 +26,36 @@
 
 # Defaults
 defaultUrsaPath="$HOME/fleek-network/ursa"
+defaultNginxSitesAvailablePath="/etc/nginx/sites-available"
+defaultNginxSitesEnabledPath="/etc/nginx/sites-enabled"
+
+# App state
+selectedUrsaPath="$defaultUrsaPath"
+selectedDomainName=""
+selectedIpAddress=""
+
+# Confirm validators
+confirmDomainName() {
+  local validate="^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\.)+[a-zA-Z]{2,}$"
+
+  if whois "$1" | grep -Ei '[Uu]nallocated|returned 0 objects' > /dev/null; then
+    return 1
+  fi
+
+  [[ $1 =~ $validate ]]
+}
+
+confirmIpAddress() {
+  local validate="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
+
+  [[ "$1" =~ $validate ]] && ping -c1 -W1 "$1" > /dev/null
+}
+
+confirmEmailAddress() {
+  local validate="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+$"
+
+  [[ "$1" =~ $validate ]]
+}
 
 read -rp "👷 This is in work-in-progress and currently only supporting Ubuntu\nPress ENTER to continue..."
 
@@ -106,6 +136,7 @@ if ! cd "$selectedUrsaPath"; then
 fi
 
 if ! hasCommand make &> /dev/null; then
+  printf "🤖%s\n" "Install make"
   sudo apt-get install make -y
 fi
 
@@ -119,4 +150,104 @@ fi
 
 printf "Great 👌! You have successfully installed all the required packages, libraries and have compiled and installed Ursa\n"
 
-printf "If you'd like to have the Ursa CLI command available globally, add the bin ($selectedUrsaPath) to your PATH e.g., edit your shell profile file, save and restart the current shell e.g., .bashrc, .zshrc, .profile to include export PATH=\"${selectedUrsaPath}:${PATH}\"\n"
+printf "If you'd like to have the Ursa CLI command available globally, add the bin (%s) to your PATH e.g., edit your shell profile file, save and restart the current shell e.g., .bashrc, .zshrc, .profile to include export PATH=\"%s:\$PATH\"\n" "$selectedUrsaPath" "$selectedUrsaPath"
+
+if ! hasCommand nginx &> /dev/null; then
+  printf -v prompt "🤖 Nginx should be installed, would you like to proceed with the installation? (y/n)\n"
+  while read -rp "$prompt"$'\n> ' answer; do
+    if [[ "$answer" == [nN] ]]; then
+      printf "👹 Oops! The install process has terminated\n"
+
+      exit 1
+    fi
+
+    if [[ "$answer" == [yY] ]]; then      
+      break
+    fi
+  done
+
+  printf "🤖 Install Nginx\n"
+  sudo apt install nginx -y
+fi
+
+if hasCommand ufw &> /dev/null; then
+  printf "🤖 HTTP and HTTPS will be set as allowed via your firewall ufw\n"
+  sudo ufw allow 'Nginx HTTP'
+  sudo ufw allow 'Nginx HTTPS'
+else
+  read -rp "🚓 Make sure you don't have HTTP and HTTPS ports 80 and 443 blocked by a firewall\n"
+fi
+
+read -rp "A custom domain name is required to secure the communications with SSL/TLS.\nVisit your domain name registrar's dashboard, create a new domain, and update the A record to have the hostname answer with the server IP address\nMake sure you complete this step before proceeding, as we'll verify it!\nPress ENTER to continue..."
+
+printf -v prompt "🤖 What's your domain name?\n"
+while read -rp "$prompt"$'\n> ' answer; do
+  if confirmDomainName "$answer"; then
+    selectedDomainName="$answer"
+    break
+  fi
+
+  printf "💩 The domain name provided is not valid!\n"
+done
+
+detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "ERROR_IP_ADDRESS_NOT_AVAILABLE")
+
+printf "The server IP address that the domain is pointing to is required. We've noticed that this machine public IP address is %s\n" "$detectedIpAddress"
+printf -v prompt "🤖 Is the domain name pointing to the public IP address %s? (y/n)\n" "$detectedIpAddress"
+while read -rp "$prompt"$'\n> ' answer; do
+  if confirmIpAddress "$answer" && [[ "$answer" == [yY] ]]; then
+    if ! dig "$selectedDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$answer" >/dev/null 2>&1 ; then
+      printf "💩 Oh no! The %s doesn't seem to point to the IP address %s\n" "$selectedDomainName" "$answer"
+
+      continue
+    fi
+
+    selectedIpAddress="$answer"
+
+    break
+  fi
+
+  printf "💩 Oh no! The IP address doesn't seem valid!\n"
+done
+
+echo "
+  proxy_cache_path /cache keys_zone=nodecache:100m levels=1:2 inactive=31536000s max_size=10g use_temp_path=off;
+
+  server {
+      listen 80;
+      listen [::]:80;
+      server_name $selectedDomainName;
+
+      location /.well-known/acme-challenge/ {
+          root /var/www/certbot;
+      }
+
+      location /stub_status {
+        stub_status;
+      }
+
+      proxy_redirect          off;
+      client_max_body_size    10m;
+      client_body_buffer_size 128k;
+      proxy_connect_timeout   90;
+      proxy_send_timeout      90;
+      proxy_read_timeout      90;
+      proxy_buffers           32 128k;
+
+      location / {
+        add_header content-type  application/vnd.ipld.raw;
+        add_header content-type  application/vnd.ipld.car;
+        add_header content-type  application/octet-stream;
+        add_header cache-control public,max-age=31536000,immutable;
+
+        proxy_cache nodecache;
+        proxy_cache_valid 200 31536000s;
+        add_header X-Proxy-Cache \$upstream_cache_status;
+        proxy_cache_methods GET HEAD POST;
+        proxy_cache_key \"\$request_uri|\$request_body\";
+        client_max_body_size 1G;
+
+        proxy_pass http://ursa:4069;
+      }
+  }
+" > "$defaultNginxSitesAvailablePath/ursa-http.conf"
