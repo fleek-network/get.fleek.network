@@ -139,7 +139,12 @@ multiLanguageChoice() {
     fi
 
     if [[ ! $opt ]]; then
-      continue
+      echo
+      read -rp "🦖 A language was not selected, will default to 🇬🇧  English. Press ENTER to continue..."
+
+      setLang "en"
+
+      break;
     fi
 
     if [[ "${supportedLanguages[*]}" =~ $opt ]]; then
