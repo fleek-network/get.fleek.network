@@ -1039,7 +1039,7 @@ cloneUrsaRepositoryToPath() {
   fi
 
   showOkMessage \
-    "$(printf "%s" "${transl[clone_ursa_repo_to_path_ok_msg]}" | sed "s|_defaultUrsaHttpsRepository_|\"${defaultUrsaHttpsRepository}\"|g; s|_ursaPath_|${1}|g")"
+    "$(printf "%s" "${transl[clone_ursa_repo_to_path_ok_msg]}" | sed "s|_defaultUrsaHttpsRepository_|\"${defaultUrsaHttpsRepository}\"|g; s|_selectedUrsaPath_|${1}|g")"
 
   printf "\r\n"
 }
@@ -1812,7 +1812,7 @@ onNightlyPreference() {
     echo
     echo "😅 ${transl[on_nightly_preference_have_run_install_before_surprise]}"
     echo
-    echo "${transl[on_nightly_preference_directory_not_empty]/_ursaPath_/$selectedUrsaPath}"
+    echo "${transl[on_nightly_preference_directory_not_empty]/_selectedUrsaPath_/$selectedUrsaPath}"
     echo "${transl[on_nightly_preference_if_stuck_clear_location_1_of_2]}"
     echo "${transl[on_nightly_preference_if_stuck_clear_location_2_of_2]/_defaultUrsaPath_/$defaultUrsaPath}"
 
