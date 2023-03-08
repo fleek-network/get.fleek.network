@@ -55,7 +55,7 @@ defaultFleekNetworkTwitterUrl="https://twitter.com/fleek_net"
 defaultGetFleekNetworkRepository="https://github.com/fleek-network/get.fleek.network"
 defaultUrsaHttpsRepository="https://github.com/fleek-network/ursa.git"
 defaultUrsaPath="$HOME/fleek-network/ursa"
-defaultUrsaNightlyImage="ghcr.io/fleek-network/ursa:nightly"
+defaultUrsaLatestImage="ghcr.io/fleek-network/ursa:latest"
 defaultDockerFullNodeRelativePath="./docker/full-node"
 defaultDockerComposeYmlRelativePath="$defaultDockerFullNodeRelativePath/docker-compose.yml"
 defaultMinMemoryBytesRequired=8000000
@@ -1718,17 +1718,17 @@ changeDirectoryToPathOrFailure() {
   fi
 }
 
-onNightlyPreference() {
+onLatestPreference() {
   echo
-  echo "✋ ${transl[on_nightly_preference_when_running_stack_docker_build]}"
-  echo "💡 ${transl[on_nightly_preference_our_recommendation]} 😴!"
+  echo "✋ ${transl[on_latest_preference_when_running_stack_docker_build]}"
+  echo "💡 ${transl[on_latest_preference_our_recommendation]} 😴!"
   echo
-  echo "${transl[on_nightly_preference_inf_future_check_documentation]}"
+  echo "${transl[on_latest_preference_inf_future_check_documentation]}"
   echo
 
   printf -v prompt "\n\n🤖 %s\n%s" \
-    "$(printf "%s" "${transl[on_nightly_preference_prompt_happy_use_nightly]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
-    "$(printf "%s" "${transl[on_nightly_preference_prompt_happy_use_nightly_yes_or_no]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
+    "$(printf "%s" "${transl[on_latest_preference_prompt_happy_use_latest]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
+    "$(printf "%s" "${transl[on_latest_preference_prompt_happy_use_latest_yes_or_no]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
   while read -rp "$prompt"$'\n> ' ans; do
     data=$(confirm "$userSelectedLanguage" "$ans")
 
@@ -1736,19 +1736,19 @@ onNightlyPreference() {
 
     if [[ "$data" -eq 1 ]]; then
       echo
-      echo "🦀 ${transl[on_nightly_preference_mind_ursa_time_build_long]}..."
+      echo "🦀 ${transl[on_latest_preference_mind_ursa_time_build_long]}..."
       echo
 
       break
     elif [[ "$data" -eq 0 ]]; then
       yq -ie 'del(.services.ursa.build)' "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
-      yq -i ".services.ursa.image = \"$defaultUrsaNightlyImage\"" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
+      yq -i ".services.ursa.image = \"$defaultUrsaLatestImage\"" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
 
-      if ! yq '.services.ursa.image' "$defaultDockerComposeYmlRelativePath" | grep -q "$defaultUrsaNightlyImage" || ! yq '.services.ursa.build' "$defaultDockerComposeYmlRelativePath" | grep -qE "null|no matches found"; then
+      if ! yq '.services.ursa.image' "$defaultDockerComposeYmlRelativePath" | grep -q "$defaultUrsaLatestImage" || ! yq '.services.ursa.build' "$defaultDockerComposeYmlRelativePath" | grep -qE "null|no matches found"; then
         echo
-        echo "💩 ${transl[on_nightly_preference_uh_oh_failed_modify_docker_compose_yaml]}"
+        echo "💩 ${transl[on_latest_preference_uh_oh_failed_modify_docker_compose_yaml]}"
 
-        printf "%s 🙏" "${transl[on_nightly_preference_uh_oh_failed_modify_docker_compose_yaml_apologies]}" | sed "s|_defaultDiscordUrl_|\"${defaultDiscordUrl}\"|g"
+        printf "%s 🙏" "${transl[on_latest_preference_uh_oh_failed_modify_docker_compose_yaml_apologies]}" | sed "s|_defaultDiscordUrl_|\"${defaultDiscordUrl}\"|g"
         echo
 
         exitInstaller
@@ -1810,11 +1810,11 @@ onNightlyPreference() {
   # Check if directory does not exit or empty
   if [[ "$(ls -A "$selectedUrsaPath" >/dev/null 2>&1)" ]]; then
     echo
-    echo "😅 ${transl[on_nightly_preference_have_run_install_before_surprise]}"
+    echo "😅 ${transl[on_latest_preference_have_run_install_before_surprise]}"
     echo
-    echo "${transl[on_nightly_preference_directory_not_empty]/_selectedUrsaPath_/$selectedUrsaPath}"
-    echo "${transl[on_nightly_preference_if_stuck_clear_location_1_of_2]}"
-    echo "${transl[on_nightly_preference_if_stuck_clear_location_2_of_2]/_defaultUrsaPath_/$defaultUrsaPath}"
+    echo "${transl[on_latest_preference_directory_not_empty]/_selectedUrsaPath_/$selectedUrsaPath}"
+    echo "${transl[on_latest_preference_if_stuck_clear_location_1_of_2]}"
+    echo "${transl[on_latest_preference_if_stuck_clear_location_2_of_2]/_defaultUrsaPath_/$defaultUrsaPath}"
 
     exitInstaller
   fi
@@ -1826,16 +1826,16 @@ onNightlyPreference() {
   # Await a few seconds to let the user read...
   sleep 5
 
-  # Recommend the Nightly build to speed up onboarding
-  onNightlyPreference
+  # Recommend the Latest build to speed up onboarding
+  onLatestPreference
 
-  # Add some space after the "nightly" request
+  # Add some space after the "latest" request
   printf "\r\n"
 
   # Optional, check if user would like to setup SSL/TLS
   setupSSLTLS
 
-  showOkMessage "${transl[on_nightly_preference_success_install_completed]}"
+  showOkMessage "${transl[on_latest_preference_success_install_completed]}"
 
   # Add some space after the "complete" message
   printf "\r\n"
