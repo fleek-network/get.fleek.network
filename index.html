@@ -997,7 +997,7 @@ requestPathnameForUrsaRepository() {
   while read -r -p "$prompt"$'\n> ' answer; do
     intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
   
-    if [[ "$intlAnswer" == "" || "$intlAnswer" == [yY] || "$intlAnswer" == [nN] ]]; then
+    if [[ "$intlAnswer" == "" || "$intlAnswer" == [yY] || "$intlAnswer" == [yY][eE][sS] || "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
       break
     fi
   done
