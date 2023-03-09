@@ -15,10 +15,13 @@
 # For the users happy to have the script assist in the installation process of Fleek Network
 # and the required dependencies, run the script at your own risk. 
 #
+# Diagram https://lucid.app/lucidspark/362f0bf1-4c4b-459f-8daa-8c3483963efd/edit?viewport_loc=-483%2C221%2C2480%2C1390%2C0_0&invitationId=inv_a869a3ae-22e0-4084-a41a-9036712c874a
+#
 # Contributing?
 # - If you'd like to test changes locally use the env var `USE_BRANCH_NAME_FOR_GH_RAW`, for remote locales pulls
 #
 # Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
+
 
 # 🚑 Check if running in Bash and supported version
 [ "$BASH" ] || { printf >&2 '🙏 Run the script with Bash, please!\n'; exit 1; }
@@ -26,13 +29,20 @@
 
 # Defaults
 defaultUrsaPath="$HOME/fleek-network/ursa"
+defaultDockerFullNodeRelativePath="./docker/full-node"
+defaultDockerComposeYmlRelativePath="$defaultDockerFullNodeRelativePath/docker-compose.yml"
 defaultNginxSitesAvailablePath="/etc/nginx/sites-available"
 defaultNginxSitesEnabledPath="/etc/nginx/sites-enabled"
+defaultUrsaNginxHttpConfFilename="ursa-http.conf"
+defaultUrsaNginxHttpsConfFilename="ursa-https.conf"
 
 # App state
 selectedUrsaPath="$defaultUrsaPath"
 selectedDomainName=""
 selectedIpAddress=""
+selectedEmailAddress=""
+selectedNginxSitesAvailablePath=""
+selectedNginxSitesEnabledPath=""
 
 # Confirm validators
 confirmDomainName() {
@@ -57,7 +67,141 @@ confirmEmailAddress() {
   [[ "$1" =~ $validate ]]
 }
 
-read -rp "👷 This is in work-in-progress and currently only supporting Ubuntu\nPress ENTER to continue..."
+# Helpers
+initLetsEncrypt() {
+  email="$1"
+  domain="$2"
+
+  if [[ -z "$1" || -z "$2" ]]; then
+    printf "💩 Uh-oh! Failed to start the Let's Encrypt process, missing email (%s) or domain (%s)\n" "$email" "$domain"
+
+    exit 1
+  fi
+
+  tmpDir=$(mktemp -d);
+  targetGetSslFile="$tmpDir/getssl"
+
+  curl --silent https://raw.githubusercontent.com/srvrco/getssl/latest/getssl > "$targetGetSslFile" ; chmod 700 "$targetGetSslFile"
+
+  "$targetGetSslFile" -c "$domain"
+
+  # Create .getssl 
+  # ~/.getssl
+  # ~/.getssl/getssl.cfg
+  # ~/.getssl/$domain
+  # ~/.getssl/$domain/getssl.cfg
+  printf "🤖 Create the getssl.cfg file\n"
+
+
+}
+
+while read -rp "👷 This is in work-in-progress and currently only supporting Ubuntu\nPress ENTER to continue..." answer; do
+  if [[ $answer == "" ]]; then
+    break;
+  fi
+done
+
+printf "A custom domain name is required to secure the communications with SSL/TLS.\nVisit your domain name registrar's dashboard, create a new domain, and update the A record to have the hostname answer with the server IP address\nMake sure you complete this step before proceeding, as we'll verify it!\n"
+while read -rp "Have you updated the DNS settings A record? (yes/no)" answer; do
+  if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+    break;
+  fi
+
+  printf "👹 Oh no! A domain name is required to secure the communications\n"
+
+  exit 1
+done
+
+printf -v prompt "🤖 What's your domain name?\n"
+while read -rp "$prompt"$'\n> ' answer; do
+  if confirmDomainName "$answer"; then
+    selectedDomainName="$answer"
+    break
+  fi
+
+  printf "💩 The domain name provided is not valid!\n"
+done
+
+detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "ERROR_IP_ADDRESS_NOT_AVAILABLE")
+
+printf "The server IP address that the domain is pointing to is required. We've noticed that this machine public IP address is %s\n" "$detectedIpAddress"
+printf -v prompt "🤖 Is the domain name pointing to the public IP address %s? (yes/no)\n" "$detectedIpAddress"
+while read -rp "$prompt"$'\n> ' answer; do
+  if confirmIpAddress "$answer" && [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+    if ! dig "$selectedDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$answer" >/dev/null 2>&1 ; then
+      printf "💩 Oh no! The %s doesn't seem to point to the IP address %s\n" "$selectedDomainName" "$answer"
+
+      continue
+    fi
+
+    selectedIpAddress="$answer"
+
+    break
+  fi
+
+  printf "💩 Oh no! The IP address doesn't seem valid!\n"
+done
+
+printf "Let's Encrypt will provide SSL/TLS Certifiates for securing the communications. A valid email address is required by Let's Encrypt organisation (Fleek does NOT provide support, or store the email address).\n"
+printf -v prompt "What's your email address?"
+while read -rp "$prompt"$'\n> ' answer; do
+  if confirmEmailAddress "$answer"; then
+    selectedEmailAddress="$answer"
+    break
+  fi
+
+  printf "💩 Oh no! The email address doesn't seem valid, try again...\n"
+done
+
+printf "🤖 The Ursa source-code is going to be git cloned to recommended path %s (otherwise, type \"n\" to modify path)" "$defaultUrsaPath"
+printf -v prompt "Should proceed with installing to path %s? (y/n)\n" "$defaultUrsaPath"
+while read -r -p "$prompt"$'\n> ' answer; do
+  if [[ "$answer" == [nN] ]]; then
+    printf -v prompt "\n🙋‍♀️ What path should we clone the Ursa source-code to?"
+    read -r -p "$prompt"$'\n> ' answer
+
+    if [[ -d "$answer" ]]; then
+      printf "👹 Oops! The path %s already exists! Clear the path and try again...\n" "$answer"
+
+      exit 1
+    fi
+
+    if ! mkdir -p "$selectedUrsaPath"; then
+      printf "👹 Oops! Failed to create the path %s\n" "$selectedUrsaPath"
+
+      exit 1
+    fi
+
+    selectedUrsaPath="$answer"
+
+    break
+  fi
+
+  if [[ "$answer" == [yY] ]]; then
+    selectedUrsaPath="$defaultUrsaPath"
+    
+    break
+  fi
+done
+
+printf "🤖 Update and upgrade apt-get\n"
+sudo apt-get update -y
+sudo apt-get upgrade -y
+
+if ! hasCommand git &> /dev/null; then
+  printf "🤖 Install Git\n"
+  sudo apt-get install git -y
+fi
+
+printf "🤖 Clone the Ursa project to %s\n" "$selectedUrsaPath"
+git clone https://github.com/fleek-network/ursa.git "$selectedUrsaPath"
+
+printf "🤖%s\n" "Change directory to ursa"
+if ! cd "$selectedUrsaPath"; then
+  printf "👹 Oops! Failed to change directory to %s\n" "$selectedUrsaPath"
+
+  exit 1
+fi
 
 if ! command -vp "cargo" &> /dev/null && ! command -vp "rustc" &> /dev/null; then
   printf "🤖 Install the Rustup tool\n"
@@ -74,73 +218,24 @@ else
   rustup update
 fi
 
-printf "🤖%s\n" "Install Sccache is a ccache-like compiler caching tool"
+printf "🤖 Install Sccache is a ccache-like compiler caching tool\n"
 cargo install sccache
 
-printf "🤖%s\n" "Update and upgrade apt-get"
-sudo apt-get update -y
-sudo apt-get upgrade -y
-
-printf "🤖%s\n" "Install the build-essentials packages, necessary for compiling general software and for our use-case Ursa CLI"
+printf "🤖 Install the build-essentials packages, necessary for compiling general software and for our use-case Ursa CLI\n"
 sudo apt-get install build-essential -y
 
-printf "🤖%s\n" "Install required to compile the application (cmake, clang, pkg-config and libssl-dev)"
+printf "🤖 Install required to compile the application (cmake, clang, pkg-config and libssl-dev)\n"
 sudo apt-get install cmake clang pkg-config libssl-dev -y
 
-printf "🤖%s\n" "Install the Protobufer Compiler"
+printf "🤖 Install the Protobufer Compiler\n"
 sudo apt-get install protobuf-compiler -y
 
-if ! hasCommand git &> /dev/null; then
-  printf "🤖%s\n" "Install Git"
-  sudo apt-get install git -y
-fi
-
-printf -v prompt "🤖 The Ursa source-code is going to be git cloned to recommended path %s (otherwise, type \"n\" to modify path). Should proceed with installing to default path? (y/n)\n" "$defaultUrsaPath"
-while read -r -p "$prompt"$'\n> ' answer; do
-  if [[ "$answer" == [nN] ]]; then
-    printf -v prompt "\n🙋‍♀️ What path should we clone the Ursa source-code to?"
-    read -r -p "$prompt"$'\n> ' userPath
-
-    if [[ -d "$userPath" ]]; then
-      printf "👹 Oops! The path %s already exists! Clear the path and try again...\n" "$userPath"
-
-      exit 1
-    fi
-
-    if ! mkdir -p "$selectedUrsaPath"; then
-      printf "👹 Oops! Failed to create the path $userPath %s\n" "$userPath"
-
-      exit 1
-    fi
-
-    selectedUrsaPath="$userPath"
-
-    break
-  fi
-
-  if [[ "$answer" == [yY] ]]; then
-    selectedUrsaPath="$defaultUrsaPath"
-    
-    break
-  fi
-done
-
-printf "🤖 Clone the Ursa project to %s\n" "$selectedUrsaPath"
-git clone https://github.com/fleek-network/ursa.git "$selectedUrsaPath"
-
-printf "🤖%s\n" "Change directory to ursa"
-if ! cd "$selectedUrsaPath"; then
-  printf "👹 Oops! Failed to change directory to %s\n" "$selectedUrsaPath"
-
-  exit 1
-fi
-
 if ! hasCommand make &> /dev/null; then
-  printf "🤖%s\n" "Install make"
+  printf "🤖 Install make\n"
   sudo apt-get install make -y
 fi
 
-printf "🤖%s\n" "Build and install the Ursa CLI"
+printf "🤖 Build and install the Ursa CLI\n"
 
 if ! make install; then
   printf "👹 Oops! Failed to build and install the Ursa CLI. If you are experience issues, help us improve by letting us know in our Discord channel\n"
@@ -149,8 +244,8 @@ if ! make install; then
 fi
 
 printf "Great 👌! You have successfully installed all the required packages, libraries and have compiled and installed Ursa\n"
-
-printf "If you'd like to have the Ursa CLI command available globally, add the bin (%s) to your PATH e.g., edit your shell profile file, save and restart the current shell e.g., .bashrc, .zshrc, .profile to include export PATH=\"%s:\$PATH\"\n" "$selectedUrsaPath" "$selectedUrsaPath"
+printf "If you'd like to have the Ursa CLI command available globally, add the binary (%s) to your system PATH e.g., edit your shell profile file, save and restart the current shell e.g., .bashrc, .zshrc, .profile to include export PATH=\"%s:\$PATH\"\n\n" "$selectedUrsaPath" "$selectedUrsaPath"
+printf "Although, the process will install additional applications. It'll install NGINX, as a reverse proxy for Ursa\n"
 
 if ! hasCommand nginx &> /dev/null; then
   printf -v prompt "🤖 Nginx should be installed, would you like to proceed with the installation? (y/n)\n"
@@ -168,48 +263,37 @@ if ! hasCommand nginx &> /dev/null; then
 
   printf "🤖 Install Nginx\n"
   sudo apt install nginx -y
-fi
-
-if hasCommand ufw &> /dev/null; then
-  printf "🤖 HTTP and HTTPS will be set as allowed via your firewall ufw\n"
-  sudo ufw allow 'Nginx HTTP'
-  sudo ufw allow 'Nginx HTTPS'
 else
-  read -rp "🚓 Make sure you don't have HTTP and HTTPS ports 80 and 443 blocked by a firewall\n"
-fi
+  printf "💡 The install process encountered NGINX already installed\nIt'll assume that the location for sites-available and sites-enabled are the default paths %s and %s\n" "$defaultNginxSitesAvailablePath" "$defaultNginxSitesEnabledPath"
+  printf -v prompt "Would you like to change the path for NGINX sites-available and sites-enabled? (yes/no)\n"
+  while read -rp "$prompt"$'\n> ' answer; do
+    if [[ $answer == [yY][eE][sS] || $answer == [yY] ]]; then
+      while read -rp "What's the path for sites-available?" answer; do
+        if [[ ! -d "$answer" ]]; then
+          printf "💩 Uh-oh! The directory (%s) was not found, try again\n" "$answer"
 
-read -rp "A custom domain name is required to secure the communications with SSL/TLS.\nVisit your domain name registrar's dashboard, create a new domain, and update the A record to have the hostname answer with the server IP address\nMake sure you complete this step before proceeding, as we'll verify it!\nPress ENTER to continue..."
+          continue;
+        fi
 
-printf -v prompt "🤖 What's your domain name?\n"
-while read -rp "$prompt"$'\n> ' answer; do
-  if confirmDomainName "$answer"; then
-    selectedDomainName="$answer"
-    break
-  fi
+        selectedNginxSitesAvailablePath="$answer"
+      done
 
-  printf "💩 The domain name provided is not valid!\n"
-done
+      while read -rp "What's the path for sites-enabled?" answer; do
+        if [[ ! -d "$answer" ]]; then
+          printf "💩 Uh-oh! The directory (%s) was not found, try again\n" "$answer"
 
-detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "ERROR_IP_ADDRESS_NOT_AVAILABLE")
+          continue;
+        fi
 
-printf "The server IP address that the domain is pointing to is required. We've noticed that this machine public IP address is %s\n" "$detectedIpAddress"
-printf -v prompt "🤖 Is the domain name pointing to the public IP address %s? (y/n)\n" "$detectedIpAddress"
-while read -rp "$prompt"$'\n> ' answer; do
-  if confirmIpAddress "$answer" && [[ "$answer" == [yY] ]]; then
-    if ! dig "$selectedDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$answer" >/dev/null 2>&1 ; then
-      printf "💩 Oh no! The %s doesn't seem to point to the IP address %s\n" "$selectedDomainName" "$answer"
-
-      continue
+        selectedNginxSitesEnabledPath="$answer"
+      done
     fi
 
-    selectedIpAddress="$answer"
+    printf "💩 The domain name provided is not valid!\n"
+  done
+fi
 
-    break
-  fi
-
-  printf "💩 Oh no! The IP address doesn't seem valid!\n"
-done
-
+printf "🤖 Create the HTTP Nginx config file for Ursa\n"
 echo "
   proxy_cache_path /cache keys_zone=nodecache:100m levels=1:2 inactive=31536000s max_size=10g use_temp_path=off;
 
@@ -250,4 +334,77 @@ echo "
         proxy_pass http://ursa:4069;
       }
   }
-" > "$defaultNginxSitesAvailablePath/ursa-http.conf"
+" > "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename"
+
+printf "🤖 Create the HTTPS Nginx config file for Ursa\n"
+echo "
+  server {
+      listen 443 ssl http2;
+      listen [::]:443 ssl http2;
+      server_name $selectedDomainName;
+
+      server_tokens off;
+
+      # SSL code
+      ssl_certificate /etc/letsencrypt/live/$selectedDomainName/fullchain.pem;
+      ssl_certificate_key /etc/letsencrypt/live/$selectedDomainName/privkey.pem;
+
+      include /etc/letsencrypt/options-ssl-nginx.conf;
+      ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+      location /stub_status {
+        stub_status;
+      }
+
+      location / {
+        add_header content-type  application/vnd.ipld.raw;
+        add_header content-type  application/vnd.ipld.car;
+        add_header content-type  application/octet-stream;
+        add_header cache-control public,max-age=31536000,immutable;
+
+        proxy_cache nodecache;
+        proxy_cache_valid 200 31536000s;
+        add_header X-Proxy-Cache \$upstream_cache_status;
+        proxy_cache_methods GET HEAD POST;
+        proxy_cache_key \"\$request_uri|\$request_body\";
+        client_max_body_size 1G;
+
+
+        proxy_pass http://ursa:4069;
+      }
+  }
+" > "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
+
+printf "🤖 Enable Nginx HTTP config for now, HTTPS will be enabled after the SSL/TLS setup from Let's Encrypt\n"
+sudo ln -s "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename" "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpConfFilename"
+
+if hasCommand ufw && ufw status | grep -q 'Status: active'; then
+  printf "💡 Detected that ufw is active\n"
+  printf "🤖 HTTP and HTTPS will be set as allowed via ufw\n"
+
+  if ! sudo ufw allow 'Nginx HTTP'; then
+    printf "💩 Uh-oh! Failed to allow Nginx HTTP for some reason...\n"
+  fi
+  
+  if ! sudo ufw allow 'Nginx HTTPS'; then
+    printf "💩 Uh-oh! Failed to allow Nginx HTTPS for some reason...\n"
+  fi
+else
+  read -rp "🚓 Warning! Make sure you don't have HTTP and HTTPS ports 80 and 443 blocked by a firewall\n"
+fi
+
+printf "🤖 Start nginx\n"
+if systemctl -q is-active nginx; then
+  if ! sudo systemctl restart nginx; then
+    printf "💩 Uh-oh! Failed to restart Nginx for some reason...\n"
+
+    exit 1
+  fi
+else
+  if ! sudo systemctl start nginx; then
+    printf "💩 Uh-oh! Failed to start Nginx for some reason...\n"
+
+    exit 1
+  fi
+fi
+
