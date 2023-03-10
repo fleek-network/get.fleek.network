@@ -60,6 +60,7 @@ defaultDockerFullNodeRelativePath="./docker/full-node"
 defaultDockerComposeYmlRelativePath="$defaultDockerFullNodeRelativePath/docker-compose.yml"
 defaultMinMemoryBytesRequired=8000000
 defaultMinDiskSpaceBytesRequired=10000000
+defaultUrsaConfigPath="~/.ursa/config.toml"
 
 # App state
 userSelectedLanguage=""
@@ -1759,6 +1760,12 @@ onLatestPreference() {
   done
 }
 
+updateUrsaConfigIpAddress() {
+  if ! sed -i "s/addresses =*/addresses = [\"/ip4/$serverIpAddress/tcp/80\"]/" "$defaultUrsaConfigPath"; then
+    showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
+  fi
+}
+
 (
   # stdin to keyboard
   exec < /dev/tty;
@@ -1842,6 +1849,10 @@ onLatestPreference() {
   
   # Await a few seconds to let the user read...
   sleep 5
+
+  # The Ursa config has an ip address property
+  # which value is shared to the indexer
+  updateUrsaConfigIpAddress
 
   # Restart docker
   restartDockerStack
