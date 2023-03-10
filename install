@@ -60,7 +60,7 @@ defaultDockerFullNodeRelativePath="./docker/full-node"
 defaultDockerComposeYmlRelativePath="$defaultDockerFullNodeRelativePath/docker-compose.yml"
 defaultMinMemoryBytesRequired=8000000
 defaultMinDiskSpaceBytesRequired=10000000
-defaultUrsaConfigPath="~/.ursa/config.toml"
+defaultUrsaConfigPath="$HOME/.ursa/config.toml"
 
 # App state
 userSelectedLanguage=""
@@ -1761,7 +1761,7 @@ onLatestPreference() {
 }
 
 updateUrsaConfigIpAddress() {
-  if ! sed -i "s/addresses =*/addresses = [\"/ip4/$serverIpAddress/tcp/80\"]/" "$defaultUrsaConfigPath"; then
+  if ! sed -i "s|addresses =.*|addresses = [\"/ip4/$serverIpAddress/tcp/80\"]|" "$defaultUrsaConfigPath"; then
     showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
   fi
 }
