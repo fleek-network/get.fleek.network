@@ -1490,7 +1490,7 @@ verifyUserHasDomain() {
   # Declare detected ip address as default server ip address
   serverIpAddress=${ans:="$detectedIpAddress"}
 
-  if [[ $serverIpAddress -eq "$ERROR_IP_ADDRESS_NOT_AVAILABLE" ]]; then
+  if [[ $serverIpAddress = "$ERROR_IP_ADDRESS_NOT_AVAILABLE" ]]; then
     showErrorMessage "${transl[verify_user_has_domain_oops_embarassing]/_ERROR_IP_ADDRESS_NOT_AVAILABLE_/$ERROR_IP_ADDRESS_NOT_AVAILABLE}"
 
     exitInstaller
