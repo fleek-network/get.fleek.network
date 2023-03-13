@@ -92,7 +92,7 @@ initCertbot() {
 
   printf "🤖 Get and install your certificates\n"
   sudo certbot certonly \
-    --webroot -w /var/www/certbot \
+    --webroot -w /var/www/"$selectedDomainName" \
     --email "$email" \
     --domain "$domain" \
     --rsa-key-size 4096 \
@@ -255,8 +255,8 @@ if ! cargo install --jobs "$vCPUsMinusOne" --locked --path crates/ursa; then
   exit 1
 fi
 
-printf "🤖 Copy the Ursa CLI binary to /usr/bin/ursa\n"
-cp "$selectedUrsaPath/target/release/ursa" /usr/bin/ursa
+printf "🤖 Copy the Ursa CLI binary to /usr/bin\n"
+cp "$selectedUrsaPath/target/release/ursa" /usr/bin
 
 printf "Great 👌! You have successfully installed all the required packages, libraries and have compiled and installed Ursa\n"
 printf "If you'd like to have the Ursa CLI command available globally, add the binary (%s) to your system PATH e.g., edit your shell profile file, save and restart the current shell e.g., .bashrc, .zshrc, .profile to include export PATH=\"%s:\$PATH\"\n\n" "$selectedUrsaPath" "$selectedUrsaPath"
@@ -331,6 +331,9 @@ if [[ -f "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename" ]
   touch "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
 fi
 
+printf "🤖 Create the Nginx site directories\n"
+mkdir -p "/var/www/$selectedDomainName/.well-known/acme-challenge"
+
 printf "🤖 Create the HTTP Nginx config file for Ursa\n"
 echo "
   proxy_cache_path /cache keys_zone=nodecache:100m levels=1:2 inactive=31536000s max_size=10g use_temp_path=off;
@@ -340,8 +343,22 @@ echo "
       listen [::]:80;
       server_name $selectedDomainName;
 
-      location /var/www/html/.well-known/acme-challenge {
-          root /var/www/certbot;
+      location ^~ /.well-known/acme-challenge/ {
+        # No auth required
+        allow all;
+
+        # Safe type
+        default_type \"text/plain\";
+
+        # Path given to certbot as -w param of the webroot plugin
+        root         /var/www/$selectedDomainName;
+        break;
+      }
+
+      # Hides /acme-challenge subdir returning 404 on all requests
+      # Keep the ending slash
+      location = /.well-known/acme-challenge/ {
+        return 404;
       }
 
       location /stub_status {
@@ -439,7 +456,7 @@ if hasCommand ufw && ufw status | grep -q 'Status: active'; then
     printf "💩 Uh-oh! Failed to allow Nginx HTTPS for some reason...\n"
   fi
 else
-  read -rp "🚓 Warning! Make sure you don't have HTTP and HTTPS ports 80 and 443 blocked by a firewall\n"
+  read -rp "🚓 Warning! Make sure you don't have HTTP and HTTPS ports 80 and 443 blocked by a firewall. Press ENTER to continue..."
 fi
 
 printf "🤖 Start nginx\n"
@@ -462,11 +479,35 @@ initCertbot "$selectedDomainName" "$selectedEmailAddress"
 printf "🤖 Nginx reload\n"
 service nginx reload
 
-if ! curl -s http://$selectedDomainName/ping | grep -q pong; then
+if ! curl -s https://$selectedDomainName/ping | grep -q pong; then
   printf "👹 Oh no! Failed to health-check the domain %s\n" "$selectedDomainName"
+  echo
+  echo "Check our Node Health-check guide to help troubleshoot https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
 
   exit 1
 fi
+
+if ! sudo certbot renew --dry-run; then
+  printf "😅 This is embarassing, the certbot renewal verification failed for %s\n" "$selectedDomainName"
+fi
+
+while read -rp "🤗 Would you like to start the Network Node now? (yes/no) " answer; do
+  if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+    break;
+  elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+    printf "🤗 All done!\n"
+    exit 1
+  fi
+done
+
+echo
+echo "⚠️ Be aware that the Network Node outputs a lot of messages these messages can be quite verbose but you shouldn't worry about it!"
+echo
+echo "The log messages come in many forms WARN, ERRORS, INFO, DEBUG, etc. Learn more about it by reading our Node Health-check guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
+echo
+
+read -rp "Press ENTER to continue..."
+echo
 
 printf "🤖 Start the Fleek Node\n"
 ursa
