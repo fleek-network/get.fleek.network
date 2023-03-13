@@ -174,3 +174,4 @@ ko["verify_user_has_domain_uh_oh_provide_valid_ip"]="어 오! 유효한 IP 주�
 ko["verify_user_has_domain_provide_ip_of_machine_1_of_3"]="노드를 설치하는 시스템의 IP 주소를 제공하십시오. 이 머신 공용 IP 주소가 _detectedIpAddress_임을 확인했습니다(기본값으로 사용함)."
 ko["show_docker_stack_log_stack_logs_seems_a_lot"]="많이 보이는데? 모든 명령과 훨씬 더 많은 기능이 설명서 사이트에서 제공됩니다!"
 ko["on_latest_preference_mind_ursa_time_build_long"]="좋아요! Ursa 이미지는 컴퓨터에 따라 빌드하는 데 시간이 걸릴 수 있습니다."
+ko["on_update_ursa_config_ip_address_update_error"]="이런! 사소한 문제, 서버 IP _serverIpAddress_로 Ursa 구성을 업데이트하지 못했습니다."

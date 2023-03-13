@@ -174,3 +174,4 @@ ru["verify_user_has_domain_uh_oh_provide_valid_ip"]="О, о! Укажите де
 ru["verify_user_has_domain_provide_ip_of_machine_1_of_3"]="Предоставьте нам IP-адрес машины, на которой вы устанавливаете Node. Мы заметили, что общедоступный IP-адрес этой машины — _detectedIpAddress_ (мы будем использовать его по умолчанию)."
 ru["show_docker_stack_log_stack_logs_seems_a_lot"]="Кажется много? Все команды и многое другое доступны на нашем сайте документации!"
 ru["on_latest_preference_mind_ursa_time_build_long"]="Хорошо! Помните, что создание образа Ursa может занять некоторое время в зависимости от вашей машины."
+ru["on_update_ursa_config_ip_address_update_error"]="Ой! Незначительная проблема, не удалось обновить конфигурацию Ursa с IP-адресом сервера _serverIpAddress_"

@@ -60,10 +60,14 @@ defaultDockerFullNodeRelativePath="./docker/full-node"
 defaultDockerComposeYmlRelativePath="$defaultDockerFullNodeRelativePath/docker-compose.yml"
 defaultMinMemoryBytesRequired=8000000
 defaultMinDiskSpaceBytesRequired=10000000
+defaultUrsaConfigFilename="config.toml"
+defaultUrsaBasePath="$HOME/.ursa"
+defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
 
 # App state
 userSelectedLanguage=""
 selectedUrsaPath=""
+serverIpAddress=""
 
 # Localization
 declare -a supportedLanguages=("en" "ch" "es" "pt" "fr" "it" "vi" "jp" "ko" "de" "hi" "ru")
@@ -1541,9 +1545,7 @@ verifyUserHasDomain() {
     esac;
   done;
 
-  echo "$userDomainName;$emailAddress"
-
-  exit 0
+  echo "$userDomainName;$emailAddress;$serverIpAddress"
 }
 
 replaceNginxConfFileForHttp() {
@@ -1652,6 +1654,7 @@ setupSSLTLS() {
 
   userDomainName=$(echo "$trimData" | cut -d ";" -f 1)
   emailAddress=$(echo "$trimData" | cut -d ";" -f 2)
+  serverIpAddress=$(echo "$trimData" | cut -d ";" -f 3)
 
   if ! rm "$defaultDockerFullNodeRelativePath"/data/nginx/app.conf; then
     showErrorMessage "${transl[setup_ssl_tls_oops_failed_clear_nginx]} 🙏"
@@ -1759,6 +1762,29 @@ onLatestPreference() {
   done
 }
 
+updateUrsaConfigIpAddress() {
+  if [[ -f "$defaultUrsaConfigPath" ]]; then
+    if ! sed -i "s|addresses =.*|addresses = [\"/ip4/$serverIpAddress/tcp/80\"]|" "$defaultUrsaConfigPath"; then
+      if ! createUrsaInitialConfig; then
+        showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
+      fi
+    fi
+  else
+    if ! mkdir -p "$defaultUrsaBasePath" || ! createUrsaInitialConfig; then
+      showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
+    fi
+  fi
+}
+
+createUrsaInitialConfig() {
+  if ! touch "$defaultUrsaConfigPath"; then
+    return 1
+  fi
+
+  echo "[server_config]" >> "$defaultUrsaConfigPath"
+  echo "addresses = [\"/ip4/$serverIpAddress/tcp/80\"]" >> "$defaultUrsaConfigPath"
+}
+
 (
   # stdin to keyboard
   exec < /dev/tty;
@@ -1842,6 +1868,10 @@ onLatestPreference() {
   
   # Await a few seconds to let the user read...
   sleep 5
+
+  # The Ursa config has an ip address property
+  # which value is shared to the indexer
+  updateUrsaConfigIpAddress
 
   # Restart docker
   restartDockerStack

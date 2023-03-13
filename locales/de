@@ -174,3 +174,4 @@ de["verify_user_has_domain_uh_oh_provide_valid_ip"]="Oh oh! Geben Sie bitte eine
 de["verify_user_has_domain_provide_ip_of_machine_1_of_3"]="Geben Sie uns die IP-Adresse des Computers an, auf dem Sie den Knoten installieren. Wir haben festgestellt, dass die öffentliche IP-Adresse dieser Maschine _detectedIpAddress_ ist (wir verwenden sie als Standard)"
 de["show_docker_stack_log_stack_logs_seems_a_lot"]="Scheint viel? Alle Befehle und vieles mehr sind auf unserer Dokumentationsseite verfügbar!"
 de["on_latest_preference_mind_ursa_time_build_long"]="OK! Denken Sie daran, dass das Erstellen des Ursa-Image je nach Computer einige Zeit in Anspruch nehmen kann"
+de["on_update_ursa_config_ip_address_update_error"]="Hoppla! Kleineres Problem, die Ursa-Konfiguration konnte nicht mit der Server-IP _serverIpAddress_ aktualisiert werden"
