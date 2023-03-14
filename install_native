@@ -121,15 +121,70 @@ initCertbot() {
   printf "🤖 Health check\n"
 }
 
-while read -rp "👷 This is in work-in-progress and currently only supporting Ubuntu. Press ENTER to continue..." answer; do
-  if [[ $answer == "" ]]; then
-    break;
+identifyOS() {
+  unameOut="$(uname -s)"
+
+  case "${unameOut}" in
+      Linux*)     os=Linux;;
+      Darwin*)    os=Mac;;
+      CYGWIN*)    os=Cygwin;;
+      MINGW*)     os=MinGw;;
+      *)          os="UNKNOWN:${unameOut}"
+  esac
+
+  osToLc=$(toLowerCase "$os")
+
+  echo "$osToLc" | tr '[:upper:]' '[:lower:]'
+}
+
+isOSSupported() {
+  if [[ "$1" == "cygwin" ]] || [[ "$1" == "mingw" ]]; then
+    printf "\n"
+
+    windowsUsersWarning
+
+    exitInstaller
   fi
-done
+
+  if [[ "$1" == "mac" ]]; then
+    printf "\n"
+
+    macOsUsersWarning
+
+    exitInstaller
+  fi
+
+  if [[ "$1" == "ubuntu" ]]; then
+    currVersion=$(lsb_release -r -s | tr -d '.')
+
+    if [[ "$currVersion" -lt "2204" ]]; then
+      echo
+      echo "👹 Oops! You'll need Ubuntu 22.04 at least"
+      echo
+
+      exitInstaller
+    fi
+  fi
+
+  if [[ "$1" == "debian" ]]; then
+    currVersion=$(lsb_release -r -s | tr -d '.')
+
+    if [[ "$currVersion" -lt "11" ]]; then
+      echo
+      echo "👹 Oops! You'll need Debian 11 at least"
+      echo
+
+      exitInstaller
+    fi
+  fi
+}
+
+printf "🤖 Check if operating system is supported\n"
+isOSSupported "$(identifyOS)"
 
 echo
 
-printf "A custom domain name is required to secure the communications with SSL/TLS.\nVisit your domain name registrar's dashboard, create a new domain, and update the A record to have the hostname answer with the server IP address\nMake sure you complete this step before proceeding, as it'll be verified!\n"
+printf "A domain name is required to secure the communications with SSL/TLS.\nVisit your domain name registrar dashboard, create a new domain, and update the A record pointed to the server public IP address\nIf you don't have a domain name, you can get one from a registrar e.g. https://njal.la, https://name.com, etc. Need help? Read our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls#domain-name-setup\n\nMake sure you complete this step before proceeding, as it'll be verified!\n"
 while read -rp "Have you updated the DNS settings A record? (yes/no) " answer; do
   if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
     break;
@@ -142,7 +197,7 @@ done
 
 echo
 
-printf -v prompt "🤖 What's your domain name?\n"
+printf -v prompt "🤖 What's your domain name address?"
 while read -rp "$prompt"$'\n> ' answer; do
   if confirmDomainName "$answer"; then
     selectedDomainName="$answer"
@@ -150,17 +205,32 @@ while read -rp "$prompt"$'\n> ' answer; do
   fi
 
   printf "💩 The domain name provided is not valid!\n"
+
+  [[ "$answer" =~ http* ]] && echo "💡 Just type the domain name address, there's no need for http:// or https:// e.g. mynode.example.com"
 done
 
 echo
 
 detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "ERROR_IP_ADDRESS_NOT_AVAILABLE")
 
-printf "The server IP address the domain points to is required. We found the public IP address for this machine as %s\n" "$detectedIpAddress"
+if ! confirmIpAddress "$detectedIpAddress"; then
+  printf "👹 Oops! We found the server public IP to be invalid (%s), if you found this to be a bug, help us improve by reporting it in our discord channel 🙏\n" "$detectedIpAddress"
+
+  exit 1
+fi
+
+echo
+
+printf "The server public IP address the domain is pointing to is required! We found the public IP address for this machine to be %s\n" "$detectedIpAddress"
 printf -v prompt "🤖 Is the domain name pointing to the public IP address %s? (yes/no) " "$detectedIpAddress"
 while read -rp "$prompt"$'\n> ' answer; do
+  if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+    printf "💩 Oh no! The %s has to point to the server public IP address %s. Alternatively, you can check our guides and install the Ursa CLI on your own, but is likely that the security of your server will be taken into account by the rewards mechanism. To avoid disappointment follow the recomendations!\n" "$selectedDomainName" "$detectedIpAddress"  
+
+    continue
+  fi
+
   if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-    # confirmIpAddress "$answer" 
     if ! dig "$selectedDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$detectedIpAddress" >/dev/null 2>&1 ; then
       printf "💩 Oh no! The %s doesn't seem to point to the IP address %s\n" "$selectedDomainName" "$detectedIpAddress"
 
@@ -172,12 +242,12 @@ while read -rp "$prompt"$'\n> ' answer; do
     break
   fi
 
-  printf "💩 Oh no! The IP address doesn't seem valid!\n"
+  printf "😅 Sorry! Try that again...\n"
 done
 
 echo
 
-printf "Let's Encrypt provides SSL/TLS Certificates for securing the communications. A valid email address is required by the Let's Encrypt organisation (Fleek is not affiliated and does NOT store the email address).\n"
+printf "Let's Encrypt provides SSL/TLS Certificates for securing the communications. A valid email address is required by the Let's Encrypt organisation (Fleek Network is not affiliated and does NOT store the email address).\n"
 printf -v prompt "What's your email address?\n"
 while read -rp "$prompt"$'\n> ' answer; do
   if confirmEmailAddress "$answer"; then
@@ -191,14 +261,14 @@ done
 echo
 
 printf "🤖 The Ursa source-code is going to be stored in the recommended path %s (otherwise, type \"n\" to modify path)\n" "$defaultUrsaPath"
-printf -v prompt "Should proceed with installing to path %s? (yes/no)\n" "$defaultUrsaPath"
+printf -v prompt "Should we proceed and install to path %s? (yes/no)\n" "$defaultUrsaPath"
 while read -r -p "$prompt"$'\n> ' answer; do
   if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
     printf -v prompt "\n🙋‍♀️ What path should we clone the Ursa source-code to?\n"
     read -r -p "$prompt"$'\n> ' answer
 
     if [[ -d "$answer" ]]; then
-      printf "👹 Oops! The path %s already exists! Clear the path and try again...\n" "$answer"
+      printf "👹 Oops! The path %s already exists! This might be annoying but we don't want to mess with your system. So, clear the path and try again...\n" "$answer"
 
       exit 1
     fi
@@ -236,12 +306,12 @@ fi
 
 echo
 
-printf "🤖 Clone the Ursa source-code to %s\n" "$selectedUrsaPath"
+printf "🤖 Clone the Ursa source-code (git repository) to %s\n" "$selectedUrsaPath"
 git clone https://github.com/fleek-network/ursa.git "$selectedUrsaPath"
 
 echo
 
-printf "🤖 Change directory to ursa\n"
+printf "🤖 Change directory to ursa (git repository)\n"
 if ! cd "$selectedUrsaPath"; then
   printf "👹 Oops! Failed to change directory to %s\n" "$selectedUrsaPath"
 
@@ -271,21 +341,13 @@ fi
 
 echo
 
-# printf "🤖 Install Sccache is a ccache-like compiler caching tool\n"
-# cargo install sccache
-
-printf "🤖 Install the build-essentials packages, necessary for compiling general software and for our use-case Ursa CLI\n"
-sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential -yq
+printf "🤖 Install Sccache is a ccache-like compiler caching tool\n"
+cargo install sccache
 
 echo
 
-printf "🤖 Install required libraries and packages to compile the application (cmake, clang, pkg-config and libssl-dev)\n"
-sudo DEBIAN_FRONTEND=noninteractive apt-get install cmake clang pkg-config libssl-dev -yq
-
-echo
-
-printf "🤖 Install the Protobufer Compiler\n"
-sudo DEBIAN_FRONTEND=noninteractive apt-get install protobuf-compiler -yq
+printf "🤖 Install the build-essentials, libraries and packages, necessary for compiling general software and for our use-case Ursa CLI\n"
+sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential cmake clang pkg-config libssl-dev protobuf-compiler -yq
 
 echo
 
@@ -304,25 +366,27 @@ if ! cargo install --jobs "$vCPUsMinusOne" --locked --path crates/ursa; then
   exit 1
 fi
 
-printf "🤖 Copy the Ursa CLI binary to /usr/bin\n"
-cp "$selectedUrsaPath/target/release/ursa" /usr/bin
+echo
+
+printf "🤖 Symlink the Ursa CLI binary to /usr/bin\n"
+ln -s "$selectedUrsaPath/target/release/ursa" /usr/bin/ursa
 
 echo
 
-printf "Great 👌! You have successfully installed all the required packages, libraries and have compiled and installed Ursa\n"
-printf "The Ursa CLI was copied to the /usr/bin and should be available globally, e.g. from now on you can start a Network Node by typing ursa\n"
+printf "👌 Great! You have successfully installed required packages, libraries, have compiled and installed Ursa\n"
+printf "The Ursa CLI should be available globally, there's a symlink to the /usr/bin/ursa. Which means that from now on you can start a Network Node by typing ursa\n"
 
 echo
 
-printf "🔓 Although the process will attempt to install additional applications, to help secure the server e.g. Nginx, as a reverse proxy\n"
+printf "🔓 Our install process will now attempt to add additional applications, to help secure the server e.g. Nginx (reverse proxy) and secure the communications with SSL/TLS\n"
 
 echo
 
 if ! hasCommand nginx; then
-  printf -v prompt "🤖 Nginx should be installed, would you like to proceed with the installation? (yes/no)\n"
+  printf -v prompt "🤖 Nginx should be installed, would you like to proceed with the installation? (yes/no)"
   while read -rp "$prompt"$'\n> ' answer; do
     if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
-      printf "👹 Oops! The install process has terminated\n"
+      printf "👹 Oops! The install process has terminated. Since you have interrupted, you might want to check the logs and uninstall any unwanted application, library or dependency.\nIf you need help, check our https://docs.fleek.network and use our search feature to help you.\n"
 
       exit 1
     fi
@@ -335,8 +399,8 @@ if ! hasCommand nginx; then
   printf "🤖 Install Nginx\n"
   sudo apt install nginx -y
 else
-  printf "💡 The install process encountered NGINX already installed\nIt'll assume that the location for sites-available and sites-enabled are the default paths %s and %s\n" "$defaultNginxSitesAvailablePath" "$defaultNginxSitesEnabledPath"
-  printf -v prompt "Can we use the default paths for NGINX sites-available and sites-enabled? (yes/no)\n"
+  printf "💡 The install process encountered Nginx already installed\nIt'll assume that the location for sites-available and sites-enabled are the default paths %s and %s\n" "$defaultNginxSitesAvailablePath" "$defaultNginxSitesEnabledPath"
+  printf -v prompt "Use the default paths for Nginx sites-available and sites-enabled? (yes/no)"
   while read -rp "$prompt"$'\n> ' answer; do
     if [[ $answer == [yY][eE][sS] || $answer == [yY] ]]; then
       selectedNginxSitesAvailablePath="$defaultNginxSitesAvailablePath"
@@ -348,7 +412,7 @@ else
     if [[ $answer == [nN][oO] || $answer == [nN] ]]; then
       while read -rp "What's the path for sites-available?" answer; do
         if [[ ! -d "$answer" ]]; then
-          printf "💩 Uh-oh! The directory (%s) was not found, try again\n" "$answer"
+          printf "💩 Uh-oh! The directory (%s) was not found. You might want to create it first, try again...\n" "$answer"
 
           continue;
         fi
@@ -359,7 +423,7 @@ else
 
       while read -rp "What's the path for sites-enabled?" answer; do
         if [[ ! -d "$answer" ]]; then
-          printf "💩 Uh-oh! The directory (%s) was not found, try again\n" "$answer"
+          printf "💩 Uh-oh! The directory (%s) was not found. You might want to create it first, try again...\n" "$answer"
 
           continue;
         fi
@@ -368,8 +432,6 @@ else
         break;
       done
     fi
-
-    printf "💩 The domain name provided is not valid!\n"
   done
 fi
 
@@ -395,8 +457,18 @@ fi
 
 touch "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
 
-printf "🤖 Create the Nginx site directories\n"
+printf "🤖 Create the Nginx directories for ACME Challenge\n"
 mkdir -p "/var/www/$selectedDomainName/.well-known/acme-challenge"
+
+echo
+
+printf "🤖 Create ACME Challenge directory health check placeholder\n"
+if [[ -f "/var/www/$selectedDomainName/.well-known/acme-challenge/healthcheck" ]]; then
+  rm "/var/www/$selectedDomainName/.well-known/acme-challenge/healthcheck"
+fi
+echo "${defaultACMEChallengeMsgPlaceholder/_domain_/$selectedDomainName}" >> "/var/www/$selectedDomainName/.well-known/acme-challenge/healthcheck"
+
+echo
 
 printf "🤖 Create the HTTP Nginx config file for Ursa\n"
 echo "
@@ -493,10 +565,6 @@ echo "
   }
 " > "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename"
 
-printf "🤖 Create ACME Challenge directory health check placeholder\n"
-echo "${defaultACMEChallengeMsgPlaceholder/_domain_/$selectedDomainName}" >> "/var/www/$selectedDomainName/.well-known/acme-challenge/healthcheck"
-echo
-
 printf "🤖 Enable Nginx HTTP config for now, HTTPS will be enabled after the SSL/TLS setup from Let's Encrypt\n"
 if [[ -f "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpConfFilename" ]]; then
   rm "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpConfFilename"
@@ -509,16 +577,22 @@ if hasCommand ufw && ufw status | grep -q 'Status: active'; then
 
   if ! sudo ufw allow 'Nginx HTTP'; then
     printf "💩 Uh-oh! Failed to allow Nginx HTTP for some reason...\n"
+
+    read -rp "🙄 Make sure your firewall setup is correct, as the installer is likely to fail. Press ENTER to continue..."
   fi
   
   if ! sudo ufw allow 'Nginx HTTPS'; then
     printf "💩 Uh-oh! Failed to allow Nginx HTTPS for some reason...\n"
+
+    read -rp "🙄 Make sure your firewall setup is correct, as the installer is likely to fail. Press ENTER to continue..."
   fi
 else
   read -rp "🚓 Warning! Make sure you don't have HTTP and HTTPS ports 80 and 443 blocked by a firewall. Press ENTER to continue..."
 fi
 
-printf "🤖 Start nginx\n"
+echo
+
+printf "🤖 Start Nginx\n"
 if systemctl -q is-active nginx; then
   if ! sudo systemctl restart nginx; then
     printf "💩 Uh-oh! Failed to restart Nginx for some reason...\n"
@@ -533,6 +607,8 @@ else
   fi
 fi
 
+echo
+
 printf "🚑 ACME Challenge health-check\n"
 if ! curl -s "http://$selectedDomainName/.well-known/acme-challenge/healthcheck" | grep -q "${defaultACMEChallengeMsgPlaceholder/_domain_/$selectedDomainName}"; then
   printf "💩 Uh-oh! The ACME Challenge health-check failed for some reason, make sure you don't have any firewall or apps blocking port 80 and 443...\n"
@@ -540,22 +616,25 @@ fi
 
 initCertbot "$selectedDomainName" "$selectedEmailAddress"
 
-printf "🤖 Enable Nginx HTTPS\n"
+echo
 
+printf "🤖 Enable Nginx HTTPS\n"
 if [[ -f "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename" ]]; then
   rm "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
 fi
 sudo ln -s "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename" "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
 
 if [[ ! -f "$defaultLetsEncryptOptionsSSLNginxConf" ]]; then
-  printf "🤖 Create Lets Encrypt options SSL Nginx configuration\n"
+  printf "🧐 Hmm, missing file! Will create Lets Encrypt options SSL Nginx configuration\n"
   curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > "$defaultLetsEncryptOptionsSSLNginxConf"
 fi
 
 if [[ ! -f "$defaultLetsEncryptSSLDHParams" ]]; then
-  printf "🤖 Create Lets Encrypt SSLDHParams\n"
+  printf "🧐 Hmm, missing file! Will create Lets Encrypt SSLDHParams\n"
   curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$defaultLetsEncryptSSLDHParams"
 fi
+
+echo
 
 printf "🤖 Nginx reload\n"
 service nginx reload
@@ -564,7 +643,7 @@ service nginx reload
 if sudo nginx -t; then
   sudo systemctl reload nginx
 else
-  printf "👹 Oh no! The Nginx configuration syntax is invalid, looks like a bug let us know in our discord channel, please!\n"
+  printf "👹 Oh no! The Nginx configuration syntax is invalid, looks like a bug. Help us improve and report in our discord channel, please!\n"
 
   exit 1
 fi
@@ -578,7 +657,9 @@ if ! curl -s https://$selectedDomainName/ping | grep -q pong; then
 fi
 
 if ! sudo certbot renew --dry-run; then
-  printf "😅 This is embarassing, the certbot renewal verification failed for %s\n" "$selectedDomainName"
+  printf "😓 This is very unfortunate! The certbot renewal verification process failed for %s\nThe installer will continue, but is likely that when the SSL/TLS Certificate expires, the scheduled renewal will fail" "$selectedDomainName"
+
+  sleep 8
 fi
 
 while read -rp "🤗 Would you like to start the Network Node now? (yes/no) " answer; do
@@ -595,7 +676,7 @@ echo
 # used for alignment
 echo "⚠️  Be aware that the Network Node outputs a lot of messages, the messages are quite verbose and you shouldn't worry about it!"
 echo
-echo "The log messages have many types INFO, DEBUG, WARNINGS, ERRORS, etc. To understand what they mean, read our Node Health-check guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
+echo "The log messages have many types INFO, DEBUG, WARNINGS, ERRORS, etc. Be patient! To understand what they mean, read our Node Health-check guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
 echo
 
 read -rp "Press ENTER to continue..."
