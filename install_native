@@ -60,7 +60,7 @@ confirmDomainName() {
   [[ $1 =~ $validate ]]
 }
 
-confirmIpAddress() {
+validateIpAddress() {
   local validate="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
 
   [[ "$1" =~ $validate ]] && ping -c1 -W1 "$1" > /dev/null
@@ -184,6 +184,34 @@ isOSSupported() {
   echo "✅ Operating system ($1) is supported!"
 }
 
+getIpAddress() {
+  detectedIpAddress=$(curl -s ifconfig.me)
+
+  if validateIpAddress "$detectedIpAddress"; then
+    echo "$detectedIpAddress"
+
+    return
+  fi
+
+  detectedIpAddress=$(curl -s icanhazip.com)
+
+  if validateIpAddress "$detectedIpAddress"; then
+    echo "$detectedIpAddress"
+
+    return
+  fi
+
+  detectedIpAddress=$(curl -s ident.me)
+
+  if validateIpAddress "$detectedIpAddress"; then
+    echo "$detectedIpAddress"
+
+    return
+  fi
+
+  echo "ERROR_IP_ADDRESS_NOT_AVAILABLE"
+}
+
 printf "🤖 Check if operating system is supported\n"
 isOSSupported "$(identifyOS)"
 
@@ -224,9 +252,9 @@ done
 
 echo
 
-detectedIpAddress=$(curl -s ifconfig.me || curl -s icanhazip.com || echo "ERROR_IP_ADDRESS_NOT_AVAILABLE")
+detectedIpAddress=$(getIpAddress)
 
-if ! confirmIpAddress "$detectedIpAddress"; then
+if ! validateIpAddress "$detectedIpAddress"; then
   printf "👹 Oops! We found the server public IP to be invalid (%s), if you found this to be a bug, help us improve by reporting it in our discord channel 🙏\n" "$detectedIpAddress"
 
   exit 1
@@ -449,13 +477,11 @@ fi
 
 echo
 
-if [[ -f /etc/nginx/sites-available/default ]]; then
-  rm /etc/nginx/sites-available/default
-fi
+printf "🤖 Remove Nginx default config\n"
+rm -f /etc/nginx/sites-available/default
+rm -f /etc/nginx/sites-enabled/default
 
-if [[ -e /etc/nginx/sites-enabled/default ]]; then
-  rm /etc/nginx/sites-enabled/default
-fi
+echo
 
 if [[ -f "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename" ]]; then
   rm "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename"
