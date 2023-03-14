@@ -140,48 +140,55 @@ identifyOS() {
   echo "$os" | tr '[:upper:]' '[:lower:]'
 }
 
+identifyDistro() {
+  if [[ -f /etc/os-release ]]; then
+    source /etc/os-release
+    echo "$ID"
+
+    exit 0
+  fi
+  
+  uname
+}
+
 isOSSupported() {
-  if [[ "$1" == "cygwin" ]] || [[ "$1" == "mingw" ]]; then
-    printf "\n"
+  os=$(identifyOS)
 
-    windowsUsersWarning
+  if [[ "$os" == "linux" ]]; then
+    distro=$(identifyDistro)
 
-    exitInstaller
-  fi
+    if [[ "$distro" == "ubuntu" ]]; then
+      currVersion=$(lsb_release -r -s | tr -d '.')
 
-  if [[ "$1" == "mac" ]]; then
-    printf "\n"
+      if [[ "$currVersion" -lt "2204" ]]; then
+        echo
+        echo "👹 Oops! You'll need Ubuntu 22.04 at least"
+        echo
 
-    macOsUsersWarning
+        exit 1
+      fi
+    elif [[ "$distro" == "debian" ]]; then
+      currVersion=$(lsb_release -r -s | tr -d '.')
 
-    exitInstaller
-  fi
+      if [[ "$currVersion" -lt "11" ]]; then
+        echo
+        echo "👹 Oops! You'll need Debian 11 at least"
+        echo
 
-  if [[ "$1" == "ubuntu" ]]; then
-    currVersion=$(lsb_release -r -s | tr -d '.')
+        exit 1
+      fi
+    else
+      printf "👹 Oops! Your operating system (%) distro (%s) is not supported by the installer at this time. Check our guides to learn how to install on your own https://docs.fleek.network\n" "$os" "$distro"
 
-    if [[ "$currVersion" -lt "2204" ]]; then
-      echo
-      echo "👹 Oops! You'll need Ubuntu 22.04 at least"
-      echo
-
-      exitInstaller
+      exit 1    
     fi
+
+    echo "✅ Operating system ($os), distro ($distro) is supported!"
+  else
+    printf "👹 Oops! Your operating system (%) is not supported by the installer at this time. Check our guides to learn how to install on your own https://docs.fleek.network\n" "$os"
+
+    exit 1
   fi
-
-  if [[ "$1" == "debian" ]]; then
-    currVersion=$(lsb_release -r -s | tr -d '.')
-
-    if [[ "$currVersion" -lt "11" ]]; then
-      echo
-      echo "👹 Oops! You'll need Debian 11 at least"
-      echo
-
-      exitInstaller
-    fi
-  fi
-
-  echo "✅ Operating system ($1) is supported!"
 }
 
 getIpAddress() {
@@ -213,7 +220,7 @@ getIpAddress() {
 }
 
 printf "🤖 Check if operating system is supported\n"
-isOSSupported "$(identifyOS)"
+isOSSupported
 
 echo
 
