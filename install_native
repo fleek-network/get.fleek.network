@@ -35,6 +35,7 @@ defaultUrsaNginxHttpsConfFilename="ursa-https.conf"
 defaultACMEChallengeMsgPlaceholder="_domain_ ACME Challenge directory is healthy!"
 defaultLetsEncryptOptionsSSLNginxConf="/etc/letsencrypt/options-ssl-nginx.conf"
 defaultLetsEncryptSSLDHParams="/etc/letsencrypt/ssl-dhparams.pem"
+defaultUrsaLogPath="/var/log/ursa"
 
 # App state
 selectedUrsaPath="$defaultUrsaPath"
@@ -691,17 +692,9 @@ service nginx reload
 
 # Verify the syntax of your configuration edits
 if sudo nginx -t; then
-  sudo systemctl reload nginx
+  sudo systemctl restart nginx
 else
   printf "👹 Oh no! The Nginx configuration syntax is invalid, looks like a bug. Help us improve and report in our discord channel, please!\n"
-
-  exit 1
-fi
-
-if ! curl -s https://$selectedDomainName/ping | grep -q pong; then
-  printf "👹 Oh no! Failed to health-check the domain %s\n" "$selectedDomainName"
-  echo
-  echo "Check our Node Health-check guide to help troubleshoot https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
 
   exit 1
 fi
@@ -732,5 +725,18 @@ echo
 read -rp "Press ENTER to continue..."
 echo
 
-printf "🤖 Start the Fleek Node\n"
-ursa
+printf "🤖 Start the Fleek Node in the background\n"
+printf "🤖 Create the Ursa log directory %s\n" "$defaultUrsaLogPath"
+if ! mkdir -p "$defaultUrsaLogPath"; then
+  printf "💩 Uh-oh! Failed to create the Ursa system log dir %s for some reason...\n" "$defaultUrsaLogPath"
+fi
+
+ursa 2> "$defaultUrsaLogPath/diagnostic.log" 1> "$defaultUrsaLogPath/output.log" &
+
+if ! curl -s https://$selectedDomainName/ping | grep -q pong; then
+  printf "👹 Oh no! Failed to health-check the domain %s\n" "$selectedDomainName"
+  echo
+  echo "Check our Node Health-check guide to help troubleshoot https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
+
+  exit 1
+fi
