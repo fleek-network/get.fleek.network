@@ -439,6 +439,9 @@ if ! hasCommand nginx; then
     fi
 
     if [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then      
+      selectedNginxSitesAvailablePath="$defaultNginxSitesAvailablePath"
+      selectedNginxSitesEnabledPath="$defaultNginxSitesEnabledPath"
+
       break
     fi
   done
