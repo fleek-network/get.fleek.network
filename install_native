@@ -33,6 +33,8 @@ defaultNginxSitesEnabledPath="/etc/nginx/sites-enabled"
 defaultUrsaNginxHttpConfFilename="ursa-http.conf"
 defaultUrsaNginxHttpsConfFilename="ursa-https.conf"
 defaultACMEChallengeMsgPlaceholder="_domain_ ACME Challenge directory is healthy!"
+defaultLetsEncryptOptionsSSLNginxConf="/etc/letsencrypt/options-ssl-nginx.conf"
+defaultLetsEncryptSSLDHParams="/etc/letsencrypt/ssl-dhparams.pem"
 
 # App state
 selectedUrsaPath="$defaultUrsaPath"
@@ -48,7 +50,7 @@ confirmDomainName() {
   local validate="^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\.)+[a-zA-Z]{2,}$"
 
   if ! hasCommand whois; then
-    sudo apt-get install whois -y
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install whois -yq
   fi
 
   if whois "$1" | grep -Ei '[Uu]nallocated|returned 0 objects' > /dev/null; then
@@ -82,14 +84,22 @@ initCertbot() {
   sudo snap install core
   sudo snap refresh core
 
+  echo
+
   printf "🤖 Remove certbot-auto and any Certbot OS packages\n"
-  sudo apt-get remove certbot
+  sudo DEBIAN_FRONTEND=noninteractive apt-get remove certbot
+
+  echo
 
   printf "🤖 Install certbot\n"
   sudo snap install --classic certbot
 
+  echo
+
   printf "🤖 Prepare the Certbot command\n"
   sudo ln -s /snap/bin/certbot /usr/bin/certbot
+
+  echo
 
   printf "🤖 Get and install your certificates\n"
   sudo certbot certonly \
@@ -101,8 +111,12 @@ initCertbot() {
     --force-renewal \
     -v
 
+  echo
+
   printf "🤖 Test automatic renewal\n"
   sudo certbot renew --dry-run
+
+  echo
 
   printf "🤖 Health check\n"
 }
@@ -113,8 +127,10 @@ while read -rp "👷 This is in work-in-progress and currently only supporting U
   fi
 done
 
-printf "A custom domain name is required to secure the communications with SSL/TLS.\nVisit your domain name registrar's dashboard, create a new domain, and update the A record to have the hostname answer with the server IP address\nMake sure you complete this step before proceeding, as we'll verify it!\n"
-while read -rp "Have you updated the DNS settings A record? (yes/no)" answer; do
+echo
+
+printf "A custom domain name is required to secure the communications with SSL/TLS.\nVisit your domain name registrar's dashboard, create a new domain, and update the A record to have the hostname answer with the server IP address\nMake sure you complete this step before proceeding, as it'll be verified!\n"
+while read -rp "Have you updated the DNS settings A record? (yes/no) " answer; do
   if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
     break;
   fi
@@ -123,6 +139,8 @@ while read -rp "Have you updated the DNS settings A record? (yes/no)" answer; do
 
   exit 1
 done
+
+echo
 
 printf -v prompt "🤖 What's your domain name?\n"
 while read -rp "$prompt"$'\n> ' answer; do
@@ -134,10 +152,12 @@ while read -rp "$prompt"$'\n> ' answer; do
   printf "💩 The domain name provided is not valid!\n"
 done
 
+echo
+
 detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "ERROR_IP_ADDRESS_NOT_AVAILABLE")
 
-printf "The server IP address that the domain is pointing to is required. We've noticed that this machine public IP address is %s\n" "$detectedIpAddress"
-printf -v prompt "🤖 Is the domain name pointing to the public IP address %s? (yes/no)\n" "$detectedIpAddress"
+printf "The server IP address the domain points to is required. We found the public IP address for this machine as %s\n" "$detectedIpAddress"
+printf -v prompt "🤖 Is the domain name pointing to the public IP address %s? (yes/no) " "$detectedIpAddress"
 while read -rp "$prompt"$'\n> ' answer; do
   if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
     # confirmIpAddress "$answer" 
@@ -155,8 +175,10 @@ while read -rp "$prompt"$'\n> ' answer; do
   printf "💩 Oh no! The IP address doesn't seem valid!\n"
 done
 
-printf "Let's Encrypt will provide SSL/TLS Certifiates for securing the communications. A valid email address is required by Let's Encrypt organisation (Fleek does NOT provide support, or store the email address).\n"
-printf -v prompt "What's your email address?"
+echo
+
+printf "Let's Encrypt provides SSL/TLS Certificates for securing the communications. A valid email address is required by the Let's Encrypt organisation (Fleek is not affiliated and does NOT store the email address).\n"
+printf -v prompt "What's your email address?\n"
 while read -rp "$prompt"$'\n> ' answer; do
   if confirmEmailAddress "$answer"; then
     selectedEmailAddress="$answer"
@@ -166,11 +188,13 @@ while read -rp "$prompt"$'\n> ' answer; do
   printf "💩 Oh no! The email address doesn't seem valid, try again...\n"
 done
 
-printf "🤖 The Ursa source-code is going to be git cloned to recommended path %s (otherwise, type \"n\" to modify path)\n" "$defaultUrsaPath"
+echo
+
+printf "🤖 The Ursa source-code is going to be stored in the recommended path %s (otherwise, type \"n\" to modify path)\n" "$defaultUrsaPath"
 printf -v prompt "Should proceed with installing to path %s? (yes/no)\n" "$defaultUrsaPath"
 while read -r -p "$prompt"$'\n> ' answer; do
-  if [[ "$answer" == [nN] ]]; then
-    printf -v prompt "\n🙋‍♀️ What path should we clone the Ursa source-code to?"
+  if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+    printf -v prompt "\n🙋‍♀️ What path should we clone the Ursa source-code to?\n"
     read -r -p "$prompt"$'\n> ' answer
 
     if [[ -d "$answer" ]]; then
@@ -190,39 +214,53 @@ while read -r -p "$prompt"$'\n> ' answer; do
     break
   fi
 
-  if [[ "$answer" == [yY] ]]; then
+  if [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
     selectedUrsaPath="$defaultUrsaPath"
     
     break
   fi
 done
 
+echo
+
 printf "🤖 Update and upgrade apt-get\n"
-sudo apt-get update -y
-sudo apt-get upgrade -y
+sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
+sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
+
+echo
 
 if ! hasCommand git; then
   printf "🤖 Install Git\n"
-  sudo apt-get install git -y
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install git -yq
 fi
 
-printf "🤖 Clone the Ursa project to %s\n" "$selectedUrsaPath"
+echo
+
+printf "🤖 Clone the Ursa source-code to %s\n" "$selectedUrsaPath"
 git clone https://github.com/fleek-network/ursa.git "$selectedUrsaPath"
 
-printf "🤖%s\n" "Change directory to ursa"
+echo
+
+printf "🤖 Change directory to ursa\n"
 if ! cd "$selectedUrsaPath"; then
   printf "👹 Oops! Failed to change directory to %s\n" "$selectedUrsaPath"
 
   exit 1
 fi
 
+echo
+
 if ! command -vp "cargo" &> /dev/null && ! command -vp "rustc" &> /dev/null; then
   printf "🤖 Install the Rustup tool\n"
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
+  echo
+
   printf "🤖 Reload PATH environments to include Cargo\n"
   source "$HOME/.cargo/env"
   
+  echo
+
   printf "✅ Rust is installed!\n"
 
   printf "Cargo version is %s\n" "$(cargo --version)"
@@ -231,27 +269,37 @@ else
   rustup update
 fi
 
+echo
+
 # printf "🤖 Install Sccache is a ccache-like compiler caching tool\n"
 # cargo install sccache
 
 printf "🤖 Install the build-essentials packages, necessary for compiling general software and for our use-case Ursa CLI\n"
-sudo apt-get install build-essential -y
+sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential -yq
 
-printf "🤖 Install required to compile the application (cmake, clang, pkg-config and libssl-dev)\n"
-sudo apt-get install cmake clang pkg-config libssl-dev -y
+echo
+
+printf "🤖 Install required libraries and packages to compile the application (cmake, clang, pkg-config and libssl-dev)\n"
+sudo DEBIAN_FRONTEND=noninteractive apt-get install cmake clang pkg-config libssl-dev -yq
+
+echo
 
 printf "🤖 Install the Protobufer Compiler\n"
-sudo apt-get install protobuf-compiler -y
+sudo DEBIAN_FRONTEND=noninteractive apt-get install protobuf-compiler -yq
+
+echo
 
 if ! hasCommand make; then
   printf "🤖 Install make\n"
-  sudo apt-get install make -y
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install make -yq
 fi
+
+echo
 
 printf "🤖 Build and install the Ursa CLI\n"
 
 if ! cargo install --jobs "$vCPUsMinusOne" --locked --path crates/ursa; then
-  printf "👹 Oops! Failed to build and install the Ursa CLI. If you are experience issues, help us improve by letting us know in our Discord channel\n"
+  printf "👹 Oops! Failed to build and install the Ursa CLI. If you are experiencing issues, help us improve by letting us know in our Discord channel\n"
 
   exit 1
 fi
@@ -259,20 +307,27 @@ fi
 printf "🤖 Copy the Ursa CLI binary to /usr/bin\n"
 cp "$selectedUrsaPath/target/release/ursa" /usr/bin
 
+echo
+
 printf "Great 👌! You have successfully installed all the required packages, libraries and have compiled and installed Ursa\n"
-printf "If you'd like to have the Ursa CLI command available globally, add the binary (%s) to your system PATH e.g., edit your shell profile file, save and restart the current shell e.g., .bashrc, .zshrc, .profile to include export PATH=\"%s:\$PATH\"\n\n" "$selectedUrsaPath" "$selectedUrsaPath"
-printf "Although, the process will install additional applications. It'll install NGINX, as a reverse proxy for Ursa\n"
+printf "The Ursa CLI was copied to the /usr/bin and should be available globally, e.g. from now on you can start a Network Node by typing ursa\n"
+
+echo
+
+printf "🔓 Although the process will attempt to install additional applications, to help secure the server e.g. Nginx, as a reverse proxy\n"
+
+echo
 
 if ! hasCommand nginx; then
   printf -v prompt "🤖 Nginx should be installed, would you like to proceed with the installation? (yes/no)\n"
   while read -rp "$prompt"$'\n> ' answer; do
-    if [[ "$answer" == [nN] ]]; then
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
       printf "👹 Oops! The install process has terminated\n"
 
       exit 1
     fi
 
-    if [[ "$answer" == [yY] ]]; then      
+    if [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then      
       break
     fi
   done
@@ -318,19 +373,27 @@ else
   done
 fi
 
+echo
+
+if [[ -f /etc/nginx/sites-available/default ]]; then
+  rm /etc/nginx/sites-available/default
+fi
+
 if [[ -f /etc/nginx/sites-enabled/default ]]; then
   rm /etc/nginx/sites-enabled/default
 fi
 
 if [[ -f "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename" ]]; then
   rm "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename"
-  touch "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename"
 fi
+
+touch "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename"
 
 if [[ -f "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename" ]]; then
   rm "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
-  touch "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
 fi
+
+touch "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
 
 printf "🤖 Create the Nginx site directories\n"
 mkdir -p "/var/www/$selectedDomainName/.well-known/acme-challenge"
@@ -405,8 +468,8 @@ echo "
       ssl_certificate /etc/letsencrypt/live/$selectedDomainName/fullchain.pem;
       ssl_certificate_key /etc/letsencrypt/live/$selectedDomainName/privkey.pem;
 
-      include /etc/letsencrypt/options-ssl-nginx.conf;
-      ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+      include $defaultLetsEncryptOptionsSSLNginxConf;
+      ssl_dhparam $defaultLetsEncryptSSLDHParams;
 
       location /stub_status {
         stub_status;
@@ -428,25 +491,17 @@ echo "
         proxy_pass http://localhost:4069;
       }
   }
-" > "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
+" > "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename"
 
 printf "🤖 Create ACME Challenge directory health check placeholder\n"
 echo "${defaultACMEChallengeMsgPlaceholder/_domain_/$selectedDomainName}" >> "/var/www/$selectedDomainName/.well-known/acme-challenge/healthcheck"
+echo
 
 printf "🤖 Enable Nginx HTTP config for now, HTTPS will be enabled after the SSL/TLS setup from Let's Encrypt\n"
 if [[ -f "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpConfFilename" ]]; then
   rm "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpConfFilename"
 fi
 sudo ln -s "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename" "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpConfFilename"
-
-# Verify the syntax of your configuration edits
-if sudo nginx -t; then
-  sudo systemctl reload nginx
-else
-  printf "👹 Oh no! The Nginx configuration syntax is invalid, looks like a bug let us know in our discord channel, please!\n"
-
-  exit 1
-fi
 
 if hasCommand ufw && ufw status | grep -q 'Status: active'; then
   printf "💡 Detected that ufw is active\n"
@@ -486,13 +541,33 @@ fi
 initCertbot "$selectedDomainName" "$selectedEmailAddress"
 
 printf "🤖 Enable Nginx HTTPS\n"
+
 if [[ -f "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename" ]]; then
   rm "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
 fi
 sudo ln -s "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename" "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
 
+if [[ ! -f "$defaultLetsEncryptOptionsSSLNginxConf" ]]; then
+  printf "🤖 Create Lets Encrypt options SSL Nginx configuration\n"
+  curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > "$defaultLetsEncryptOptionsSSLNginxConf"
+fi
+
+if [[ ! -f "$defaultLetsEncryptSSLDHParams" ]]; then
+  printf "🤖 Create Lets Encrypt SSLDHParams\n"
+  curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$defaultLetsEncryptSSLDHParams"
+fi
+
 printf "🤖 Nginx reload\n"
 service nginx reload
+
+# Verify the syntax of your configuration edits
+if sudo nginx -t; then
+  sudo systemctl reload nginx
+else
+  printf "👹 Oh no! The Nginx configuration syntax is invalid, looks like a bug let us know in our discord channel, please!\n"
+
+  exit 1
+fi
 
 if ! curl -s https://$selectedDomainName/ping | grep -q pong; then
   printf "👹 Oh no! Failed to health-check the domain %s\n" "$selectedDomainName"
@@ -516,9 +591,11 @@ while read -rp "🤗 Would you like to start the Network Node now? (yes/no) " an
 done
 
 echo
-echo "⚠️ Be aware that the Network Node outputs a lot of messages these messages can be quite verbose but you shouldn't worry about it!"
+# The extra-whitespace between emoji and text is intentional
+# used for alignment
+echo "⚠️  Be aware that the Network Node outputs a lot of messages, the messages are quite verbose and you shouldn't worry about it!"
 echo
-echo "The log messages come in many forms WARN, ERRORS, INFO, DEBUG, etc. Learn more about it by reading our Node Health-check guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
+echo "The log messages have many types INFO, DEBUG, WARNINGS, ERRORS, etc. To understand what they mean, read our Node Health-check guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
 echo
 
 read -rp "Press ENTER to continue..."
