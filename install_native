@@ -79,10 +79,15 @@ hasCommand() {
 initCertbot() {
   domain="$1"
   email="$2"
-  
-  printf "🤖 Ensure that your version of snapd is up to date\n"
-  sudo snap install core
-  sudo snap refresh core
+
+  if ! snap --version > /dev/null; then
+    printf "🤖 Install Snap package manager\n"
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install snapd -yq
+  else
+    printf "🤖 Ensure that your version of snapd is up to date\n"
+    sudo snap install core
+    sudo snap refresh core
+  fi
 
   echo
 
@@ -132,9 +137,7 @@ identifyOS() {
       *)          os="UNKNOWN:${unameOut}"
   esac
 
-  osToLc=$(toLowerCase "$os")
-
-  echo "$osToLc" | tr '[:upper:]' '[:lower:]'
+  echo "$os" | tr '[:upper:]' '[:lower:]'
 }
 
 isOSSupported() {
@@ -177,6 +180,8 @@ isOSSupported() {
       exitInstaller
     fi
   fi
+
+  echo "✅ OS is supported!"
 }
 
 printf "🤖 Check if operating system is supported\n"
@@ -184,7 +189,15 @@ isOSSupported "$(identifyOS)"
 
 echo
 
-printf "A domain name is required to secure the communications with SSL/TLS.\nVisit your domain name registrar dashboard, create a new domain, and update the A record pointed to the server public IP address\nIf you don't have a domain name, you can get one from a registrar e.g. https://njal.la, https://name.com, etc. Need help? Read our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls#domain-name-setup\n\nMake sure you complete this step before proceeding, as it'll be verified!\n"
+echo "A domain name is required to secure the communications with SSL/TLS."
+echo
+echo "Visit your domain name registrar dashboard, create a new domain, and update the A record pointed to the server public IP address"
+echo "If you don't have a domain name, you can get one from a registrar e.g. https://njal.la, https://name.com, etc."
+echo
+echo "Need help? Read our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls#domain-name-setup"
+echo "Make sure you complete this step before proceeding, as it'll be verified!"
+echo
+
 while read -rp "Have you updated the DNS settings A record? (yes/no) " answer; do
   if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
     break;
@@ -222,7 +235,7 @@ fi
 echo
 
 printf "The server public IP address the domain is pointing to is required! We found the public IP address for this machine to be %s\n" "$detectedIpAddress"
-printf -v prompt "🤖 Is the domain name pointing to the public IP address %s? (yes/no) " "$detectedIpAddress"
+printf -v prompt "🤖 Is the domain name %s pointing to the public IP address %s? (yes/no) " "$selectedDomainName" "$detectedIpAddress"
 while read -rp "$prompt"$'\n> ' answer; do
   if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
     printf "💩 Oh no! The %s has to point to the server public IP address %s. Alternatively, you can check our guides and install the Ursa CLI on your own, but is likely that the security of your server will be taken into account by the rewards mechanism. To avoid disappointment follow the recomendations!\n" "$selectedDomainName" "$detectedIpAddress"  
@@ -341,11 +354,6 @@ fi
 
 echo
 
-printf "🤖 Install Sccache is a ccache-like compiler caching tool\n"
-cargo install sccache
-
-echo
-
 printf "🤖 Install the build-essentials, libraries and packages, necessary for compiling general software and for our use-case Ursa CLI\n"
 sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential cmake clang pkg-config libssl-dev protobuf-compiler -yq
 
@@ -355,6 +363,10 @@ if ! hasCommand make; then
   printf "🤖 Install make\n"
   sudo DEBIAN_FRONTEND=noninteractive apt-get install make -yq
 fi
+
+# sccache requires build-essentials (install after)
+printf "🤖 Install Sccache is a ccache-like compiler caching tool\n"
+cargo install sccache
 
 echo
 
