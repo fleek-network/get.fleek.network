@@ -181,7 +181,7 @@ isOSSupported() {
     fi
   fi
 
-  echo "✅ OS is supported!"
+  echo "✅ Operating system ($1) is supported!"
 }
 
 printf "🤖 Check if operating system is supported\n"
@@ -224,7 +224,7 @@ done
 
 echo
 
-detectedIpAddress=$(curl --silent ifconfig.me || curl --silent icanhazip.com || echo "ERROR_IP_ADDRESS_NOT_AVAILABLE")
+detectedIpAddress=$(curl -s ifconfig.me || curl -s icanhazip.com || echo "ERROR_IP_ADDRESS_NOT_AVAILABLE")
 
 if ! confirmIpAddress "$detectedIpAddress"; then
   printf "👹 Oops! We found the server public IP to be invalid (%s), if you found this to be a bug, help us improve by reporting it in our discord channel 🙏\n" "$detectedIpAddress"
@@ -385,17 +385,17 @@ ln -s "$selectedUrsaPath/target/release/ursa" /usr/bin/ursa
 
 echo
 
-printf "👌 Great! You have successfully installed required packages, libraries, have compiled and installed Ursa\n"
+printf "👌 Great! You have successfully installed required packages, libraries, have compiled and installed Ursa\n\n"
 printf "The Ursa CLI should be available globally, there's a symlink to the /usr/bin/ursa. Which means that from now on you can start a Network Node by typing ursa\n"
 
 echo
 
-printf "🔓 Our install process will now attempt to add additional applications, to help secure the server e.g. Nginx (reverse proxy) and secure the communications with SSL/TLS\n"
+printf "🔓 Our wizard will now attempt to install additional applications, to help secure the server e.g. Nginx (reverse proxy), secure the communications with SSL/TLS, etc. Be patient, please 🙏\n"
 
 echo
 
 if ! hasCommand nginx; then
-  printf -v prompt "🤖 Nginx should be installed, would you like to proceed with the installation? (yes/no)"
+  printf -v prompt "🤖 Nginx is required, would you like to proceed with the installation? (yes/no)"
   while read -rp "$prompt"$'\n> ' answer; do
     if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
       printf "👹 Oops! The install process has terminated. Since you have interrupted, you might want to check the logs and uninstall any unwanted application, library or dependency.\nIf you need help, check our https://docs.fleek.network and use our search feature to help you.\n"
@@ -409,7 +409,7 @@ if ! hasCommand nginx; then
   done
 
   printf "🤖 Install Nginx\n"
-  sudo apt install nginx -y
+  sudo DEBIAN_FRONTEND=noninteractive apt install nginx -y
 else
   printf "💡 The install process encountered Nginx already installed\nIt'll assume that the location for sites-available and sites-enabled are the default paths %s and %s\n" "$defaultNginxSitesAvailablePath" "$defaultNginxSitesEnabledPath"
   printf -v prompt "Use the default paths for Nginx sites-available and sites-enabled? (yes/no)"
@@ -453,7 +453,7 @@ if [[ -f /etc/nginx/sites-available/default ]]; then
   rm /etc/nginx/sites-available/default
 fi
 
-if [[ -f /etc/nginx/sites-enabled/default ]]; then
+if [[ -e /etc/nginx/sites-enabled/default ]]; then
   rm /etc/nginx/sites-enabled/default
 fi
 
@@ -464,10 +464,10 @@ fi
 touch "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename"
 
 if [[ -f "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename" ]]; then
-  rm "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
+  rm "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename"
 fi
 
-touch "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
+touch "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename"
 
 printf "🤖 Create the Nginx directories for ACME Challenge\n"
 mkdir -p "/var/www/$selectedDomainName/.well-known/acme-challenge"
@@ -582,6 +582,8 @@ if [[ -f "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpConfFilename" ]]; 
   rm "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpConfFilename"
 fi
 sudo ln -s "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename" "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpConfFilename"
+
+echo
 
 if hasCommand ufw && ufw status | grep -q 'Status: active'; then
   printf "💡 Detected that ufw is active\n"
