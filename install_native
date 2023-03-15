@@ -26,6 +26,46 @@
 [ "$BASH" ] || { printf >&2 '🙏 Run the script with Bash, please!\n'; exit 1; }
 (( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
 
+# 🚑 Check total Processing Units
+vCPUs=$(nproc --all)
+if [[ "$vCPUs" -lt 4 ]]; then
+  while read -rp "😅 The installer needs at least 4 total processing units, your system has $vCPUs. The installer is likely to fail, would you like to continue? (yes/no)" answer; do
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+      printf "🦖 Exited the installation process\n\n"
+
+      exit 1
+    elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+      printf "😅 Good luck!\n\n"
+
+      break;
+    fi
+
+    printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+  done
+fi
+
+# 🚑 Check if ports available
+declare -a requiredPorts=(80 443 4069 6009)
+
+if ! dpkg -s net-tools >/dev/null; then
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install net-tools -y
+fi
+
+hasPortsAvailable=0
+for port in "${requiredPorts[@]}"; do
+  if netstat -tulpen | grep "$port"; then
+    printf "💩 Uh-oh! The port %s is required but is in use...\n" "$port"
+
+    hasPortsAvailable=1
+  fi
+done
+
+if [[ "$hasPortsAvailable" -eq 1 ]]; then
+  printf "👹 Oops! Required port(s) are in use, make sure the ports are open before retrying, please!\n"
+
+  exit 1
+fi
+
 # Defaults
 defaultUrsaPath="$HOME/fleek-network/ursa"
 defaultNginxSitesAvailablePath="/etc/nginx/sites-available"
@@ -49,7 +89,7 @@ selectedIpAddress=""
 selectedEmailAddress=""
 selectedNginxSitesAvailablePath=""
 selectedNginxSitesEnabledPath=""
-vCPUsMinusOne=$(($(nproc --all) - 1))
+vCPUsMinusOne=$(($vCPUs - 1))
 
 # Confirm validators
 confirmDomainName() {
@@ -405,9 +445,11 @@ if ! hasCommand make; then
   sudo DEBIAN_FRONTEND=noninteractive apt-get install make -yq
 fi
 
+# OBS: sccache takes quite long to install
+# after the installation there was no perceived benefit in having it
 # sccache requires build-essentials (install after)
-printf "🤖 Install Sccache is a ccache-like compiler caching tool\n"
-cargo install sccache
+## printf "🤖 Install Sccache is a ccache-like compiler caching tool\n"
+## cargo install sccache
 
 echo
 
@@ -655,7 +697,7 @@ if hasCommand ufw && ufw status | grep -q 'Status: active'; then
     read -rp "🙄 Make sure your firewall setup is correct, as the installer is likely to fail. Press ENTER to continue..."
   fi
 else
-  read -rp "🚓 Warning! Make sure you don't have HTTP and HTTPS ports 80 and 443 blocked by a firewall. Press ENTER to continue..."
+  read -rp "🚓 Warning! Make sure you don't have HTTP and HTTPS ports 80 and 443 blocked by a firewall. The installer will fail if you don't have the required ports open. Press ENTER to continue..."
 fi
 
 echo
