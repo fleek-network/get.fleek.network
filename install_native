@@ -47,13 +47,13 @@ fi
 # 🚑 Check if ports available
 declare -a requiredPorts=(80 443 4069 6009)
 
-if ! dpkg -s net-tools >/dev/null; then
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install net-tools -y
+if ! dpkg -s lsof >/dev/null; then
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install lsof -y
 fi
 
 hasPortsAvailable=0
 for port in "${requiredPorts[@]}"; do
-  if netstat -tulpen | grep -q "$port"; then
+  if lsof -i :"$port"; then
     printf "💩 Uh-oh! The port %s is required but is in use...\n" "$port"
 
     hasPortsAvailable=1
@@ -355,6 +355,29 @@ while read -rp "$prompt"$'\n> ' answer; do
   fi
 
   if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+    # Dig is required for the next step
+    if ! dpkg -s dnsutils >/dev/null; then
+      while read -rp "🙋‍♀️ Dnsutils is required, can we go ahead and install it? (yes/no) " answer; do
+        if [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+          printf "🤖 Update and upgrade apt-get\n"
+          sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
+
+          if ! sudo DEBIAN_FRONTEND=noninteractive apt-get install dnsutils -y; then
+            printf "👹 Oops! Failed to install dnsutils for some reason...\n"
+          fi
+
+          break
+        elif [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+          printf "🦖 Exited! Dnsutils is required\n"
+
+          exit 1
+        fi
+
+        printf "💩 We need a yes (y) or a no (n), try again...\n"
+      done
+    fi
+
     if ! dig "$selectedDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$detectedIpAddress" >/dev/null 2>&1 ; then
       printf "💩 Oh no! The %s doesn't seem to point to the IP address %s\n" "$selectedDomainName" "$detectedIpAddress"
 
