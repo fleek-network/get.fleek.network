@@ -53,7 +53,7 @@ fi
 
 hasPortsAvailable=0
 for port in "${requiredPorts[@]}"; do
-  if netstat -tulpen | grep "$port"; then
+  if netstat -tulpen | grep -q "$port"; then
     printf "💩 Uh-oh! The port %s is required but is in use...\n" "$port"
 
     hasPortsAvailable=1
@@ -265,6 +265,36 @@ getIpAddress() {
   echo "ERROR_IP_ADDRESS_NOT_AVAILABLE"
 }
 
+cat << "URSA_START_SCRIPT"
+          _..._
+        .'     '.     _
+      /    .-""-\   _/ \
+    .-|   /:.   |  |   |
+    |  \  |:.   /.-'-./
+    | .-'-;:__.'    =/
+    .'=  *=|URSA _.='
+    /   _.  |    ;
+    ;-.-'|    \   |
+  /   | \    _\  _\
+  \__/'._;.  ==' ==\
+          \    \   |
+          /    /   /
+          /-._/-._/
+          \   `\  \
+            `-._/._/
+URSA_START_SCRIPT
+
+echo
+echo "⭐️ Ursa, a Decentralized Content Delivery Network (DCDN) ⭐️"
+echo
+echo "★★★★★★★★★ 🌍 Website https://fleek.network"
+echo "★★★★★★★★★ 📚 Documentation https://docs.fleek.network"
+echo "★★★★★★★★★ 💾 Git repository https://github.com/fleek-network/ursa"
+echo "★★★★★★★★★ 🤖 Discord https://discord.gg/fleekxyz"
+echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
+echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
+echo
+
 printf "🤖 Check if operating system is supported\n"
 isOSSupported
 
@@ -272,8 +302,8 @@ echo
 
 echo "A domain name is required to secure the communications with SSL/TLS."
 echo
-echo "Visit your domain name registrar dashboard, create a new domain, and update the A record pointed to the server public IP address"
-echo "If you don't have a domain name, you can get one from a registrar e.g. https://njal.la, https://name.com, etc."
+echo "Visit your domain name registrar dashboard, create a new domain, and update the A record pointed to the server public IP address."
+echo "If you don't have a domain name (DNS, as ENS or similar are not supported), you can get one from a registrar e.g. https://njal.la, https://name.com, etc."
 echo
 echo "Need help? Read our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls#domain-name-setup"
 echo "Make sure you complete this step before proceeding, as it'll be verified!"
