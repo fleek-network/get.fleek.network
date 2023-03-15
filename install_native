@@ -421,8 +421,20 @@ fi
 
 echo
 
-printf "🤖 Symlink the Ursa CLI binary to /usr/bin\n"
-ln -s "$selectedUrsaPath/target/release/ursa" /usr/bin/ursa
+printf "🤖 Symlink the Ursa CLI binary to /usr/bin. By default rustup should've set the .cargo/bin into your system PATH, in any case we'll attempt to symlink to ensure ursa is available globally\n"
+if [[ -f "$HOME/.cargo/bin/ursa" ]]; then
+  if ! ln -s "$HOME/.cargo/bin/ursa" /usr/bin/ursa; then
+    printf "👹 Oops! Failed to symlink %s to /usr/bin/ursa\n" "$HOME/.cargo/bin/ursa"
+    echo
+    read -rp "😅 After the installation, if ursa cli command is not available globally, then you need to add $HOME/.cargo/bin/ursa to your system PATH or symlink the binary to /usr/bin/ursa, as we've failed to do it. Press ENTER to continue..."
+  fi
+else
+  if ! ln -s "$selectedUrsaPath/target/release/ursa" /usr/bin/ursa; then
+    printf "👹 Oops! Failed to symlink %s to /usr/bin/ursa\n" "$selectedUrsaPath/target/release/ursa"
+    echo
+    read -rp "😅 After the installation, if ursa cli command is not available globally, then you need to add $selectedUrsaPath/target/release/ursa to your system PATH or symlink the binary to /usr/bin/ursa, as we've failed to do it. Press ENTER to continue..."
+  fi
+fi
 
 echo
 
