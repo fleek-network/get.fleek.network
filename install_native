@@ -754,6 +754,8 @@ printf "🤖 Ursa service availability check\n"
 pingAttempts=0
 while ! curl localhost:4069/ping | grep -q pong; do
   if [[ "$pingAttempts" -gt 10 ]]; then
+    printf "👹 Oh no! Failed to health-check the domain %s\n" "$selectedDomainName"
+
     break;
   fi
 
