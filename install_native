@@ -1,0 +1,981 @@
+#!/bin/bash
+
+# <!-- IGNORE: This line is intentional DO NOT MODIFY --><pre><script>document.querySelector('body').firstChild.textContent = '#!/bin/bash'</script>
+
+# "Get Fleek Network" is an attempt to make our software more accessible.
+# By providing scripts to automate the installation process of our software,
+# we believe that it can help improve the onboarding experience of our users.
+#
+# Quick install: `curl https://get.fleek.network/install_native | bash`
+#
+# This script automates the process illustrated in our guide "how to install rust and the dependencies for ursa cli"
+# advanced users might find it better to follow the instructions in the guide
+# If that's your preference, go ahead and check our guides https://docs.fleek.network
+#
+# For the users happy to have the script assist in the installation process of Fleek Network
+# and the required dependencies, run the script at your own risk. 
+#
+# Diagram https://lucid.app/lucidspark/362f0bf1-4c4b-459f-8daa-8c3483963efd/edit?viewport_loc=-483%2C221%2C2480%2C1390%2C0_0&invitationId=inv_a869a3ae-22e0-4084-a41a-9036712c874a
+#
+# Contributing?
+# - If you'd like to test changes locally use the env var `USE_BRANCH_NAME_FOR_GH_RAW`, for remote locales pulls
+#
+# Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
+
+# 🚑 Check if running in Bash and supported version
+[ "$BASH" ] || { printf >&2 '🙏 Run the script with Bash, please!\n'; exit 1; }
+(( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
+
+# 🚑 Check total Processing Units
+vCPUs=$(nproc --all)
+if [[ "$vCPUs" -lt 4 ]]; then
+  while read -rp "😅 The installer needs at least 4 total processing units, your system has $vCPUs. The installer is likely to fail, would you like to continue? (yes/no)" answer; do
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+      printf "🦖 Exited the installation process\n\n"
+
+      exit 1
+    elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+      printf "😅 Good luck!\n\n"
+
+      break;
+    fi
+
+    printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+  done
+fi
+
+# 🚑 Check if ports available
+declare -a requiredPorts=(80 443 4069 6009)
+
+if ! dpkg -s lsof >/dev/null; then
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install lsof -y
+fi
+
+hasPortsAvailable=0
+for port in "${requiredPorts[@]}"; do
+  if lsof -i :"$port"; then
+    printf "💩 Uh-oh! The port %s is required but is in use...\n" "$port"
+
+    hasPortsAvailable=1
+  fi
+done
+
+if [[ "$hasPortsAvailable" -eq 1 ]]; then
+  printf "👹 Oops! Required port(s) are in use, make sure the ports are open before retrying, please!\n"
+
+  exit 1
+fi
+
+# Defaults
+defaultUrsaPath="$HOME/fleek-network/ursa"
+defaultNginxSitesAvailablePath="/etc/nginx/sites-available"
+defaultNginxSitesEnabledPath="/etc/nginx/sites-enabled"
+defaultUrsaNginxHttpConfFilename="ursa-http.conf"
+defaultUrsaNginxHttpsConfFilename="ursa-https.conf"
+defaultACMEChallengeMsgPlaceholder="_domain_ ACME Challenge directory is healthy!"
+defaultLetsEncryptOptionsSSLNginxConf="/etc/letsencrypt/options-ssl-nginx.conf"
+defaultLetsEncryptSSLDHParams="/etc/letsencrypt/ssl-dhparams.pem"
+defaultUrsaLogPath="/var/log/ursa"
+defaultUrsaDiagnosticFilename="diagnostic.log"
+defaultUrsaOutputFilename="output.log"
+defaultUrsaDiagnosticLogAbsPath="$defaultUrsaLogPath/$defaultUrsaDiagnosticFilename"
+defaultUrsaOutputLogAbsPath="$defaultUrsaLogPath/$defaultUrsaOutputFilename"
+defaultUrsaStartHelperFilename="start_node"
+
+# App state
+selectedUrsaPath="$defaultUrsaPath"
+selectedDomainName=""
+selectedIpAddress=""
+selectedEmailAddress=""
+selectedNginxSitesAvailablePath=""
+selectedNginxSitesEnabledPath=""
+vCPUsMinusOne=$(($vCPUs - 1))
+
+# Confirm validators
+confirmDomainName() {
+  local validate="^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\.)+[a-zA-Z]{2,}$"
+
+  if ! hasCommand whois; then
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install whois -yq
+  fi
+
+  if whois "$1" | grep -Ei '[Uu]nallocated|returned 0 objects' > /dev/null; then
+    return 1
+  fi
+
+  [[ $1 =~ $validate ]]
+}
+
+validateIpAddress() {
+  local validate="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
+
+  [[ "$1" =~ $validate ]] && ping -c1 -W1 "$1" > /dev/null
+}
+
+confirmEmailAddress() {
+  local validate="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+$"
+
+  [[ "$1" =~ $validate ]]
+}
+
+hasCommand() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+initCertbot() {
+  domain="$1"
+  email="$2"
+
+  if ! hasCommand snap; then
+    printf "🤖 Install Snap package manager\n"
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install snapd -yq
+  else
+    printf "🤖 Ensure that your version of snapd is up to date\n"
+    sudo snap install core
+    sudo snap refresh core
+  fi
+
+  echo
+
+  printf "🤖 Remove certbot-auto and any Certbot OS packages\n"
+  sudo DEBIAN_FRONTEND=noninteractive apt-get remove certbot
+
+  echo
+
+  printf "🤖 Install certbot\n"
+  sudo snap install --classic certbot
+
+  echo
+
+  printf "🤖 Prepare the Certbot command\n"
+  sudo ln -s /snap/bin/certbot /usr/bin/certbot
+
+  echo
+
+  printf "🤖 Get and install your certificates\n"
+  sudo certbot certonly \
+    --webroot -w /var/www/"$selectedDomainName" \
+    --email "$email" \
+    --domain "$domain" \
+    --rsa-key-size 4096 \
+    --agree-tos -n \
+    --force-renewal \
+    -v
+
+  echo
+
+  printf "🤖 Test automatic renewal\n"
+  sudo certbot renew --dry-run
+
+  echo
+
+  printf "🤖 Health check\n"
+}
+
+identifyOS() {
+  unameOut="$(uname -s)"
+
+  case "${unameOut}" in
+      Linux*)     os=Linux;;
+      Darwin*)    os=Mac;;
+      CYGWIN*)    os=Cygwin;;
+      MINGW*)     os=MinGw;;
+      *)          os="UNKNOWN:${unameOut}"
+  esac
+
+  echo "$os" | tr '[:upper:]' '[:lower:]'
+}
+
+identifyDistro() {
+  if [[ -f /etc/os-release ]]; then
+    source /etc/os-release
+    echo "$ID"
+
+    exit 0
+  fi
+  
+  uname
+}
+
+isOSSupported() {
+  os=$(identifyOS)
+
+  if [[ "$os" == "linux" ]]; then
+    distro=$(identifyDistro)
+
+    if [[ "$distro" == "ubuntu" ]]; then
+      currVersion=$(lsb_release -r -s | tr -d '.')
+
+      if [[ "$currVersion" -lt "2204" ]]; then
+        echo
+        echo "👹 Oops! You'll need Ubuntu 22.04 at least"
+        echo
+
+        exit 1
+      fi
+    elif [[ "$distro" == "debian" ]]; then
+      currVersion=$(lsb_release -r -s | tr -d '.')
+
+      if [[ "$currVersion" -lt "11" ]]; then
+        echo
+        echo "👹 Oops! You'll need Debian 11 at least"
+        echo
+
+        exit 1
+      fi
+    else
+      printf "👹 Oops! Your operating system (%) distro (%s) is not supported by the installer at this time. Check our guides to learn how to install on your own https://docs.fleek.network\n" "$os" "$distro"
+
+      exit 1    
+    fi
+
+    echo "✅ Operating system ($os), distro ($distro) is supported!"
+  else
+    printf "👹 Oops! Your operating system (%) is not supported by the installer at this time. Check our guides to learn how to install on your own https://docs.fleek.network\n" "$os"
+
+    exit 1
+  fi
+}
+
+getIpAddress() {
+  detectedIpAddress=$(curl -s ifconfig.me)
+
+  if validateIpAddress "$detectedIpAddress"; then
+    echo "$detectedIpAddress"
+
+    return
+  fi
+
+  detectedIpAddress=$(curl -s icanhazip.com)
+
+  if validateIpAddress "$detectedIpAddress"; then
+    echo "$detectedIpAddress"
+
+    return
+  fi
+
+  detectedIpAddress=$(curl -s ident.me)
+
+  if validateIpAddress "$detectedIpAddress"; then
+    echo "$detectedIpAddress"
+
+    return
+  fi
+
+  echo "ERROR_IP_ADDRESS_NOT_AVAILABLE"
+}
+
+cat << "URSA_START_SCRIPT"
+          _..._
+        .'     '.     _
+      /    .-""-\   _/ \
+    .-|   /:.   |  |   |
+    |  \  |:.   /.-'-./
+    | .-'-;:__.'    =/
+    .'=  *=|URSA _.='
+    /   _.  |    ;
+    ;-.-'|    \   |
+  /   | \    _\  _\
+  \__/'._;.  ==' ==\
+          \    \   |
+          /    /   /
+          /-._/-._/
+          \   `\  \
+            `-._/._/
+URSA_START_SCRIPT
+
+echo
+echo "⭐️ Ursa, a Decentralized Content Delivery Network (DCDN) ⭐️"
+echo
+echo "★★★★★★★★★ 🌍 Website https://fleek.network"
+echo "★★★★★★★★★ 📚 Documentation https://docs.fleek.network"
+echo "★★★★★★★★★ 💾 Git repository https://github.com/fleek-network/ursa"
+echo "★★★★★★★★★ 🤖 Discord https://discord.gg/fleekxyz"
+echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
+echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
+echo
+
+printf "🤖 Check if operating system is supported\n"
+isOSSupported
+
+echo
+
+echo "A domain name is required to secure the communications with SSL/TLS."
+echo
+echo "Visit your domain name registrar dashboard, create a new domain, and update the A record pointed to the server public IP address."
+echo "If you don't have a domain name (DNS, as ENS or similar are not supported), you can get one from a registrar e.g. https://njal.la, https://name.com, etc."
+echo
+echo "Need help? Read our guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls#domain-name-setup"
+echo "Make sure you complete this step before proceeding, as it'll be verified!"
+echo
+
+while read -rp "Have you updated the DNS settings A record? (yes/no) " answer; do
+  if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+    break;
+  fi
+
+  printf "👹 Oh no! A domain name is required to secure the communications\n"
+
+  exit 1
+done
+
+echo
+
+printf -v prompt "🤖 What's your domain name address?"
+while read -rp "$prompt"$'\n> ' answer; do
+  if confirmDomainName "$answer"; then
+    selectedDomainName="$answer"
+    break
+  fi
+
+  printf "💩 The domain name provided is not valid!\n"
+
+  [[ "$answer" =~ http* ]] && echo "💡 Just type the domain name address, there's no need for http:// or https:// e.g. mynode.example.com"
+done
+
+echo
+
+detectedIpAddress=$(getIpAddress)
+
+if ! validateIpAddress "$detectedIpAddress"; then
+  printf "👹 Oops! We found the server public IP to be invalid (%s), if you found this to be a bug, help us improve by reporting it in our discord channel 🙏\n" "$detectedIpAddress"
+
+  exit 1
+fi
+
+echo
+
+printf "The server public IP address the domain is pointing to is required! We found the public IP address for this machine to be %s\n" "$detectedIpAddress"
+printf -v prompt "🤖 Is the domain name %s pointing to the public IP address %s? (yes/no) " "$selectedDomainName" "$detectedIpAddress"
+while read -rp "$prompt"$'\n> ' answer; do
+  if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+    printf "💩 Oh no! The %s has to point to the server public IP address %s. Alternatively, you can check our guides and install the Ursa CLI on your own, but is likely that the security of your server will be taken into account by the rewards mechanism. To avoid disappointment follow the recomendations!\n" "$selectedDomainName" "$detectedIpAddress"  
+
+    continue
+  fi
+
+  if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+    # Dig is required for the next step
+    if dpkg -s bind9-dnsutils >/dev/null; then
+      while read -rp "🙋‍♀️ bind9-dnsutils is required, can we go ahead and install it? (yes/no) " answer; do
+        if [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+          printf "🤖 Update and upgrade apt-get\n"
+          sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
+
+          if ! sudo DEBIAN_FRONTEND=noninteractive apt-get install bind9-dnsutils -y; then
+            printf "👹 Oops! Failed to install dnsutils for some reason...\n"
+          fi
+
+          break
+        elif [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+          printf "🦖 Exited! bind9-dnsutils is required\n"
+
+          exit 1
+        fi
+
+        printf "💩 We need a yes (y) or a no (n), try again...\n"
+      done
+    fi
+
+    if ! dig "$selectedDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$detectedIpAddress" >/dev/null 2>&1 ; then
+      printf "💩 Oh no! The %s doesn't seem to point to the IP address %s\n" "$selectedDomainName" "$detectedIpAddress"
+
+      continue
+    fi
+
+    selectedIpAddress="$detectedIpAddress"
+
+    break
+  fi
+
+  printf "😅 Sorry! Try that again...\n"
+done
+
+echo
+
+printf "Let's Encrypt provides SSL/TLS Certificates for securing the communications. A valid email address is required by the Let's Encrypt organisation (Fleek Network is not affiliated and does NOT store the email address).\n"
+printf -v prompt "What's your email address?"
+while read -rp "$prompt"$'\n> ' answer; do
+  if confirmEmailAddress "$answer"; then
+    selectedEmailAddress="$answer"
+    break
+  fi
+
+  printf "💩 Oh no! The email address doesn't seem valid, try again...\n"
+done
+
+echo
+
+printf "🤖 The Ursa source-code is going to be stored in the recommended path %s (otherwise, type \"n\" to modify path)\n" "$defaultUrsaPath"
+printf -v prompt "Should we proceed and install to path %s? (yes/no)" "$defaultUrsaPath"
+while read -r -p "$prompt"$'\n> ' answer; do
+  if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+    printf -v prompt "\n🙋‍♀️ What path should we clone the Ursa source-code to?\n"
+    read -r -p "$prompt"$'\n> ' answer
+
+    if [[ -d "$answer" ]]; then
+      printf "👹 Oops! The path %s already exists! This might be annoying but we don't want to mess with your system. So, clear the path and try again...\n" "$answer"
+
+      exit 1
+    fi
+
+    if ! mkdir -p "$selectedUrsaPath"; then
+      printf "👹 Oops! Failed to create the path %s\n" "$selectedUrsaPath"
+
+      exit 1
+    fi
+
+    selectedUrsaPath="$answer"
+
+    break
+  fi
+
+  if [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+    selectedUrsaPath="$defaultUrsaPath"
+    
+    break
+  fi
+done
+
+echo
+
+printf "🤖 Update and upgrade apt-get\n"
+sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
+sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
+
+echo
+
+if ! hasCommand git; then
+  printf "🤖 Install Git\n"
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install git -yq
+fi
+
+echo
+
+printf "🤖 Clone the Ursa source-code (git repository) to %s\n" "$selectedUrsaPath"
+git clone https://github.com/fleek-network/ursa.git "$selectedUrsaPath"
+
+echo
+
+printf "🤖 Change directory to ursa (git repository)\n"
+if ! cd "$selectedUrsaPath"; then
+  printf "👹 Oops! Failed to change directory to %s\n" "$selectedUrsaPath"
+
+  exit 1
+fi
+
+echo
+
+if ! command -vp "cargo" &> /dev/null && ! command -vp "rustc" &> /dev/null; then
+  printf "🤖 Install the Rustup tool\n"
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+  echo
+
+  printf "🤖 Reload PATH environments to include Cargo\n"
+  source "$HOME/.cargo/env"
+  
+  echo
+
+  printf "✅ Rust is installed!\n"
+
+  printf "Cargo version is %s\n" "$(cargo --version)"
+else
+  printf "🤖 Update Rustup\n"
+  rustup update
+fi
+
+echo
+
+printf "🤖 Install the build-essentials, libraries and packages, necessary for compiling general software and for our use-case Ursa CLI\n"
+sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential cmake clang pkg-config libssl-dev protobuf-compiler -yq
+
+echo
+
+if ! hasCommand make; then
+  printf "🤖 Install make\n"
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install make -yq
+fi
+
+# OBS: sccache takes quite long to install
+# after the installation there was no perceived benefit in having it
+# sccache requires build-essentials (install after)
+## printf "🤖 Install Sccache is a ccache-like compiler caching tool\n"
+## cargo install sccache
+
+echo
+
+printf "🤖 Build and install the Ursa CLI\n"
+
+if ! cargo install --jobs "$vCPUsMinusOne" --locked --path crates/ursa; then
+  printf "👹 Oops! Failed to build and install the Ursa CLI. If you are experiencing issues, help us improve by letting us know in our Discord channel\n"
+
+  exit 1
+fi
+
+echo
+
+printf "🤖 Symlink the Ursa CLI binary to /usr/bin. By default rustup should've set the .cargo/bin into your system PATH, in any case we'll attempt to symlink to ensure ursa is available globally\n"
+if [[ -f "$HOME/.cargo/bin/ursa" ]]; then
+  if ! ln -s "$HOME/.cargo/bin/ursa" /usr/bin/ursa; then
+    printf "👹 Oops! Failed to symlink %s to /usr/bin/ursa\n" "$HOME/.cargo/bin/ursa"
+    echo
+    read -rp "😅 After the installation, if ursa cli command is not available globally, then you need to add $HOME/.cargo/bin/ursa to your system PATH or symlink the binary to /usr/bin/ursa, as we've failed to do it. Press ENTER to continue..."
+  fi
+else
+  if ! ln -s "$selectedUrsaPath/target/release/ursa" /usr/bin/ursa; then
+    printf "👹 Oops! Failed to symlink %s to /usr/bin/ursa\n" "$selectedUrsaPath/target/release/ursa"
+    echo
+    read -rp "😅 After the installation, if ursa cli command is not available globally, then you need to add $selectedUrsaPath/target/release/ursa to your system PATH or symlink the binary to /usr/bin/ursa, as we've failed to do it. Press ENTER to continue..."
+  fi
+fi
+
+echo
+
+printf "👌 Great! You have successfully installed required packages, libraries, have compiled and installed Ursa\n\n"
+printf "The Ursa CLI should be available globally, there's a symlink to the /usr/bin/ursa. Which means that from now on you can start a Network Node by typing ursa\n"
+
+echo
+
+printf "🔓 Our wizard will now attempt to install additional applications, to help secure the server e.g. Nginx (reverse proxy), secure the communications with SSL/TLS, etc. Be patient, please 🙏\n"
+
+echo
+
+if ! hasCommand nginx; then
+  printf -v prompt "🤖 Nginx is required, would you like to proceed with the installation? (yes/no)"
+  while read -rp "$prompt"$'\n> ' answer; do
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+      printf "👹 Oops! The install process has terminated. Since you have interrupted, you might want to check the logs and uninstall any unwanted application, library or dependency.\nIf you need help, check our https://docs.fleek.network and use our search feature to help you.\n"
+
+      exit 1
+    fi
+
+    if [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then      
+      selectedNginxSitesAvailablePath="$defaultNginxSitesAvailablePath"
+      selectedNginxSitesEnabledPath="$defaultNginxSitesEnabledPath"
+
+      break
+    fi
+  done
+
+  printf "🤖 Install Nginx\n"
+  sudo DEBIAN_FRONTEND=noninteractive apt install nginx -y
+else
+  printf "💡 The install process encountered Nginx already installed\nIt'll assume that the location for sites-available and sites-enabled are the default paths %s and %s\n" "$defaultNginxSitesAvailablePath" "$defaultNginxSitesEnabledPath"
+  printf -v prompt "Use the default paths for Nginx sites-available and sites-enabled? (yes/no)"
+  while read -rp "$prompt"$'\n> ' answer; do
+    if [[ $answer == [yY][eE][sS] || $answer == [yY] ]]; then
+      selectedNginxSitesAvailablePath="$defaultNginxSitesAvailablePath"
+      selectedNginxSitesEnabledPath="$defaultNginxSitesEnabledPath"
+
+      break;
+    fi
+
+    if [[ $answer == [nN][oO] || $answer == [nN] ]]; then
+      while read -rp "What's the path for sites-available?" answer; do
+        if [[ ! -d "$answer" ]]; then
+          printf "💩 Uh-oh! The directory (%s) was not found. You might want to create it first, try again...\n" "$answer"
+
+          continue;
+        fi
+
+        selectedNginxSitesAvailablePath="$answer"
+        break;
+      done
+
+      while read -rp "What's the path for sites-enabled?" answer; do
+        if [[ ! -d "$answer" ]]; then
+          printf "💩 Uh-oh! The directory (%s) was not found. You might want to create it first, try again...\n" "$answer"
+
+          continue;
+        fi
+
+        selectedNginxSitesEnabledPath="$answer"
+        break;
+      done
+    fi
+  done
+fi
+
+echo
+
+printf "🤖 Remove Nginx default config\n"
+rm -f /etc/nginx/sites-available/default
+rm -f /etc/nginx/sites-enabled/default
+
+echo
+
+if [[ -f "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename" ]]; then
+  rm "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename"
+fi
+
+touch "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename"
+
+if [[ -f "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename" ]]; then
+  rm "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename"
+fi
+
+touch "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename"
+
+printf "🤖 Create the Nginx directories for ACME Challenge\n"
+mkdir -p "/var/www/$selectedDomainName/.well-known/acme-challenge"
+
+echo
+
+printf "🤖 Create ACME Challenge directory health check placeholder\n"
+if [[ -f "/var/www/$selectedDomainName/.well-known/acme-challenge/healthcheck" ]]; then
+  rm "/var/www/$selectedDomainName/.well-known/acme-challenge/healthcheck"
+fi
+echo "${defaultACMEChallengeMsgPlaceholder/_domain_/$selectedDomainName}" >> "/var/www/$selectedDomainName/.well-known/acme-challenge/healthcheck"
+
+echo
+
+printf "🤖 Create the HTTP Nginx config file for Ursa\n"
+echo "
+  proxy_cache_path /cache keys_zone=nodecache:100m levels=1:2 inactive=31536000s max_size=10g use_temp_path=off;
+
+  server {
+      listen 80;
+      listen [::]:80;
+      server_name $selectedDomainName;
+
+      location ^~ /.well-known/acme-challenge/ {
+        # No auth required
+        allow all;
+
+        # Safe type
+        default_type \"text/plain\";
+
+        # Path given to certbot as -w param of the webroot plugin
+        root         /var/www/$selectedDomainName;
+        break;
+      }
+
+      # Hides /acme-challenge subdir returning 404 on all requests
+      # Keep the ending slash
+      location = /.well-known/acme-challenge/ {
+        return 404;
+      }
+
+      location /stub_status {
+        stub_status;
+      }
+
+      proxy_redirect          off;
+      client_max_body_size    10m;
+      client_body_buffer_size 128k;
+      proxy_connect_timeout   90;
+      proxy_send_timeout      90;
+      proxy_read_timeout      90;
+      proxy_buffers           32 128k;
+
+      location / {
+        add_header content-type  application/vnd.ipld.raw;
+        add_header content-type  application/vnd.ipld.car;
+        add_header content-type  application/octet-stream;
+        add_header cache-control public,max-age=31536000,immutable;
+
+        proxy_cache nodecache;
+        proxy_cache_valid 200 31536000s;
+        add_header X-Proxy-Cache \$upstream_cache_status;
+        proxy_cache_methods GET HEAD POST;
+        proxy_cache_key \"\$request_uri|\$request_body\";
+        client_max_body_size 1G;
+
+        proxy_pass http://localhost:4069;
+      }
+  }
+" > "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename"
+
+printf "🤖 Create the HTTPS Nginx config file for Ursa\n"
+echo "
+  server {
+      listen 443 ssl http2;
+      listen [::]:443 ssl http2;
+      server_name $selectedDomainName;
+
+      server_tokens off;
+
+      # SSL code
+      ssl_certificate /etc/letsencrypt/live/$selectedDomainName/fullchain.pem;
+      ssl_certificate_key /etc/letsencrypt/live/$selectedDomainName/privkey.pem;
+
+      include $defaultLetsEncryptOptionsSSLNginxConf;
+      ssl_dhparam $defaultLetsEncryptSSLDHParams;
+
+      location /stub_status {
+        stub_status;
+      }
+
+      location / {
+        add_header content-type  application/vnd.ipld.raw;
+        add_header content-type  application/vnd.ipld.car;
+        add_header content-type  application/octet-stream;
+        add_header cache-control public,max-age=31536000,immutable;
+
+        proxy_cache nodecache;
+        proxy_cache_valid 200 31536000s;
+        add_header X-Proxy-Cache \$upstream_cache_status;
+        proxy_cache_methods GET HEAD POST;
+        proxy_cache_key \"\$request_uri|\$request_body\";
+        client_max_body_size 1G;
+
+        proxy_pass http://localhost:4069;
+      }
+  }
+" > "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename"
+
+printf "🤖 Enable Nginx HTTP config for now, HTTPS will be enabled after the SSL/TLS setup from Let's Encrypt\n"
+if [[ -f "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpConfFilename" ]]; then
+  rm "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpConfFilename"
+fi
+sudo ln -s "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename" "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpConfFilename"
+
+echo
+
+if hasCommand ufw && ufw status | grep -q 'Status: active'; then
+  printf "💡 Detected that ufw is active\n"
+  printf "🤖 HTTP and HTTPS will be set as allowed via ufw\n"
+
+  if ! sudo ufw allow 'Nginx HTTP'; then
+    printf "💩 Uh-oh! Failed to allow Nginx HTTP for some reason...\n"
+
+    read -rp "🙄 Make sure your firewall setup is correct, as the installer is likely to fail. Press ENTER to continue..."
+  fi
+  
+  if ! sudo ufw allow 'Nginx HTTPS'; then
+    printf "💩 Uh-oh! Failed to allow Nginx HTTPS for some reason...\n"
+
+    read -rp "🙄 Make sure your firewall setup is correct, as the installer is likely to fail. Press ENTER to continue..."
+  fi
+else
+  read -rp "🚓 Warning! Make sure you don't have HTTP and HTTPS ports 80 and 443 blocked by a firewall. The installer will fail if you don't have the required ports open. Press ENTER to continue..."
+fi
+
+echo
+
+printf "🤖 Start Nginx\n"
+if systemctl -q is-active nginx; then
+  if ! sudo systemctl restart nginx; then
+    printf "💩 Uh-oh! Failed to restart Nginx for some reason...\n"
+
+    exit 1
+  fi
+else
+  if ! sudo systemctl start nginx; then
+    printf "💩 Uh-oh! Failed to start Nginx for some reason...\n"
+
+    exit 1
+  fi
+fi
+
+echo
+
+printf "🚑 ACME Challenge health-check\n"
+if ! curl -s "http://$selectedDomainName/.well-known/acme-challenge/healthcheck" | grep -q "${defaultACMEChallengeMsgPlaceholder/_domain_/$selectedDomainName}"; then
+  printf "💩 Uh-oh! The ACME Challenge health-check failed for some reason, make sure you don't have any firewall or apps blocking port 80 and 443...\n"
+fi
+
+initCertbot "$selectedDomainName" "$selectedEmailAddress"
+
+echo
+
+printf "🤖 Enable Nginx HTTPS\n"
+if [[ -f "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename" ]]; then
+  rm "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
+fi
+sudo ln -s "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename" "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
+
+if [[ ! -f "$defaultLetsEncryptOptionsSSLNginxConf" ]]; then
+  printf "🧐 Hmm, missing file! Will create Lets Encrypt options SSL Nginx configuration\n"
+  curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > "$defaultLetsEncryptOptionsSSLNginxConf"
+fi
+
+if [[ ! -f "$defaultLetsEncryptSSLDHParams" ]]; then
+  printf "🧐 Hmm, missing file! Will create Lets Encrypt SSLDHParams\n"
+  curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$defaultLetsEncryptSSLDHParams"
+fi
+
+echo
+
+printf "🤖 Nginx reload\n"
+service nginx reload
+
+# Verify the syntax of your configuration edits
+if sudo nginx -t; then
+  sudo systemctl restart nginx
+else
+  printf "👹 Oh no! The Nginx configuration syntax is invalid, looks like a bug. Help us improve and report in our discord channel, please!\n"
+
+  exit 1
+fi
+
+if ! sudo certbot renew --dry-run; then
+  printf "😓 This is very unfortunate! The certbot renewal verification process failed for %s\nThe installer will continue, but is likely that when the SSL/TLS Certificate expires, the scheduled renewal will fail" "$selectedDomainName"
+
+  sleep 8
+fi
+
+while read -rp "🤗 Would you like to start the Network Node now? (yes/no) " answer; do
+  if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+    break;
+  elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+    printf "🤗 All done!\n"
+    exit 1
+  fi
+done
+
+echo
+# The extra-whitespace between emoji and text is intentional
+# used for alignment
+echo "⚠️  Be aware that the Network Node outputs a lot of messages, the messages are quite verbose and you shouldn't worry about it! To keep it simple and not confusing, we'll keep the output of the Node in $defaultUrsaLogPath."
+echo
+echo "The log messages have many types INFO, DEBUG, WARNINGS, ERRORS, etc. Be patient! To understand what they mean, read our Node Health-check guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
+echo
+
+read -rp "Press ENTER to continue..."
+echo
+
+printf "🤖 Start the Fleek Node in the background\n"
+printf "🤖 Create the Ursa log directory %s\n" "$defaultUrsaLogPath"
+if ! mkdir -p "$defaultUrsaLogPath"; then
+  printf "💩 Uh-oh! Failed to create the Ursa system log dir %s for some reason...\n" "$defaultUrsaLogPath"
+fi
+
+ursa 2> "$defaultUrsaDiagnosticLogAbsPath" 1> "$defaultUrsaOutputLogAbsPath" &
+
+printf "🤖 Ursa service availability check\n"
+pingAttempts=0
+while ! curl -s localhost:4069/ping | grep -q pong; do
+  if [[ "$pingAttempts" -gt 10 ]]; then
+    printf "👹 Oh no! Failed to health-check the domain %s\n" "$selectedDomainName"
+
+    break;
+  fi
+
+  printf "🤖 Awaiting Ursa on port 4069...\n"
+  sleep 1
+
+  ((pingAttempts++))
+done
+
+printf "🚑 Health check %s via HTTPS /ping endpoint\n" "$selectedDomainName"
+if ! curl -s https://$selectedDomainName/ping | grep -q pong; then
+  printf "💩 Uh-oh! Failed to health-check the domain %s\n" "$selectedDomainName"
+  echo
+  echo "Learn how to do a Health Check by following the guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
+else
+  printf "✅ Health checked!\n"
+fi
+
+
+cat << "EOF" > "$selectedUrsaPath/$defaultUrsaStartHelperFilename"
+#!/bin/bash
+
+cat << "URSA_START_SCRIPT"
+          _..._
+        .'     '.     _
+      /    .-""-\   _/ \
+    .-|   /:.   |  |   |
+    |  \  |:.   /.-'-./
+    | .-'-;:__.'    =/
+    .'=  *=|URSA _.='
+    /   _.  |    ;
+    ;-.-'|    \   |
+  /   | \    _\  _\
+  \__/'._;.  ==' ==\
+          \    \   |
+          /    /   /
+          /-._/-._/
+          \   `\  \
+            `-._/._/
+URSA_START_SCRIPT
+
+echo
+echo "⭐️ Ursa, a Decentralized Content Delivery Network (DCDN) ⭐️"
+echo
+echo "★★★★★★★★★ 🌍 Website https://fleek.network"
+echo "★★★★★★★★★ 📚 Documentation https://docs.fleek.network"
+echo "★★★★★★★★★ 💾 Git repository https://github.com/fleek-network/ursa"
+echo "★★★★★★★★★ 🤖 Discord https://discord.gg/fleekxyz"
+echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
+echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
+echo
+
+if ! ursa 2> _defaultUrsaDiagnosticLogAbsPath_ 1> _defaultUrsaOutputLogAbsPath_ &; then
+  echo "👹 Oops! Failed to launch Network Node..."
+
+  exit 1
+fi
+
+echo
+echo "🌈 The Fleek Network Node is running!"
+echo
+echo "You can watch the Node output by running the command:"
+echo "tail -f _defaultUrsaOutputLogAbsPath_"
+echo
+echo "For diagnostics run the command:"
+echo "tail -f _defaultUrsaDiagnosticLogAbsPath_"
+echo
+echo "Since the Node was started in the background, you can find the job number by:"
+echo "jobs -f"
+echo
+echo "Bring it to the foreground by:"
+echo "fg %<NUMBER>"
+echo
+echo "Here's an example:"
+echo "fg %1"
+echo
+echo "You can stop Ursa by:"
+echo "pkill -9 <PID or NAME>"
+echo
+echo "Here's an example:"
+echo "pkill -9 ursa"
+echo
+echo "Check our documentation site to learn more!"
+echo
+echo "Launch the Network Node by running:"
+echo "./_selectedUrsaPath_/_defaultUrsaStartHelperFilename_"
+echo
+EOF
+
+chmod +x "$selectedUrsaPath/$defaultUrsaStartHelperFilename"
+
+sed -i "s|_defaultUrsaDiagnosticLogAbsPath_|$defaultUrsaDiagnosticLogAbsPath}|g" "$selectedUrsaPath/$defaultUrsaStartHelperFilename"
+sed -i "s|_defaultUrsaOutputLogAbsPath_|$defaultUrsaOutputLogAbsPath|g" "$selectedUrsaPath/$defaultUrsaStartHelperFilename"
+sed -i "s|_selectedUrsaPath_|$selectedUrsaPath|g" "$selectedUrsaPath/$defaultUrsaStartHelperFilename"
+sed -i "s|_defaultUrsaStartHelperFilename_|$defaultUrsaStartHelperFilename|g" "$selectedUrsaPath/$defaultUrsaStartHelperFilename"
+
+echo
+echo "🌈 The Fleek Network Node is running!"
+echo
+echo "You can watch the Node output by running the command:"
+echo "tail -f $defaultUrsaOutputLogAbsPath"
+echo
+echo "For diagnostics run the command:"
+echo "tail -f $defaultUrsaDiagnosticLogAbsPath"
+echo
+echo "Since the Node was started in the background, you can find the job number by:"
+echo "jobs -f"
+echo
+echo "Bring it to the foreground by:"
+echo "fg %<NUMBER>"
+echo
+echo "Here's an example:"
+echo "fg %1"
+echo
+echo "You can stop Ursa by:"
+echo "pkill -9 <PID or NAME>"
+echo
+echo "Here's an example:"
+echo "pkill -9 ursa"
+echo
+echo "Launch the Network Node by running the helper script in:"
+echo "$selectedUrsaPath/$defaultUrsaStartHelperFilename"
+echo
+echo "Here's an example, change directory to $selectedUrsaPath and run:"
+echo "./$defaultUrsaStartHelperFilename"
+echo
+echo "✨ Done! Learn more by checking our guides at https://docs.fleek.network"
+echo

@@ -1798,6 +1798,7 @@ createUrsaInitialConfig() {
   # Identity the OS
   os=$(identifyOS)
 
+  # TODO: bug found this should be the distro
   isOSSupported "$os"
 
   # Show disclaimer
