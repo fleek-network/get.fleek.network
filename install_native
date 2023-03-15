@@ -829,7 +829,7 @@ done
 echo
 # The extra-whitespace between emoji and text is intentional
 # used for alignment
-echo "⚠️  Be aware that the Network Node outputs a lot of messages, the messages are quite verbose and you shouldn't worry about it!"
+echo "⚠️  Be aware that the Network Node outputs a lot of messages, the messages are quite verbose and you shouldn't worry about it! To keep it simple and not confusing, we'll keep the output of the Node in $defaultUrsaLogPath."
 echo
 echo "The log messages have many types INFO, DEBUG, WARNINGS, ERRORS, etc. Be patient! To understand what they mean, read our Node Health-check guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
 echo
