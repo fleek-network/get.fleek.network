@@ -738,16 +738,28 @@ fi
 
 ursa 2> "$defaultUrsaDiagnosticLogAbsPath" 1> "$defaultUrsaOutputLogAbsPath" &
 
+printf "🤖 Ursa service availability check\n"
+pingAttempts=0
+while ! curl localhost:4069/ping | grep -q pong; do
+  if [[ "$pingAttempts" -gt 10 ]]; then
+    break;
+  fi
+
+  printf "🤖 Awaiting Ursa on port 4069...\n"
+  sleep 1
+
+  ((pingAttempts++))
+done
+
 printf "🚑 Health check %s via HTTPS /ping endpoint\n" "$selectedDomainName"
 if ! curl -s https://$selectedDomainName/ping | grep -q pong; then
-  printf "👹 Oh no! Failed to health-check the domain %s\n" "$selectedDomainName"
+  printf "💩 Uh-oh! Failed to health-check the domain %s\n" "$selectedDomainName"
   echo
-  echo "Check our Node Health-check guide to help troubleshoot https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
-
-  exit 1
+  echo "Learn how to do a Health Check by following the guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
+else
+  printf "✅ Health checked!\n"
 fi
 
-printf "✅ Health checked!\n"
 
 cat << "EOF" > "$selectedUrsaPath/$defaultUrsaStartHelperFilename"
 #!/bin/bash
