@@ -86,7 +86,7 @@ initCertbot() {
   domain="$1"
   email="$2"
 
-  if ! snap --version > /dev/null; then
+  if ! hasCommand snap; then
     printf "🤖 Install Snap package manager\n"
     sudo DEBIAN_FRONTEND=noninteractive apt-get install snapd -yq
   else
@@ -752,7 +752,7 @@ ursa 2> "$defaultUrsaDiagnosticLogAbsPath" 1> "$defaultUrsaOutputLogAbsPath" &
 
 printf "🤖 Ursa service availability check\n"
 pingAttempts=0
-while ! curl localhost:4069/ping | grep -q pong; do
+while ! curl -s localhost:4069/ping | grep -q pong; do
   if [[ "$pingAttempts" -gt 10 ]]; then
     printf "👹 Oh no! Failed to health-check the domain %s\n" "$selectedDomainName"
 
@@ -881,4 +881,6 @@ echo "$selectedUrsaPath/$defaultUrsaStartHelperFilename"
 echo
 echo "Here's an example, change directory to $selectedUrsaPath and run:"
 echo "./$defaultUrsaStartHelperFilename"
+echo
+echo "✨ Done! Learn more by checking our guides at https://docs.fleek.network"
 echo
