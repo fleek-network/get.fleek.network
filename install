@@ -63,10 +63,10 @@ echo
 echo "Select how to run the Fleek Network:"
 echo
 echo "1) 🔫 Docker Stack (recommended)"
-echo "2) 🖥️ Natively"
+echo "2) 👾 Natively"
 echo
 
-while read -rp "Type your selection > " answer; do
+while read -rp "Type your selection number > " answer; do
   if [[ $answer -eq 1 ]]; then
     echo
     read -rp "🧑‍🚀 Nice choice terrestrial! We'll launch the process, press ENTER to continue..."
@@ -80,6 +80,7 @@ while read -rp "Type your selection > " answer; do
   elif [[ $answer -eq 2 ]]; then
     echo
     echo "🔭 Nice one astrophysicist! Before we launch the process, just to let you know that the Ursa CLI (that we use to start the Node Network) will be compiled from the Rust 🦀 source code. Depending on your spaceship specifications this can be quite slow, be patient!"
+    echo
     read -rp "Let's launch the process, press ENTER to continue..."
 
     curl "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$useBranch/scripts/install_native" > install_native

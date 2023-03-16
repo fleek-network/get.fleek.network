@@ -356,7 +356,7 @@ while read -rp "$prompt"$'\n> ' answer; do
 
   if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
     # Dig is required for the next step
-    if dpkg -s bind9-dnsutils >/dev/null; then
+    if ! dpkg -s bind9-dnsutils >/dev/null; then
       while read -rp "🙋‍♀️ bind9-dnsutils is required, can we go ahead and install it? (yes/no) " answer; do
         if [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
           printf "🤖 Update and upgrade apt-get\n"
