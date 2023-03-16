@@ -1588,6 +1588,10 @@ replaceNginxConfFileForHttp() {
 
           proxy_pass http://ursa:4069;
         }
+        
+        location /metrics {
+          proxy_pass http://ursa:4069;
+        }
     }
   " > "$defaultDockerFullNodeRelativePath"/data/nginx/http.conf
 }
@@ -1625,7 +1629,10 @@ replaceNginxConfFileForHttps() {
           proxy_cache_key \"\$request_uri|\$request_body\";
           client_max_body_size 1G;
 
-
+          proxy_pass http://ursa:4069;
+        }
+        
+        location /metrics {
           proxy_pass http://ursa:4069;
         }
     }

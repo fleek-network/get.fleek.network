@@ -685,6 +685,10 @@ echo "
 
         proxy_pass http://localhost:4069;
       }
+      
+      location /metrics {
+        proxy_pass http://localhost:4069
+      }
   }
 " > "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename"
 
@@ -722,6 +726,10 @@ echo "
         client_max_body_size 1G;
 
         proxy_pass http://localhost:4069;
+      }
+      
+      location /metrics {
+        proxy_pass http://localhost:4069
       }
   }
 " > "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename"
