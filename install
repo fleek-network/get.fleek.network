@@ -18,7 +18,19 @@
 #
 # Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
 
+# Default to branch "main"
+useBranch=${USE_BRANCH_NAME_FOR_GH_RAW="main"}
+
+# Workdir
+if ! cd "$(mktemp -d)"; then
+  echo "👹 Oops! We tried to create a temporary directory to host some install artifacts but failed for some reason..."
+
+  exit 1
+fi
+
+# The white space before and after is intentional
 cat << "ART"
+
   ⭐️ Ursa, a Decentralized Content Delivery Network (DCDN) ⭐️
 
         ,-.
@@ -38,33 +50,42 @@ cat << "ART"
       // || \\
   __//__||__\\__
   '--------------' URSA
+
 ART
 
 echo
-echo "👽 Welcome ultra-terrestrial being!"
+echo "👽 Welcome ultra-terrestrial being 👽"
 echo
-echo "We are ready to launch the communication channel with the Fleek Network, but you need to make a choice!"
-echo "A Network Node can be run in a Docker Container, or installed natively in your operating system."
-echo "Most Node Operators are using the Docker Stack (if you stick with the recommendations, this can be quick 🚀 to setup), other's have a preferrence for running it Natively (might take longer to setup, as it requires to build the Ursa CLI binary from the Rust 🦀 source-code)"
+echo "We are ready to launch the communication channel with the Fleek Network 📡, but you need to make a choice!"
+echo "There are two options, where option number 1 is to run a Network Node un a Docker Container, or option number 2, installed natively in your operating system."
+echo "Most Node Operators are using the Docker Stack (if you stick with the recommendations, this is the quickest way to setup 🚀), while other's have a preference for running Natively (might take longer to set up, as it requires building the Ursa CLI binary from the Rust 🦀 source-code)."
 echo
-echo "Select how to run the Fleek Network"
+echo "Select how to run the Fleek Network:"
 echo
-echo "1) Docker Stack (recommended)"
-echo "2) Natively"
+echo "1) 🔫 Docker Stack (recommended)"
+echo "2) 🖥️ Natively"
 echo
 
-while read -rp "> " answer; do
+while read -rp "Type your selection > " answer; do
   if [[ $answer -eq 1 ]]; then
+    echo
     read -rp "🧑‍🚀 Nice choice terrestrial! We'll launch the process, press ENTER to continue..."
 
-    # TODO: curl pipe launch docker stack installer
+    curl "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$useBranch/scripts/install_docker" > install_docker
+    chmod +x install_docker
+
+    ./install_docker
 
     break
   elif [[ $answer -eq 2 ]]; then
-    echo "🔭 Nice one astrophysicist! Before we launch the process, just to let you know that the Ursa CLI (that we use to start the Node Network) will be compiled from the Rust 🦀 source-code. Depending on your spaceship specifications this can be quite slow, be patient!"
+    echo
+    echo "🔭 Nice one astrophysicist! Before we launch the process, just to let you know that the Ursa CLI (that we use to start the Node Network) will be compiled from the Rust 🦀 source code. Depending on your spaceship specifications this can be quite slow, be patient!"
     read -rp "Let's launch the process, press ENTER to continue..."
 
-    # TODO: curl pipe launch native installer
+    curl "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$useBranch/scripts/install_native" > install_native
+    chmod +x install_native
+
+    ./install_native
 
     break;
   fi
