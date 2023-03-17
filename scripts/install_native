@@ -531,24 +531,11 @@ printf "🔓 Our wizard will now attempt to install additional applications, to 
 echo
 
 if ! hasCommand nginx; then
-  printf -v prompt "🤖 Nginx is required, would you like to proceed with the installation? (yes/no)"
-  while read -rp "$prompt"$'\n> ' answer; do
-    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
-      printf "👹 Oops! The install process has terminated. Since you have interrupted, you might want to check the logs and uninstall any unwanted application, library or dependency.\nIf you need help, check our https://docs.fleek.network and use our search feature to help you.\n"
-
-      exit 1
-    fi
-
-    if [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then      
-      selectedNginxSitesAvailablePath="$defaultNginxSitesAvailablePath"
-      selectedNginxSitesEnabledPath="$defaultNginxSitesEnabledPath"
-
-      break
-    fi
-  done
+  selectedNginxSitesAvailablePath="$defaultNginxSitesAvailablePath"
+  selectedNginxSitesEnabledPath="$defaultNginxSitesEnabledPath"
 
   printf "🤖 Install Nginx\n"
-  sudo DEBIAN_FRONTEND=noninteractive apt install nginx -y
+  sudo DEBIAN_FRONTEND=noninteractive apt install nginx -yq
 else
   printf "💡 The install process encountered Nginx already installed\nIt'll assume that the location for sites-available and sites-enabled are the default paths %s and %s\n" "$defaultNginxSitesAvailablePath" "$defaultNginxSitesEnabledPath"
   printf -v prompt "Use the default paths for Nginx sites-available and sites-enabled? (yes/no)"
@@ -621,105 +608,105 @@ echo
 
 printf "🤖 Create the HTTP Nginx config file for Ursa\n"
 echo "
-  proxy_cache_path /cache keys_zone=nodecache:100m levels=1:2 inactive=31536000s max_size=10g use_temp_path=off;
+proxy_cache_path /cache keys_zone=nodecache:100m levels=1:2 inactive=31536000s max_size=10g use_temp_path=off;
 
-  server {
-      listen 80;
-      listen [::]:80;
-      server_name $selectedDomainName;
+server {
+  listen 80;
+  listen [::]:80;
+  server_name $selectedDomainName;
 
-      location ^~ /.well-known/acme-challenge/ {
-        # No auth required
-        allow all;
+  location ^~ /.well-known/acme-challenge/ {
+    # No auth required
+    allow all;
 
-        # Safe type
-        default_type \"text/plain\";
+    # Safe type
+    default_type \"text/plain\";
 
-        # Path given to certbot as -w param of the webroot plugin
-        root         /var/www/$selectedDomainName;
-        break;
-      }
-
-      # Hides /acme-challenge subdir returning 404 on all requests
-      # Keep the ending slash
-      location = /.well-known/acme-challenge/ {
-        return 404;
-      }
-
-      location /stub_status {
-        stub_status;
-      }
-
-      proxy_redirect          off;
-      client_max_body_size    10m;
-      client_body_buffer_size 128k;
-      proxy_connect_timeout   90;
-      proxy_send_timeout      90;
-      proxy_read_timeout      90;
-      proxy_buffers           32 128k;
-
-      location / {
-        add_header content-type  application/vnd.ipld.raw;
-        add_header content-type  application/vnd.ipld.car;
-        add_header content-type  application/octet-stream;
-        add_header cache-control public,max-age=31536000,immutable;
-
-        proxy_cache nodecache;
-        proxy_cache_valid 200 31536000s;
-        add_header X-Proxy-Cache \$upstream_cache_status;
-        proxy_cache_methods GET HEAD POST;
-        proxy_cache_key \"\$request_uri|\$request_body\";
-        client_max_body_size 1G;
-
-        proxy_pass http://localhost:4069;
-      }
-      
-      location /metrics {
-        proxy_pass http://localhost:4069
-      }
+    # Path given to certbot as -w param of the webroot plugin
+    root         /var/www/$selectedDomainName;
+    break;
   }
+
+  # Hides /acme-challenge subdir returning 404 on all requests
+  # Keep the ending slash
+  location = /.well-known/acme-challenge/ {
+    return 404;
+  }
+
+  location /stub_status {
+    stub_status;
+  }
+
+  proxy_redirect          off;
+  client_max_body_size    10m;
+  client_body_buffer_size 128k;
+  proxy_connect_timeout   90;
+  proxy_send_timeout      90;
+  proxy_read_timeout      90;
+  proxy_buffers           32 128k;
+
+  location / {
+    add_header content-type  application/vnd.ipld.raw;
+    add_header content-type  application/vnd.ipld.car;
+    add_header content-type  application/octet-stream;
+    add_header cache-control public,max-age=31536000,immutable;
+
+    proxy_cache nodecache;
+    proxy_cache_valid 200 31536000s;
+    add_header X-Proxy-Cache \$upstream_cache_status;
+    proxy_cache_methods GET HEAD POST;
+    proxy_cache_key \"\$request_uri|\$request_body\";
+    client_max_body_size 1G;
+
+    proxy_pass http://localhost:4069;
+  }
+  
+  location /metrics {
+    proxy_pass http://localhost:4069;
+  }
+}
 " > "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename"
 
 printf "🤖 Create the HTTPS Nginx config file for Ursa\n"
 echo "
-  server {
-      listen 443 ssl http2;
-      listen [::]:443 ssl http2;
-      server_name $selectedDomainName;
+server {
+  listen 443 ssl http2;
+  listen [::]:443 ssl http2;
+  server_name $selectedDomainName;
 
-      server_tokens off;
+  server_tokens off;
 
-      # SSL code
-      ssl_certificate /etc/letsencrypt/live/$selectedDomainName/fullchain.pem;
-      ssl_certificate_key /etc/letsencrypt/live/$selectedDomainName/privkey.pem;
+  # SSL code
+  ssl_certificate /etc/letsencrypt/live/$selectedDomainName/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/$selectedDomainName/privkey.pem;
 
-      include $defaultLetsEncryptOptionsSSLNginxConf;
-      ssl_dhparam $defaultLetsEncryptSSLDHParams;
+  include $defaultLetsEncryptOptionsSSLNginxConf;
+  ssl_dhparam $defaultLetsEncryptSSLDHParams;
 
-      location /stub_status {
-        stub_status;
-      }
-
-      location / {
-        add_header content-type  application/vnd.ipld.raw;
-        add_header content-type  application/vnd.ipld.car;
-        add_header content-type  application/octet-stream;
-        add_header cache-control public,max-age=31536000,immutable;
-
-        proxy_cache nodecache;
-        proxy_cache_valid 200 31536000s;
-        add_header X-Proxy-Cache \$upstream_cache_status;
-        proxy_cache_methods GET HEAD POST;
-        proxy_cache_key \"\$request_uri|\$request_body\";
-        client_max_body_size 1G;
-
-        proxy_pass http://localhost:4069;
-      }
-      
-      location /metrics {
-        proxy_pass http://localhost:4069
-      }
+  location /stub_status {
+    stub_status;
   }
+
+  location / {
+    add_header content-type  application/vnd.ipld.raw;
+    add_header content-type  application/vnd.ipld.car;
+    add_header content-type  application/octet-stream;
+    add_header cache-control public,max-age=31536000,immutable;
+
+    proxy_cache nodecache;
+    proxy_cache_valid 200 31536000s;
+    add_header X-Proxy-Cache \$upstream_cache_status;
+    proxy_cache_methods GET HEAD POST;
+    proxy_cache_key \"\$request_uri|\$request_body\";
+    client_max_body_size 1G;
+
+    proxy_pass http://localhost:4069;
+  }
+  
+  location /metrics {
+    proxy_pass http://localhost:4069;
+  }
+}
 " > "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename"
 
 printf "🤖 Enable Nginx HTTP config for now, HTTPS will be enabled after the SSL/TLS setup from Let's Encrypt\n"
