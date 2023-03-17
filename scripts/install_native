@@ -851,8 +851,8 @@ MemoryMax=8G
 RestartSec=15s
 Restart=always
 ExecStart=/usr/bin/ursa
-StandardOutput=append:$defaultUrsaDiagnosticLogAbsPath
-StandardError=append:$defaultUrsaOutputLogAbsPath
+StandardOutput=append:$defaultUrsaOutputLogAbsPath
+StandardError=append:$defaultUrsaDiagnosticLogAbsPath
 
 [Install]
 WantedBy=multi-user.target
@@ -860,6 +860,9 @@ URSA_SERVICE
 
 printf "🤖 Set service file permissions\n"
 sudo chmod 644 "$defaultUrsaSystemdServicePath"
+
+printf "🤖 System control daemon reload\n"
+sudo systemctl daemon-reload
 
 printf "🤖 Start the Ursa service\n"
 sudo systemctl start "$defaultUrsaSystemdServiceName"
@@ -901,11 +904,11 @@ echo "For diagnostics run the command:"
 echo "tail -f $defaultUrsaDiagnosticLogAbsPath"
 echo
 echo "Launch or stop the Network Node by running:"
-echo "sudo service stop ursa"
-echo "sudo service restart ursa"
+echo "sudo systemctl stop ursa"
+echo "sudo systemctl restart ursa"
 echo
 echo "Check the status of the service:"
-echo "sudo service status ursa"
+echo "sudo systemctl status ursa"
 echo
 echo "Learn more by checking our guides at https://docs.fleek.network"
 echo "✨ That's all!"
