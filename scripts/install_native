@@ -356,26 +356,15 @@ while read -rp "$prompt"$'\n> ' answer; do
 
   if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
     # Dig is required for the next step
-    if dpkg -s bind9-dnsutils >/dev/null; then
-      while read -rp "🙋‍♀️ bind9-dnsutils is required, can we go ahead and install it? (yes/no) " answer; do
-        if [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
-          printf "🤖 Update and upgrade apt-get\n"
-          sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
-          sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
+    if ! dpkg -s bind9-dnsutils >/dev/null; then
+      echo "🙋‍♀️ bind9-dnsutils is required, we'll go ahead and install it"
+      printf "🤖 Update and upgrade apt-get\n"
+      sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
+      sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
 
-          if ! sudo DEBIAN_FRONTEND=noninteractive apt-get install bind9-dnsutils -y; then
-            printf "👹 Oops! Failed to install dnsutils for some reason...\n"
-          fi
-
-          break
-        elif [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
-          printf "🦖 Exited! bind9-dnsutils is required\n"
-
-          exit 1
-        fi
-
-        printf "💩 We need a yes (y) or a no (n), try again...\n"
-      done
+      if ! sudo DEBIAN_FRONTEND=noninteractive apt-get install bind9-dnsutils -y; then
+        printf "👹 Oops! Failed to install dnsutils for some reason...\n"
+      fi
     fi
 
     if ! dig "$selectedDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$detectedIpAddress" >/dev/null 2>&1 ; then
