@@ -51,7 +51,7 @@ fi
 
 hasPortsAvailable=0
 for port in "${requiredPorts[@]}"; do
-  if lsof -i :"$port"; then
+  if lsof -i :"$port" >/dev/null; then
     printf "💩 Uh-oh! The port %s is required but is in use...\n" "$port"
 
     hasPortsAvailable=1
@@ -746,7 +746,8 @@ if hasCommand ufw && ufw status | grep -q 'Status: active'; then
     read -rp "🙄 Make sure your firewall setup is correct, as the installer is likely to fail. Press ENTER to continue..."
   fi
 else
-  read -rp "🚓 Warning! Make sure you don't have HTTP and HTTPS ports 80 and 443 blocked by a firewall. The installer will fail if you don't have the required ports open. Press ENTER to continue..."
+  printf -v prompt "🚓 Warning! Make sure you don't have ports (%s) blocked by a firewall. The installer will fail if you don't have the required ports open! Press ENTER to continue..." "$requiredPorts[*]"
+  read -rp "$prompt"
 fi
 
 echo
@@ -770,7 +771,7 @@ echo
 
 printf "🚑 ACME Challenge health-check\n"
 if ! curl -s "http://$selectedDomainName/.well-known/acme-challenge/healthcheck" | grep -q "${defaultACMEChallengeMsgPlaceholder/_domain_/$selectedDomainName}"; then
-  printf "💩 Uh-oh! The ACME Challenge health-check failed for some reason, make sure you don't have any firewall or apps blocking port 80 and 443...\n"
+  printf "💩 Uh-oh! The ACME Challenge health-check failed for some reason, make sure you don't have any firewall or apps blocking ports %s...\n" "${requiredPorts[*]}"
 fi
 
 initCertbot "$selectedDomainName" "$selectedEmailAddress"
@@ -895,11 +896,11 @@ echo "For diagnostics run the command:"
 echo "tail -f $defaultUrsaDiagnosticLogAbsPath"
 echo
 echo "Launch or stop the Network Node by running:"
-echo "sudo systemctl stop ursa"
-echo "sudo systemctl restart ursa"
+echo "sudo service stop ursa"
+echo "sudo service restart ursa"
 echo
 echo "Check the status of the service:"
-echo "sudo systemctl status ursa"
+echo "sudo service status ursa"
 echo
 echo "Learn more by checking our guides at https://docs.fleek.network"
 echo "✨ That's all!"
