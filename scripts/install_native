@@ -850,7 +850,9 @@ Type=simple
 MemoryMax=8G
 RestartSec=15s
 Restart=always
-ExecStart=/usr/bin/ursa 2> "$defaultUrsaDiagnosticLogAbsPath" 1> "$defaultUrsaOutputLogAbsPath"
+ExecStart=/usr/bin/ursa
+StandardOutput=append:$defaultUrsaDiagnosticLogAbsPath
+StandardError=append:$defaultUrsaOutputLogAbsPath
 URSA_SERVICE
 
 printf "🤖 Set service file permissions\n"
