@@ -738,7 +738,7 @@ if hasCommand ufw && ufw status | grep -q 'Status: active'; then
     read -rp "🙄 Make sure your firewall setup is correct, as the installer is likely to fail. Press ENTER to continue..."
   fi
 else
-  printf -v prompt "🚓 Warning! Make sure you don't have ports (%s) blocked by a firewall. The installer will fail if you don't have the required ports open! Press ENTER to continue..." "$requiredPorts[*]"
+  printf -v prompt "🚓 Warning! Make sure you don't have ports (%s) blocked by a firewall. The installer will fail if you don't have the required ports open! Press ENTER to continue..." "${requiredPorts[*]}"
   read -rp "$prompt"
 fi
 
