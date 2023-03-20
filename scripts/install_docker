@@ -58,8 +58,8 @@ defaultUrsaPath="$HOME/fleek-network/ursa"
 defaultUrsaLatestImage="ghcr.io/fleek-network/ursa:latest"
 defaultDockerFullNodeRelativePath="./docker/full-node"
 defaultDockerComposeYmlRelativePath="$defaultDockerFullNodeRelativePath/docker-compose.yml"
-defaultMinMemoryBytesRequired=8000000
-defaultMinDiskSpaceBytesRequired=10000000
+defaultMinMemoryKBytesRequired=8000000
+defaultMinDiskSpaceKBytesRequired=1000000
 defaultUrsaConfigFilename="config.toml"
 defaultUrsaBasePath="$HOME/.ursa"
 defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
@@ -789,7 +789,7 @@ checkSystemHasRecommendedResources() {
   mem=$(awk '/^MemTotal:/{print $2}' /proc/meminfo);
   partDiskSpace=$(df --output=avail -B 1 "$PWD" |tail -n 1)
 
-  if [[ ("$mem" -lt "$defaultMinMemoryBytesRequired") ]] || [[ ( "$partDiskSpace" -lt "$defaultMinDiskSpaceBytesRequired" ) ]]; then
+  if [[ ("$mem" -lt "$defaultMinMemoryKBytesRequired") ]] || [[ ( "$partDiskSpace" -lt "$defaultMinDiskSpaceKBytesRequired" ) ]]; then
     echo "😬 ${transl[check_sys_has_recommended_resources_oh_no_need_at_least]}"
     echo
     printf -v prompt "\n\n🤖 %s?" \
