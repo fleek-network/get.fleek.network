@@ -64,6 +64,9 @@ if [[ "$hasPortsAvailable" -eq 1 ]]; then
   exit 1
 fi
 
+# Date
+dateRuntime=$(date '+%Y%m%d%H%M%S')
+
 # Defaults
 defaultUrsaPath="$HOME/fleek-network/ursa"
 defaultNginxSitesAvailablePath="/etc/nginx/sites-available"
@@ -80,6 +83,10 @@ defaultUrsaDiagnosticLogAbsPath="$defaultUrsaLogPath/$defaultUrsaDiagnosticFilen
 defaultUrsaOutputLogAbsPath="$defaultUrsaLogPath/$defaultUrsaOutputFilename"
 defaultUrsaSystemdServiceName="ursa"
 defaultUrsaSystemdServicePath="/etc/systemd/system/$defaultUrsaSystemdServiceName.service"
+defaultUrsaConfigFilename="config.toml"
+defaultUrsaBasePath="$HOME/.ursa"
+defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
+defaultUrsaConfigBackupPath="$defaultUrsaConfigPath.backup.$dateRuntime"
 
 # App state
 selectedUrsaPath="$defaultUrsaPath"
@@ -263,6 +270,18 @@ getIpAddress() {
 
   echo "ERROR_IP_ADDRESS_NOT_AVAILABLE"
 }
+
+if [[ -f "$defaultUrsaConfigPath" ]]; then
+  printf "💩 Uh oh! The installer found that a Ursa config directory already exists at %s.\nA backup was created at %s..." "$defaultUrsaConfigPath" "$defaultUrsaConfigBackupPath"
+
+  if ! cp "$defaultUrsaConfigPath" "$defaultUrsaConfigBackupPath"; then
+    echo "👹 Oops! Failed to create config.toml backup..."
+
+    exit 1
+  fi
+
+  echo "✅ Done! Backup file was created $defaultUrsaConfigBackupPath"
+fi
 
 cat << "URSA_START_SCRIPT"
           _..._
@@ -799,6 +818,35 @@ if ! sudo certbot renew --dry-run; then
   printf "😓 This is very unfortunate! The certbot renewal verification process failed for %s\nThe installer will continue, but is likely that when the SSL/TLS Certificate expires, the scheduled renewal will fail" "$selectedDomainName"
 
   sleep 8
+fi
+
+printf "🤖 Set Ursa server IP Address in the configuration file\n"
+if [[ -f "$defaultUrsaConfigPath" ]]; then
+  echo "🤖 The installer found that a Ursa config directory already exists at $defaultUrsaConfigPath. The install wizard will update the addresses in the config.toml with your server IP addresss."
+
+  if ! sed -i "s|addresses =.*|addresses = [\"/ip4/$selectedIpAddress/tcp/80\"]|" "$defaultUrsaConfigPath"; then
+    printf "👹 Oh no! Failed to update the addresses with your server IP adress (%s) in the config.toml\n" "$selectedIpAddress"
+
+    exit 1
+  fi
+else
+  if ! mkdir -p "$defaultUrsaBasePath"; then
+    printf "👹 Oh no! Failed to create the directory %s\n" "$defaultUrsaBasePath"
+
+    exit 1
+  fi
+
+  if ! touch "$defaultUrsaConfigPath"; then
+    printf "👹 Oh no! Failed to create the config.toml at %s\n" "$defaultUrsaBasePath"
+
+    exit 1
+  fi
+
+  if ! echo "[server_config]" >> "$defaultUrsaConfigPath" || ! echo "addresses = [\"/ip4/$selectedIpAddress/tcp/80\"]" >> "$defaultUrsaConfigPath"; then
+    printf "👹 Oh no! Failed to populate the config file %s\n" "$defaultUrsaConfigPath"
+
+    exit 1
+  fi
 fi
 
 while read -rp "🤗 Would you like to start the Network Node now? (yes/no) " answer; do
