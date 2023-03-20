@@ -174,3 +174,4 @@ hi["verify_user_has_domain_uh_oh_provide_valid_ip"]="उह ओह! कृपय
 hi["verify_user_has_domain_provide_ip_of_machine_1_of_3"]="हमें उस मशीन का आईपी पता प्रदान करें जहां आप नोड स्थापित कर रहे हैं। हमने देखा है कि यह मशीन सार्वजनिक आईपी पता _detectedIpAddress_ है (हम इसे डिफ़ॉल्ट के रूप में उपयोग करेंगे)"
 hi["show_docker_stack_log_stack_logs_seems_a_lot"]="बहुत लगता है? हमारे प्रलेखन साइट में सभी आदेश और बहुत कुछ उपलब्ध हैं!"
 hi["on_latest_preference_mind_ursa_time_build_long"]="ठीक है! याद रखें, आपकी मशीन के आधार पर उरसा छवि को बनने में कुछ समय लग सकता है"
+hi["on_update_ursa_config_ip_address_update_error"]="उफ़! मामूली समस्या, उरसा कॉन्फ़िगरेशन को सर्वर आईपी _serverIpAddress_ के साथ अपडेट करने में विफल"

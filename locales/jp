@@ -174,3 +174,4 @@ jp["verify_user_has_domain_uh_oh_provide_valid_ip"]="ええとああ！有効な
 jp["verify_user_has_domain_provide_ip_of_machine_1_of_3"]="ノードをインストールするマシンの IP アドレスを提供してください。このマシンのパブリック IP アドレスは _detectedIpAddress_ であることがわかりました (これをデフォルトとして使用します)。"
 jp["show_docker_stack_log_stack_logs_seems_a_lot"]="多いような？すべてのコマンドとその他の機能は、ドキュメント サイトで入手できます。"
 jp["on_latest_preference_mind_ursa_time_build_long"]="Ok！お使いのマシンによっては、Ursa イメージのビルドに時間がかかる場合があります。"
+jp["on_update_ursa_config_ip_address_update_error"]="おっとっと！マイナーな問題、サーバー IP _serverIpAddress_ で Ursa 構成を更新できませんでした"

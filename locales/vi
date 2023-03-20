@@ -174,3 +174,4 @@ vi["verify_user_has_domain_uh_oh_provide_valid_ip"]="Ồ ồ! Vui lòng cung c�
 vi["verify_user_has_domain_provide_ip_of_machine_1_of_3"]="Cung cấp cho chúng tôi địa chỉ IP của máy mà bạn đang cài đặt Node. Chúng tôi nhận thấy rằng địa chỉ IP công khai của máy này là _detectedIpAddress_ (chúng tôi sẽ sử dụng địa chỉ này làm mặc định)"
 vi["show_docker_stack_log_stack_logs_seems_a_lot"]="Có vẻ nhiều? Tất cả các lệnh và nhiều hơn nữa đều có sẵn trong trang tài liệu của chúng tôi!"
 vi["on_latest_preference_mind_ursa_time_build_long"]="Được rồi! Hãy nhớ rằng, hình ảnh Ursa có thể mất một chút thời gian để tạo tùy thuộc vào máy của bạn"
+vi["on_update_ursa_config_ip_address_update_error"]="Ối! Sự cố nhỏ, không thể cập nhật cấu hình Ursa với ip máy chủ _serverIpAddress_"

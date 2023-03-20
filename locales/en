@@ -174,3 +174,4 @@ en["on_latest_preference_directory_not_empty"]="The directory _selectedUrsaPath_
 en["on_latest_preference_if_stuck_clear_location_1_of_2"]="If you are stuck on this, clear the desired location before retrying"
 en["on_latest_preference_if_stuck_clear_location_2_of_2"]="e.g., if you chose to install in the default _defaultUrsaPath_ clear it, as the assisted installer does not do deletes."
 en["on_latest_preference_success_install_completed"]="The installation process has completed!"
+en["on_update_ursa_config_ip_address_update_error"]="Oops! Minor issue, failed to update the Ursa config with the server ip _serverIpAddress_"
