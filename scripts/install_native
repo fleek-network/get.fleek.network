@@ -42,6 +42,24 @@ if [[ "$vCPUs" -lt 4 ]]; then
   done
 fi
 
+# 🚑 Check memory
+defaultMinMemoryKBytesRequired=8000000
+defaultMinDiskSpaceKBytesRequired=1000000
+mem=$(awk '/^MemTotal:/{print $2}' /proc/meminfo);
+partDiskSpace=$(df --output=avail -B 1 "$PWD" |tail -n 1)
+
+if [[ ("$mem" -lt "$defaultMinMemoryKBytesRequired") ]] || [[ ( "$partDiskSpace" -lt "$defaultMinDiskSpaceKBytesRequired" ) ]]; then
+  echo "💩 Uh oh! We're afraid you need at least 8 GB of RAM and 10 GB of available disk space"
+
+  read -r -p "Are you sure you want to continue? (yes/no)" answer
+
+  if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+    printf "🦖 Exited the installation process\n"
+
+    exit 1
+  fi
+fi
+
 # 🚑 Check if ports available
 declare -a requiredPorts=(80 443 4069 6009)
 
