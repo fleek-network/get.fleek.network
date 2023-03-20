@@ -1765,12 +1765,14 @@ onLatestPreference() {
 updateUrsaConfigIpAddress() {
   if [[ -f "$defaultUrsaConfigPath" ]]; then
     if ! sed -i "s|addresses =.*|addresses = [\"/ip4/$serverIpAddress/tcp/80\"]|" "$defaultUrsaConfigPath"; then
-      if ! createUrsaInitialConfig; then
-        showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
-      fi
+      showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
     fi
   else
-    if ! mkdir -p "$defaultUrsaBasePath" || ! createUrsaInitialConfig; then
+    if ! mkdir -p "$defaultUrsaBasePath"; then
+      showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
+    fi
+
+    if ! createUrsaInitialConfig; then
       showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
     fi
   fi
