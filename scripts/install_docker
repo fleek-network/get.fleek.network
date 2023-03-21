@@ -1590,7 +1590,6 @@ replaceNginxConfFileForHttp() {
         }
     }
   " | sudo tee "$defaultDockerFullNodeRelativePath"/data/nginx/http.conf
-  echo
 }
 
 replaceNginxConfFileForHttps() {
@@ -1631,7 +1630,6 @@ replaceNginxConfFileForHttps() {
         }
     }
   " | sudo tee "$defaultDockerFullNodeRelativePath"/data/nginx/https.conf
-  echo
 }
 
 setupSSLTLS() {
@@ -1787,6 +1785,7 @@ createUrsaInitialConfig() {
 
   echo "[server_config]" | sudo tee "$defaultUrsaConfigPath"
   echo "addresses = [\"/ip4/$serverIpAddress/tcp/80\"]" | sudo tee -a "$defaultUrsaConfigPath"
+  echo
 }
 
 (
