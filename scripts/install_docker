@@ -1024,7 +1024,7 @@ requestPathnameForUrsaRepository() {
     requestPathnameForUrsaRepository
   fi
 
-  if ! mkdir -p "$selectedUrsaPath"; then
+  if ! sudo mkdir -p "$selectedUrsaPath"; then
     # TODO: test param expansion
     showErrorMessage "${transl[request_path_for_ursa_repo_save_to_oops_failed_create_dir]/_selectedUrsaPath_/$selectedUrsaPath}"
 
@@ -1176,7 +1176,7 @@ initLetsEncrypt() {
     echo "🤖 ${transl[init_lets_encrypt_download_recommended_tls]}..."
     echo
 
-    mkdir -p "$data_path/conf"
+    sudo mkdir -p "$data_path/conf"
 
     sudo curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > "$data_path/conf/options-ssl-nginx.conf"
     sudo curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$data_path/conf/ssl-dhparams.pem"
@@ -1188,7 +1188,7 @@ initLetsEncrypt() {
   echo
 
   path="/etc/letsencrypt/live/$domain"
-  mkdir -p "$data_path/conf/live/$domain"
+  sudo mkdir -p "$data_path/conf/live/$domain"
 
   if ! sudo docker-compose -f "$config_path" \
     run --rm --entrypoint "\
@@ -1768,7 +1768,7 @@ updateUrsaConfigIpAddress() {
       showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
     fi
   else
-    if ! mkdir -p "$defaultUrsaBasePath"; then
+    if ! sudo mkdir -p "$defaultUrsaBasePath"; then
       showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
     fi
 
