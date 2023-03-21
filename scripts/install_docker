@@ -1396,7 +1396,7 @@ verifyDepsOrInstall() {
         showOkMessage "${transl[verify_deps_installed_via_package_manager]/_name_/$name} snap"
 
         # ensure snap is in the PATH and pkgs
-        source /etc/profile.d/apps-bin-path.sh
+        PATH="$PATH:/snap/bin"
 
         return 0
       fi
