@@ -82,6 +82,12 @@ if [[ "$hasPortsAvailable" -eq 1 ]]; then
   exit 1
 fi
 
+if [ "$(id -u)" -ne 0 ]; then
+  printf "😅 Our apologies! You need to run as root. We should provide support for sudoers shortly 🙏\n" >&2;
+
+  exit 1;
+fi
+
 # Date
 dateRuntime=$(date '+%Y%m%d%H%M%S')
 
