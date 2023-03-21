@@ -1035,7 +1035,7 @@ requestPathnameForUrsaRepository() {
 }
 
 cloneUrsaRepositoryToPath() {
-  if ! git clone $defaultUrsaHttpsRepository "$1"; then
+  if ! sudo git clone $defaultUrsaHttpsRepository "$1"; then
     showErrorMessage \
       "$(printf "%s" "${transl[clone_ursa_repo_to_path_oops_failed_to_clone]}" | sed "s|_defaultUrsaHttpsRepository_|\"${defaultUrsaHttpsRepository}\"|g")"
 
@@ -1178,8 +1178,8 @@ initLetsEncrypt() {
 
     sudo mkdir -p "$data_path/conf"
 
-    sudo curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > "$data_path/conf/options-ssl-nginx.conf"
-    sudo curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$data_path/conf/ssl-dhparams.pem"
+    curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf | sudo tee "$data_path/conf/options-ssl-nginx.conf"
+    curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem | sudo tee "$data_path/conf/ssl-dhparams.pem"
     echo
   fi
 
@@ -1589,7 +1589,8 @@ replaceNginxConfFileForHttp() {
           proxy_pass http://ursa:4069;
         }
     }
-  " > "$defaultDockerFullNodeRelativePath"/data/nginx/http.conf
+  " | sudo tee "$defaultDockerFullNodeRelativePath"/data/nginx/http.conf
+  echo
 }
 
 replaceNginxConfFileForHttps() {
@@ -1629,7 +1630,8 @@ replaceNginxConfFileForHttps() {
           proxy_pass http://ursa:4069;
         }
     }
-  " > "$defaultDockerFullNodeRelativePath"/data/nginx/https.conf
+  " | sudo tee "$defaultDockerFullNodeRelativePath"/data/nginx/https.conf
+  echo
 }
 
 setupSSLTLS() {
@@ -1656,7 +1658,7 @@ setupSSLTLS() {
   emailAddress=$(echo "$trimData" | cut -d ";" -f 2)
   serverIpAddress=$(echo "$trimData" | cut -d ";" -f 3)
 
-  if ! rm "$defaultDockerFullNodeRelativePath"/data/nginx/app.conf; then
+  if ! sudo rm "$defaultDockerFullNodeRelativePath"/data/nginx/app.conf; then
     showErrorMessage "${transl[setup_ssl_tls_oops_failed_clear_nginx]} 🙏"
 
     exitInstaller
@@ -1668,7 +1670,7 @@ setupSSLTLS() {
     exitInstaller
   fi
 
-  chmod +x "$defaultDockerFullNodeRelativePath"/init-letsencrypt.sh
+  sudo chmod +x "$defaultDockerFullNodeRelativePath"/init-letsencrypt.sh
 
   showOkMessage "${transl[setup_ssl_tls_updated_file_permissions_lets_encrypt_execution]} (set +x)!"
 
@@ -1744,10 +1746,10 @@ onLatestPreference() {
 
       break
     elif [[ "$data" -eq 0 ]]; then
-      yq -ie 'del(.services.ursa.build)' "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
-      yq -i ".services.ursa.image = \"$defaultUrsaLatestImage\"" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
+      sudo yq -ie 'del(.services.ursa.build)' "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
+      sudo yq -i ".services.ursa.image = \"$defaultUrsaLatestImage\"" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
 
-      if ! yq '.services.ursa.image' "$defaultDockerComposeYmlRelativePath" | grep -q "$defaultUrsaLatestImage" || ! yq '.services.ursa.build' "$defaultDockerComposeYmlRelativePath" | grep -qE "null|no matches found"; then
+      if ! sudo yq '.services.ursa.image' "$defaultDockerComposeYmlRelativePath" | grep -q "$defaultUrsaLatestImage" || ! sudo yq '.services.ursa.build' "$defaultDockerComposeYmlRelativePath" | grep -qE "null|no matches found"; then
         echo
         echo "💩 ${transl[on_latest_preference_uh_oh_failed_modify_docker_compose_yaml]}"
 
@@ -1764,7 +1766,7 @@ onLatestPreference() {
 
 updateUrsaConfigIpAddress() {
   if [[ -f "$defaultUrsaConfigPath" ]]; then
-    if ! sed -i "s|addresses =.*|addresses = [\"/ip4/$serverIpAddress/tcp/80\"]|" "$defaultUrsaConfigPath"; then
+    if ! sudo sed -i "s|addresses =.*|addresses = [\"/ip4/$serverIpAddress/tcp/80\"]|" "$defaultUrsaConfigPath"; then
       showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
     fi
   else
@@ -1779,12 +1781,12 @@ updateUrsaConfigIpAddress() {
 }
 
 createUrsaInitialConfig() {
-  if ! touch "$defaultUrsaConfigPath"; then
+  if ! sudo touch "$defaultUrsaConfigPath"; then
     return 1
   fi
 
-  echo "[server_config]" >> "$defaultUrsaConfigPath"
-  echo "addresses = [\"/ip4/$serverIpAddress/tcp/80\"]" >> "$defaultUrsaConfigPath"
+  echo "[server_config]" | sudo tee "$defaultUrsaConfigPath"
+  echo "addresses = [\"/ip4/$serverIpAddress/tcp/80\"]" | sudo tee -a "$defaultUrsaConfigPath"
 }
 
 (
