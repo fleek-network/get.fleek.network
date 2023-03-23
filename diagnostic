@@ -22,6 +22,7 @@ defaultFleekNetworkInstallPath="$HOME/fleek-network/ursa"
 dotUrsaPath="$HOME/.ursa/config.toml"
 defaultUrsaBinPath="/usr/bin/ursa"
 pasteCliUrl="https://0x0.st"
+separator="----------"
 
 # styles
 bold=$(tput bold)
@@ -109,9 +110,12 @@ echo
 
   echo "🤖 User home"
   echo "$HOME"
+  echo
 
   echo "💡 The current user details"
   id
+  echo
+
   echo "User name is $USER"
   echo
 
@@ -123,7 +127,11 @@ echo
   hasPortsAvailable=0
   for port in "${fleekNetworkServicePorts[@]}"; do
     if lsof -i :"$port" >/dev/null; then
-      echo "💩 Uh-oh! The port $port is required but is in use..."
+      echo "The port $port which is required but is in use"
+      echo "$separator Start details for port $port $separator"
+      lsof -i :"$port"
+      echo "$separator End details for port $port $separator"
+      echo
 
       hasPortsAvailable=1
     fi
@@ -132,7 +140,7 @@ echo
   echo
 
   if [[ "$hasPortsAvailable" -eq 1 ]]; then
-    echo "👹 Oops! Required port(s) are in use, make sure the ports are open before retrying, please!"
+    echo "👹 Required port(s) are in use."
     echo
   fi
 
@@ -152,24 +160,29 @@ echo
   echo
 
   echo "🤖 Is the Ursa source-code installed in user home?"
+  echo
 
   if [[ ! -d "$HOME/fleek-network/ursa" ]]; then
     echo "💩 Uh-oh! The Ursa source-code is not installed in the user HOME path $HOME"
     echo
 
     echo "🤖 Is the Ursa source-code installed in root home?"
+    echo
     
     if [[ ! -d "/root/fleek-network/ursa" ]]; then
       echo "💩 Uh-oh! The Ursa source-code is not installed in the root HOME path /root/fleek-network/ursa"
       echo
     else
       echo "✅ Found the Ursa source stored in /root/fleek-network/ursa"
+      echo
     fi
   else
     echo "✅ Found the Ursa source stored in $HOME/fleek-network/ursa"
+    echo
   fi
 
   echo "🤖 File permissions"
+  echo
   ls -la "$defaultFleekNetworkInstallPath"
   echo
 
@@ -178,27 +191,37 @@ echo
 
   if command -v "docker" >/dev/null 2>&1; then
     echo "✅ Docker is installed!"
+    echo
 
     echo "Docker path"
     dockerPath=$(which docker)
+    echo
+
     echo "$dockerPath"
+    echo
 
     echo "Docker permissions"
     ls -la "$dockerPath"
+    echo
 
     echo "Docker version"
     docker -v
-    
+    echo
+
     echo "Docker systemd status"
     systemctl status --no-pager docker
+    echo
 
     echo "Docker process status"
     docker ps -a
+    echo
 
     echo "Is Docker container full-node_ursa_1 running?"
     docker container inspect -f '{{.State.Running}}' full-node_ursa_1
+    echo
 
     echo "🤖 NGINX Config files"
+    echo
 
     showNginxConfigContent() {
       if [[ -f "$nginxConfigPath/$1" ]]; then
@@ -208,6 +231,7 @@ echo
       fi
       
       echo "💩 Uh-oh! NGINX Https config not found at $nginxConfigPath/$1"
+      echo
     }
 
     for conf in "http.conf" "https.conf"; do
@@ -216,6 +240,7 @@ echo
   fi
 
   echo "🤖 Dot Ursa"
+  echo
 
   if [[ -d $HOME/.ursa ]]; then
     echo "✅ Found dot ursa at $HOME/.ursa"
@@ -232,23 +257,29 @@ echo
     echo
   else
     echo "💩 Uh-oh! The dot Ursa was not found"
+    echo
   fi
 
   if command -v "ursa" >/dev/null 2>&1; then
     echo "✅ Ursa binary globally accessible"
+    echo
 
     if [[ -f "$defaultUrsaBinPath" ]]; then
       echo "✅ Ursa binary in $defaultUrsaBinPath"
+      echo
     else
       echo "💩 Ursa binary not found at $defaultUrsaBinPath";
+      echo
     fi
 
     echo
 
     if [[ :$PATH: = *:"$defaultUrsaBinPath":* ]]; then
       echo "✅ Ursa $defaultUrsaBinPath in system PATH";
+      echo
     else
       echo "💩 Ursa $defaultUrsaBinPath not found in system PATH";
+      echo
     fi
 
     echo
@@ -259,6 +290,8 @@ echo
 
     if ! docker ps -a | grep -q ursa; then
       echo "🤖 NGINX Service status"
+      echo
+      
       systemctl status --no-pager nginx
       echo
     fi
