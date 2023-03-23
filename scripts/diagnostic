@@ -1,0 +1,263 @@
+#!/bin/bash
+
+#defaults
+nginxConfigPath="$HOME/fleek-network/ursa/docker/full-node/data/nginx"
+diagnosticFilename="diagnostic.log"
+defaultFleekNetworkInstallPath="$HOME/fleek-network/ursa"
+dotUrsaPath="$HOME/.ursa/config.toml"
+defaultUrsaBinPath="/usr/bin/ursa"
+pasteCliUrl="https://0x0.st"
+
+# styles
+bold=$(tput bold)
+normal=$(tput sgr0)
+
+# Service ports
+declare -a fleekNetworkServicePorts=(80 443 4069 6009)
+
+tempWorkDir=$(mktemp -d)
+
+onInterruption() {
+  rm -rf "$tempWorkDir"
+}
+
+trap onInterruption INT
+
+if ! cd "$tempWorkDir"; then
+  echo "👹 Oops! Failed to create temporary directory to store diagnostic logs"
+
+  exit 1
+fi
+
+cat << "EOF"
+
+                  .eeeeeeeee
+                  .$$$$$$$$P"
+                .$$$$$$$$P
+                z$$$$$$$$P
+              z$$$$$$$$"
+              z$$$$$$$$"
+            d$$$$$$$$"
+            d$$$$$$$$"
+          .d$$$$$$$P
+        .$$$$$$$$P
+        .$$$$$$$$$.........
+      .$$$$$$$$$$$$$$$$$$"
+      z$$$$$$$$$$$$$$$$$P"
+    -**********$$$$$$$P
+              d$$$$$$"
+            .d$$$$$$"
+            .$$$$$$P"
+          z$$$$$$P
+          d$$$$$$"
+        .d$$$$$$"
+      .$$$$$$$"
+      z$$$$$$$beeeeee
+    d$$$$$$$$$$$$$*
+    ^""""""""$$$$$"
+            d$$$*
+          d$$$"
+          d$$*
+        d$P"
+      .$$"
+      .$P"
+    .$"
+    .P"
+  ."
+  /"
+
+EOF
+
+echo
+echo "⚡️ Ursa spaceship diagnostics ⚡️"
+echo
+echo "★★★★★★★★★ 🌍 Website https://fleek.network"
+echo "★★★★★★★★★ 📚 Documentation https://docs.fleek.network"
+echo "★★★★★★★★★ 💾 Git repository https://github.com/fleek-network/ursa"
+echo "★★★★★★★★★ 🤖 Discord https://discord.gg/fleekxyz"
+echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
+echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
+echo
+
+echo "🙋‍♀️ We're going save the diagnostic details to https://0x0.st. When complete copy and share the diagnostics URL to us in our Discord channel!"
+echo
+
+echo "🙏 Be patient while we generate the URL for you, please!"
+echo
+
+(
+  echo "🤖 Display Linux distro version"
+  echo
+
+  cat /etc/*-release
+  echo
+
+  echo "🤖 User home"
+  echo "$HOME"
+
+  echo "💡 The current user details"
+  id
+  echo "User name is $USER"
+  echo
+
+  echo "🤖 System PATH"
+  echo "$PATH"
+  echo
+
+  echo "🤖 Ports"
+  hasPortsAvailable=0
+  for port in "${fleekNetworkServicePorts[@]}"; do
+    if lsof -i :"$port" >/dev/null; then
+      echo "💩 Uh-oh! The port $port is required but is in use..."
+
+      hasPortsAvailable=1
+    fi
+  done
+
+  echo
+
+  if [[ "$hasPortsAvailable" -eq 1 ]]; then
+    echo "👹 Oops! Required port(s) are in use, make sure the ports are open before retrying, please!"
+    echo
+  fi
+
+  echo
+
+  echo "🤖 Iptables list of rules"
+  iptables -S
+  echo
+
+  if command -v "ufw" >/dev/null 2>&1; then
+    echo "✅ ufw found!"
+
+    echo "🤖 UFW Status"
+    ufw status
+  fi
+
+  echo
+
+  echo "🤖 Is the Ursa source-code installed in user home?"
+
+  if [[ ! -d "$HOME/fleek-network/ursa" ]]; then
+    echo "💩 Uh-oh! The Ursa source-code is not installed in the user HOME path $HOME"
+    echo
+
+    echo "🤖 Is the Ursa source-code installed in root home?"
+    
+    if [[ ! -d "/root/fleek-network/ursa" ]]; then
+      echo "💩 Uh-oh! The Ursa source-code is not installed in the root HOME path /root/fleek-network/ursa"
+      echo
+    else
+      echo "✅ Found the Ursa source stored in /root/fleek-network/ursa"
+    fi
+  else
+    echo "✅ Found the Ursa source stored in $HOME/fleek-network/ursa"
+  fi
+
+  echo "🤖 File permissions"
+  ls -la "$defaultFleekNetworkInstallPath"
+  echo
+
+  echo "🤖 Check Docker"
+  echo
+
+  if command -v "docker" >/dev/null 2>&1; then
+    echo "✅ Docker is installed!"
+
+    echo "Docker path"
+    dockerPath=$(which docker)
+    echo "$dockerPath"
+
+    echo "Docker permissions"
+    ls -la "$dockerPath"
+
+    echo "Docker version"
+    docker -v
+    
+    echo "Docker systemd status"
+    systemctl status --no-pager docker
+
+    echo "Docker process status"
+    docker ps -a
+
+    echo "Is Docker container full-node_ursa_1 running?"
+    docker container inspect -f '{{.State.Running}}' full-node_ursa_1
+
+    echo "🤖 NGINX Config files"
+
+    showNginxConfigContent() {
+      if [[ -f "$nginxConfigPath/$1" ]]; then
+        cat "$nginxConfigPath/$1"
+
+        return 0
+      fi
+      
+      echo "💩 Uh-oh! NGINX Https config not found at $nginxConfigPath/$1"
+    }
+
+    for conf in "http.conf" "https.conf"; do
+      showNginxConfigContent "$conf"
+    done
+  fi
+
+  echo "🤖 Dot Ursa"
+
+  if [[ -d $HOME/.ursa ]]; then
+    echo "✅ Found dot ursa at $HOME/.ursa"
+    echo
+
+    echo "🤖 Dot Ursa Config.toml"
+    echo
+
+    cat "$dotUrsaPath"
+    echo
+
+    echo "🤖 Dot Ursa file permissions"
+    ls -la "$dotUrsaPath"
+    echo
+  else
+    echo "💩 Uh-oh! The dot Ursa was not found"
+  fi
+
+  if command -v "ursa" >/dev/null 2>&1; then
+    echo "✅ Ursa binary globally accessible"
+
+    if [[ -f "$defaultUrsaBinPath" ]]; then
+      echo "✅ Ursa binary in $defaultUrsaBinPath"
+    else
+      echo "💩 Ursa binary not found at $defaultUrsaBinPath";
+    fi
+
+    echo
+
+    if [[ :$PATH: = *:"$defaultUrsaBinPath":* ]]; then
+      echo "✅ Ursa $defaultUrsaBinPath in system PATH";
+    else
+      echo "💩 Ursa $defaultUrsaBinPath not found in system PATH";
+    fi
+
+    echo
+
+    echo "🤖 Ursa binary file permissions"
+    ls -la "$defaultUrsaBinPath"
+    echo
+
+    if ! docker ps -a | grep -q ursa; then
+      echo "🤖 NGINX Service status"
+      systemctl status --no-pager nginx
+      echo
+    fi
+  fi
+
+) > "$diagnosticFilename"
+
+pasteUrl=$(curl -sF "file=@$diagnosticFilename" $pasteCliUrl)
+
+if [[ ! $pasteUrl = $pasteCliUrl*  ]]; then
+  echo "👹 Oops! We failed to create the diagnostic URL for some reason, try again later?" >&2
+
+  exit 1
+fi
+
+echo "✅ Diagnostic is available at $pasteUrl"
+echo
