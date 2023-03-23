@@ -1,5 +1,17 @@
 #!/bin/bash
 
+# "Get Fleek Network" is an attempt to make our software more accessible.
+# By providing scripts to automate the installation process of our software,
+# we believe that it can help improve the onboarding experience of our users.
+#
+# Quick diagnostic: `curl https://get.fleek.network/diagnostic | bash`
+#
+# This scripts automates the process of getting detailed information about the server where Ursa is running
+# such as, file permissions, systemd services, user, paths, etc.
+#
+# Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
+
+
 #defaults
 nginxConfigPath="$HOME/fleek-network/ursa/docker/full-node/data/nginx"
 diagnosticFilename="diagnostic.log"
@@ -259,5 +271,5 @@ if [[ ! $pasteUrl = $pasteCliUrl*  ]]; then
   exit 1
 fi
 
-echo "✅ Diagnostic is available at $pasteUrl"
+echo "✅ Diagnostic is available at ${bold}$pasteUrl${normal}"
 echo
