@@ -108,6 +108,9 @@ echo
   cat /etc/*-release
   echo
 
+  echo "🤖 The /proc/version"
+  cat /proc/version
+
   echo "🤖 User home"
   echo "$HOME"
   echo
