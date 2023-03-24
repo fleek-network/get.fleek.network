@@ -759,6 +759,24 @@ isOSSupported() {
 
       exitInstaller
     fi
+
+    if dpkg -l ubuntu-desktop; then
+      echo
+      echo "⚠️ Desktop operating systems are not supported at this time!"
+      echo "Most Desktop computers have a dynamic IP address and a domain name's required to secure the server with SSL/TLS."
+      echo
+
+      read -rp "Continue at your own risk. Press ENTER to continue..."
+    fi
+
+    if grep -q Microsoft /proc/version; then
+      echo
+      echo "⚠️ Windows Subsystem Linux detected (WSL), desktop operating systems are not supported at this time!"
+      echo "Most Desktop computers have a dynamic IP address and a domain name's required to secure the server with SSL/TLS."
+      echo
+
+      read -rp "Continue at your own risk. Press ENTER to continue..."
+    fi
   fi
 
   if [[ "$1" == "debian" ]]; then
