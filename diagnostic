@@ -45,6 +45,34 @@ if ! cd "$tempWorkDir"; then
   exit 1
 fi
 
+getIpAddress() {
+  detectedIpAddress=$(curl -s ifconfig.me)
+
+  if validateIpAddress "$detectedIpAddress"; then
+    echo "$detectedIpAddress"
+
+    return
+  fi
+
+  detectedIpAddress=$(curl -s icanhazip.com)
+
+  if validateIpAddress "$detectedIpAddress"; then
+    echo "$detectedIpAddress"
+
+    return
+  fi
+
+  detectedIpAddress=$(curl -s ident.me)
+
+  if validateIpAddress "$detectedIpAddress"; then
+    echo "$detectedIpAddress"
+
+    return
+  fi
+
+  echo "ERROR_IP_ADDRESS_NOT_AVAILABLE"
+}
+
 cat << "EOF"
 
                   .eeeeeeeee
@@ -125,6 +153,9 @@ echo
   echo "🤖 System PATH"
   echo "$PATH"
   echo
+
+  echo "🤖 User IP Address"
+  getIpAddress
 
   echo "🤖 Ports"
   hasPortsAvailable=0
