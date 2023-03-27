@@ -418,6 +418,14 @@ mapLanguageYesNoQuitToSystem() {
   fi
 }
 
+dockerComposeExec() {
+  if docker compose version >/dev/null 2>&1; then
+    sudo docker "$@"
+  else
+    sudo docker-compose "$@"
+  fi
+}
+
 # Confirm validators
 confirmDomainName() {
   local validate="^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\.)+[a-zA-Z]{2,}$"
@@ -985,25 +993,6 @@ checkIfDockerInstalled() {
   showOkMessage "${transl[check_if_docker_success]}"
 }
 
-dockerHealthCheck() {
-  if ! hasCommand docker-compose; then
-    showErrorMessage "${transl[docker_health_check_oops_docker_compose]}"
-
-    exitInstaller
-  fi
-
-  expectedMessage="Hello from Docker"
-  res=$(docker run -i --log-driver=none -a stdout hello-world)
-
-  if ! echo "$res" | grep "$expectedMessage" &> /dev/null; then
-    showErrorMessage "${transl[docker_health_check_oops_docker_daemon_hello_world]}"
-
-    exitInstaller
-  fi
-
-  showOkMessage "${transl[docker_health_check_passed]}"
-}
-
 requestPathnameForUrsaRepository() {
   # TODO: on translation, the selected path needs to be computed
   # that is that on runtime the defaultPath might need to be replaced
@@ -1072,13 +1061,13 @@ restartDockerStack() {
 
   # TODO: Use health check instead
   sleep 10
-  sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" stop
+  dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" stop
 
   showOkMessage "${transl[restart_docker_stack_is_going_to_start]}"
 
   # TODO: Use health check instead
   sleep 10
-  sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" up -d
+  dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" up -d
 
   showOkMessage "${transl[restart_docker_stack_has_restarted]}"
 
@@ -1162,7 +1151,7 @@ showDockerStackLog() {
 
   read -r -p "${transl[common_press_enter_continue]}... "
 
-  sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" logs -f
+  dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" logs -f
 }
 
 initLetsEncrypt() {
@@ -1208,7 +1197,7 @@ initLetsEncrypt() {
   path="/etc/letsencrypt/live/$domain"
   sudo mkdir -p "$data_path/conf/live/$domain"
 
-  if ! sudo docker-compose -f "$config_path" \
+  if ! dockerComposeExec -f "$config_path" \
     run --rm --entrypoint "\
     openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1\
       -keyout '$path/privkey.pem' \
@@ -1223,7 +1212,7 @@ initLetsEncrypt() {
   echo "🤖 ${transl[init_lets_encrypt_starting_nginx]} 🙏"
   echo
 
-  if ! sudo docker-compose -f "$config_path" up --force-recreate -d nginx; then
+  if ! dockerComposeExec -f "$config_path" up --force-recreate -d nginx; then
     showErrorMessage "${transl[init_lets_encrypt_failed_start_nginx]}..."
 
     exitInstaller
@@ -1233,7 +1222,7 @@ initLetsEncrypt() {
   echo "🤖 ${transl[init_lets_encrypt_deleting_dummy_certificate]/_domain_/$domain}..."
   echo
 
-  if ! sudo docker-compose -f "$config_path" \
+  if ! dockerComposeExec -f "$config_path" \
     run --rm --entrypoint "\
     rm -Rf /etc/letsencrypt/live/$domain && \
     rm -Rf /etc/letsencrypt/archive/$domain && \
@@ -1251,7 +1240,7 @@ initLetsEncrypt() {
   # Enable staging mode if needed
   if [ $staging != "0" ]; then staging_arg="--staging"; fi
 
-  if ! sudo docker-compose -f "$config_path" run --rm --entrypoint "\
+  if ! dockerComposeExec -f "$config_path" run --rm --entrypoint "\
     certbot certonly --webroot -w /var/www/certbot \
       $staging_arg \
       --email $email \
@@ -1287,13 +1276,13 @@ initLetsEncrypt() {
       echo
       echo "🤖 ${transl[init_lets_encrypt_restart_docker_stack]}..."
       echo
-      sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" down      
-      sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" start
+      dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" down      
+      dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" start
 
       initLetsEncrypt "$email" "$domain"
     fi
 
-    sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" down
+    dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" down
 
     exitInstaller
   fi
@@ -1302,7 +1291,7 @@ initLetsEncrypt() {
   echo "🤖 ${transl[init_lets_encrypt_reloading_nginx]}..."
   echo
 
-  sudo docker-compose -f "$config_path" exec nginx nginx -s reload
+  dockerComposeExec -f "$config_path" exec nginx nginx -s reload
 
   showOkMessage "${transl[init_lets_encrypt_success_secured_message]}"
 }
