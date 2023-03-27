@@ -967,7 +967,7 @@ checkIfDockerInstalled() {
   # is required to check the user docker version and also
   # check if docker compose is available. Some users are still
   # using legacy e.g., preinstalled docker or archlinux, etc
-  if ! hasCommand docker || ! hasCommand docker-compose; then
+  if ! hasCommand docker; then
     printf "😅 %s\n" "${transl[check_if_docker_installed]}"
 
     requestAuthorizationAndExec \
