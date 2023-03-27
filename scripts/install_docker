@@ -892,9 +892,7 @@ installDocker() {
       sudo apt-get install \
           docker-ce \
           docker-ce-cli \
-          containerd.io \
-          docker-compose-plugin \
-          docker-compose
+          containerd.io
 
       # https://docs.docker.com/build/buildkit/
       sudo mkdir -p /etc/docker
@@ -924,9 +922,7 @@ installDocker() {
       sudo apt-get install \
           docker-ce \
           docker-ce-cli \
-          containerd.io \
-          docker-compose-plugin \
-          docker-compose
+          containerd.io
 
       # https://docs.docker.com/build/buildkit/
       sudo mkdir -p /etc/docker
@@ -1090,7 +1086,7 @@ showDockerStackLog() {
   echo
   echo "  - ${transl[show_docker_stack_log_stack_logs_handy_cmd_show_logs]}:"
   echo
-  echo "    ${txtPrefixForBold}docker-compose -f ./docker/full-node/docker-compose.yml logs -f${txtPrefixForNormal}"
+  echo "    ${txtPrefixForBold}docker compose -f ./docker/full-node/docker-compose.yml logs -f${txtPrefixForNormal}"
   echo
   echo "  - ${transl[show_docker_stack_log_stack_logs_handy_cmd_signit]}:"
   echo
@@ -1103,11 +1099,11 @@ showDockerStackLog() {
   echo
   echo "  - ${transl[show_docker_stack_log_stack_logs_can_stop_then_after_start]}"
   echo
-  echo "    ${txtPrefixForBold}docker-compose -f ./docker/full-node/docker-compose.yml up${txtPrefixForNormal}"
+  echo "    ${txtPrefixForBold}docker compose -f ./docker/full-node/docker-compose.yml up${txtPrefixForNormal}"
   echo
   echo "  - ${transl[show_docker_stack_log_stack_logs_can_stop_then_after_stop]}"
   echo
-  echo "    ${txtPrefixForBold}docker-compose -f ./docker/full-node/docker-compose.yml down${txtPrefixForNormal}"
+  echo "    ${txtPrefixForBold}docker compose -f ./docker/full-node/docker-compose.yml down${txtPrefixForNormal}"
   echo
   echo "🥹 ${transl[show_docker_stack_log_stack_logs_seems_a_lot]}"
   # The extra white space between ✏️ and start of text is intentional and used for alignment
@@ -1683,7 +1679,7 @@ setupSSLTLS() {
   echo
 
   # start stack in bg, as lets encrypt will need the nginx to validate
-  COMPOSE_DOCKER_CLI_BUILD=1 sudo docker-compose -f "$defaultDockerComposeYmlRelativePath" up -d
+  COMPOSE_DOCKER_CLI_BUILD=1 dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" up -d
 
   # TODO: add health check in the docker compose file
 
