@@ -419,8 +419,8 @@ mapLanguageYesNoQuitToSystem() {
 }
 
 dockerComposeExec() {
-  if docker compose version >/dev/null 2>&1; then
-    sudo docker "$@"
+  if docker compose -v >/dev/null 2>&1; then
+    sudo docker compose "$@"
   else
     sudo docker-compose "$@"
   fi
@@ -892,7 +892,8 @@ installDocker() {
       sudo apt-get install \
           docker-ce \
           docker-ce-cli \
-          containerd.io
+          containerd.io \
+          docker-compose-plugin
 
       # https://docs.docker.com/build/buildkit/
       sudo mkdir -p /etc/docker
@@ -908,7 +909,8 @@ installDocker() {
         curl \
         gnupg \
         lsb-release \
-        dnsutils
+        dnsutils \
+        docker-compose-plugin
 
       sudo mkdir -p /etc/apt/keyrings
       curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
