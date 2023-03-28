@@ -145,6 +145,9 @@ echo
   echo "🤖 The /proc/version"
   cat /proc/version
 
+  echo "🤖 CPU details"
+  cat /proc/cpuinfo
+
   echo "🤖 User home"
   echo "$HOME"
   echo
