@@ -419,7 +419,7 @@ mapLanguageYesNoQuitToSystem() {
 }
 
 dockerComposeExec() {
-  if docker compose -v >/dev/null 2>&1; then
+  if docker compose version >/dev/null 2>&1; then
     sudo docker compose "$@"
   else
     sudo docker-compose "$@"
