@@ -257,7 +257,11 @@ echo
     echo
 
     echo "Is Docker container full-node_ursa_1 running?"
-    docker container inspect -f '{{.State.Running}}' full-node_ursa_1
+    if ! docker container inspect -f '{{.State.Running}}' full-node-ursa-1; then
+      echo "🤖 Will check alternative name full-node_ursa_1"
+      echo
+      docker container inspect -f '{{.State.Running}}' full-node_ursa_1
+    fi
     echo
 
     echo "🤖 NGINX Config files"
