@@ -63,6 +63,7 @@ defaultMinDiskSpaceKBytesRequired=1000000
 defaultUrsaConfigFilename="config.toml"
 defaultUrsaBasePath="$HOME/.ursa"
 defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
+defaultDockerDaemonJson="/etc/docker/daemon.json"
 
 # App state
 userSelectedLanguage=""
@@ -992,10 +993,17 @@ checkIfDockerInstalled() {
     fi
   fi
 
-  # TODO: what if the file already exists? Should take that into account and modify it
-  if [[ ! -f /etc/docker/daemon.json ]]; then
+  if [[ ! -f "$defaultDockerDaemonJson" ]]; then
     createDockerDaemonJsonForBuildKit
+  else
+    echo "🤖 Docker Buildkit require update in $defaultDockerDaemonJson"
+    jqTmpDockerDaemonJsonFile="tmp.$dateRuntime"
+    jq '.features.buildkit=false' "$defaultDockerDaemonJson" > "$jqTmpDockerDaemonJsonFile" && mv "$jqTmpDockerDaemonJsonFile" "$defaultDockerDaemonJson" && cat "$defaultDockerDaemonJson"
+    echo
   fi
+
+  echo "🤖 Restart docker"
+  sudo systemctl restart docker
 
   showOkMessage "${transl[check_if_docker_success]}"
 }
@@ -1019,7 +1027,6 @@ requestPathnameForUrsaRepository() {
       break
     fi
   done
-
 
   if [[ ! "$intlAnswer" == "" && "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
     printf -v prompt "\n🙋‍♀️ %s" "${transl[request_path_for_ursa_repo_save_to_locattion_where_store]}"
