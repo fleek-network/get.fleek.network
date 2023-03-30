@@ -866,6 +866,15 @@ gitHealthCheck() {
   fi
 }
 
+createDockerDaemonJsonForBuildKit() {
+  sudo mkdir -p /etc/docker
+  sudo bash -c 'echo "{
+    \"features\": {
+      \"buildkit\" : true
+      }
+    }" > /etc/docker/daemon.json'
+}
+
 installDocker() {
   os=$(identifyOS)
 
@@ -896,12 +905,7 @@ installDocker() {
           docker-compose-plugin
 
       # https://docs.docker.com/build/buildkit/
-      sudo mkdir -p /etc/docker
-      sudo bash -c 'echo "{
-        \"features\": {
-          \"buildkit\" : true
-          }
-        }" > /etc/docker/daemon.json'
+      createDockerDaemonJsonForBuildKit
     elif [[ "$distro" == "debian" ]]; then
       sudo apt-get update
       sudo apt-get install \
@@ -986,6 +990,11 @@ checkIfDockerInstalled() {
 
       exitInstaller
     fi
+  fi
+
+  # TODO: what if the file already exists? Should take that into account and modify it
+  if [[ ! -f /etc/docker/daemon.json ]]; then
+    createDockerDaemonJsonForBuildKit
   fi
 
   showOkMessage "${transl[check_if_docker_success]}"
