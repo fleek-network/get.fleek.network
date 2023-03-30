@@ -991,19 +991,19 @@ checkIfDockerInstalled() {
 
       exitInstaller
     fi
-  fi
-
-  if [[ ! -f "$defaultDockerDaemonJson" ]]; then
-    createDockerDaemonJsonForBuildKit
   else
-    echo "🤖 Docker Buildkit require update in $defaultDockerDaemonJson"
-    jqTmpDockerDaemonJsonFile="tmp.$dateRuntime"
-    jq '.features.buildkit=false' "$defaultDockerDaemonJson" > "$jqTmpDockerDaemonJsonFile" && mv "$jqTmpDockerDaemonJsonFile" "$defaultDockerDaemonJson" && cat "$defaultDockerDaemonJson"
-    echo
-  fi
+    if [[ ! -f "$defaultDockerDaemonJson" ]]; then
+      createDockerDaemonJsonForBuildKit
+    else
+      echo "🤖 Docker Buildkit require update in $defaultDockerDaemonJson"
+      echo
 
-  echo "🤖 Restart docker"
-  sudo systemctl restart docker
+      jqTmpDockerDaemonJsonFile="tmp.$dateRuntime"
+      jq '.features.buildkit=true' "$defaultDockerDaemonJson" > "$jqTmpDockerDaemonJsonFile" && mv "$jqTmpDockerDaemonJsonFile" "$defaultDockerDaemonJson" && cat "$defaultDockerDaemonJson"
+
+      echo
+    fi
+  fi
 
   showOkMessage "${transl[check_if_docker_success]}"
 }
@@ -1873,6 +1873,9 @@ createUrsaInitialConfig() {
   # Pull the `ursa` project repository to the preferred target directory via HTTPS
   cloneUrsaRepositoryToPath "$selectedUrsaPath"
   changeDirectoryToPathOrFailure "Ursa" "$selectedUrsaPath"
+
+  echo "🤖 Restart docker for Docker daemon settings to take effect"
+  sudo systemctl restart docker
 
   # Await a few seconds to let the user read...
   sleep 5
