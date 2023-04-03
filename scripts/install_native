@@ -906,7 +906,7 @@ Description=Ursa, a Decentralized Content Delivery Network (DCDN)
 
 [Service]
 Type=simple
-MemoryMax=8G
+MemoryHigh=8G
 RestartSec=15s
 Restart=always
 ExecStart=/usr/bin/ursa
