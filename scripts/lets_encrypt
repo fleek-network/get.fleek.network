@@ -150,7 +150,7 @@ domainNameConfSettingsVerificationHandler() {
         fi
       done
 
-      if ! sed -i "s|$domainCertPath|$selectedDomainName|" "$defaultUrsaConfigPath"; then
+      if ! sed -i "s|$domainCertPath|$selectedDomainName|" "$defaultUrsaProxyConfigPath"; then
         echo "👹 Oh no! Failed to update the domain name in the config.toml, make the changes manually before retrying."
         echo
 
@@ -164,19 +164,20 @@ domainNameConfSettingsVerificationHandler() {
 }
 
 ursaServerConfigurationHandler() {
-if grep -qi "$defaultLetsEncryptCertificatesLivePath" "$defaultUrsaConfigPath" && grep -qi "[[server]]" "$defaultUrsaConfigPath"; then
-  echo "✅ Ursa server proxy configuration exists"
-  echo
-
-  # Check if domain name is correct in the settings file
-  domainNameConfSettingsVerificationHandler "$1"
-
-  return 0
-fi
-
-if [[ -d "$defaultUrsaProxyConfigPath" ]]; then
+if [[ -d "$defaultUrsaProxyDir" ]]; then
   echo "✅ Create Ursa proxy directory"
-  mkdir -p "$defaultUrsaProxyConfigPath"
+  mkdir -p "$defaultUrsaProxyDir"
+  touch "$defaultUrsaProxyConfigPath"
+else
+  if grep -qi "$defaultLetsEncryptCertificatesLivePath" "$defaultUrsaProxyConfigPath" && grep -qi "[[server]]" "$defaultUrsaProxyConfigPath"; then
+    echo "✅ Ursa server proxy configuration exists"
+    echo
+
+    # Check if domain name is correct in the settings file
+    domainNameConfSettingsVerificationHandler "$1"
+
+    return 0
+  fi
 fi
 
 if [[ $1 -eq "1" ]]; then
@@ -204,7 +205,7 @@ key_path = \"$defaultLetsEncryptCertificatesLivePath/$selectedDomainName/privkey
 # You can omit this section as this is the default.
 [admin]
 addr = \"0.0.0.0:8881\"
-" > "$defaultUrsaConfigPath"
+" > "$defaultUrsaProxyConfigPath" || exit 1
 elif [[ $1 -eq "2" ]]; then
 # Here "no identation" is intentional, do not change
 # The top empty line at the top is intentional
@@ -222,7 +223,7 @@ key_path = \"$defaultLetsEncryptCertificatesLivePath/$selectedDomainName/privkey
 # You can omit this section as this is the default.
 [admin]
 addr = \"0.0.0.0:8881\"
-" > "$defaultUrsaConfigPath"
+" > "$defaultUrsaProxyConfigPath" || exit 1
 fi
 
 echo "✅ Updated the config.toml by including the [server] settings"
