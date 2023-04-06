@@ -45,6 +45,33 @@ selectedEmailAddress=""
 selectedIpAddress=""
 selectedUrsaPath=""
 
+# Confirm validators
+confirmDomainName() {
+  local validate="^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\.)+[a-zA-Z]{2,}$"
+
+  if ! hasCommand whois; then
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install whois -yq
+  fi
+
+  if whois "$1" | grep -Ei '[Uu]nallocated|returned 0 objects' > /dev/null; then
+    return 1
+  fi
+
+  [[ $1 =~ $validate ]]
+}
+
+validateIpAddress() {
+  local validate="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
+
+  [[ "$1" =~ $validate ]] && ping -c1 -W1 "$1" > /dev/null
+}
+
+validateIpAddress() {
+  local validate="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
+
+  [[ "$1" =~ $validate ]] && ping -c1 -W1 "$1" > /dev/null
+}
+
 getIpAddress() {
   detectedIpAddress=$(curl -s ifconfig.me)
 
@@ -222,6 +249,18 @@ if ! cd "$selectedUrsaPath"; then
 fi
 
 detectedIpAddress=$(getIpAddress)
+
+printf -v prompt "🤖 What's your domain name address?"
+while read -rp "$prompt"$'\n> ' answer; do
+  if confirmDomainName "$answer"; then
+    selectedDomainName="$answer"
+    break
+  fi
+
+  printf "💩 The domain name provided is not valid!\n"
+
+  [[ "$answer" =~ http* ]] && echo "💡 Just type the domain name address, there's no need for http:// or https:// e.g. mynode.example.com"
+done
 
 printf "The server public IP address the domain is pointing to is required! We found the public IP address for this machine to be %s\n" "$detectedIpAddress"
 printf -v prompt "🤖 Is the domain name %s pointing to the public IP address %s? (yes/no) " "$selectedDomainName" "$detectedIpAddress"
