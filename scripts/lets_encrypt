@@ -118,6 +118,9 @@ if ! sudo certbot renew --dry-run; then
     printf "💩 Oh no! The email address doesn't seem valid, try again...\n"
   done
 
+  # Ursa proxy configuration file
+  addUrsaProxyConfig
+
   printf "🚑 ACME Challenge health-check\n"
   if ! curl -s "http://$selectedDomainName/.well-known/acme-challenge/healthcheck" | grep -q "${defaultACMEChallengeMsgPlaceholder/_domain_/$selectedDomainName}"; then
     printf "💩 Uh-oh! The ACME Challenge health-check failed for some reason, make sure you don't have any firewall or apps blocking ports %s...\n" "${requiredPorts[*]}"
@@ -162,12 +165,7 @@ if ! sudo certbot renew --dry-run; then
   fi
 fi
 
-addUrsaProxyConfig() {
-if grep -qi "/etc/letsencrypt/live" "$defaultUrsaConfigPath" && grep -qi "[[server]]" "$defaultUrsaConfigPath"; then
-  echo "✅ Ursa server proxy configuration exists"
-  echo
-  echo ""
-
+domainNameConfSettingsVerificationHandler() {
   domainCertPath=$(grep -i "cert_path" "$defaultUrsaConfigPath" | cut -d '/' -f 5)
   domainKeyPaty=$(grep -i "key_path" "$defaultUrsaConfigPath" | cut -d '/' -f 5)
 
@@ -182,18 +180,37 @@ if grep -qi "/etc/letsencrypt/live" "$defaultUrsaConfigPath" && grep -qi "[[serv
     if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
       break;
     elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-      read -rp "🙋‍♀️ What's the domain name?" answer
-      if ! sed -i "s|$domainCertPath|$answer|" "$defaultUrsaConfigPath"; then
+      while read -rp "🙋‍♀️ We'll update the configuration domain to $selectedDomainName. Is this ok? Type \"no\" to change (yes/no)" answer; do
+        if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+          break;
+        elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+          read -rp "🙋‍♀️ What's the domain name" answer
+          selectedDomainName="$answer"
+          break;
+        fi
+      done
+
+      if ! sed -i "s|$domainCertPath|$selectedDomainName|" "$defaultUrsaConfigPath"; then
         echo "👹 Oh no! Failed to update the domain name in the config.toml, make the changes manually before retrying."
         echo
 
         exit 1
       fi
 
-      echo "✅ Updated the config.toml by replacing the domain name to $answer"
+      echo "✅ Updated the config.toml by replacing the domain name to $selectedDomainName"
       echo
     fi
   done
+}
+
+addUrsaProxyConfig() {
+if grep -qi "/etc/letsencrypt/live" "$defaultUrsaConfigPath" && grep -qi "[[server]]" "$defaultUrsaConfigPath"; then
+  echo "✅ Ursa server proxy configuration exists"
+  echo
+  echo ""
+
+  # Check if domain name is correct in the settings file
+  domainNameConfSettingsVerificationHandler
 
   return 0
 fi
