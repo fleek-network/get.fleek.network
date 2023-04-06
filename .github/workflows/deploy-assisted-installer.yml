@@ -23,6 +23,9 @@ jobs:
           cp ./static/CNAME ./build
           chmod 755 ./build/index.html
           cp -R ./locales ./build
+          cp ./scripts/lets_encrypt ./build
+          cp ./scripts/install_docker ./build
+          cp ./scripts/install_native ./build
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
