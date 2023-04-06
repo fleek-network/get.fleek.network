@@ -235,6 +235,29 @@ if ! sudo certbot renew --dry-run; then
   # Ursa server configuration handler to ensure the settings exist and correct
   ursaServerConfigurationHandler 1
 
+  echo "🤖 Start the Ursa proxy"
+  if ! ursa-proxy daemon; then
+    printf "👹 Oops! The ursa-proxy failed to start for some reason...\n"
+
+    exit 1
+  fi
+
+  printf "🚑 Ursa proxy health-check\n"
+  pingAttempts=0
+  while ! curl -s localhost/ping | grep -q pong; do
+    if [[ "$pingAttempts" -gt 10 ]]; then
+      echo "👹 Oh no! Failed to health-check the ursa proxy"
+      echo
+
+      break;
+    fi
+
+    printf "🤖 Awaiting for Ursa proxy on port 80, attempt number %s...\n" "$pingAttempts"
+    sleep 1
+
+    ((pingAttempts++))
+  done
+
   printf "🚑 ACME Challenge health-check\n"
   if ! curl -s "http://$selectedDomainName/.well-known/acme-challenge/healthcheck" | grep -q "${defaultACMEChallengeMsgPlaceholder/_domain_/$selectedDomainName}"; then
     printf "💩 Uh-oh! The ACME Challenge health-check failed for some reason, make sure you don't have any firewall or apps blocking ports %s...\n" "${requiredPorts[*]}"
