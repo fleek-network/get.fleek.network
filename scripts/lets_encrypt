@@ -163,7 +163,6 @@ if ! sudo certbot renew --dry-run; then
 fi
 
 addUrsaProxyConfig() {
-
 if grep -qi "/etc/letsencrypt/live" "$defaultUrsaConfigPath" && grep -qi "[[server]]" "$defaultUrsaConfigPath"; then
   echo "✅ Ursa server proxy configuration exists"
   echo
@@ -174,9 +173,27 @@ if grep -qi "/etc/letsencrypt/live" "$defaultUrsaConfigPath" && grep -qi "[[serv
 
   if [[ ! "$domainCertPath" -eq "$domainKeyPaty" ]]; then
     echo "🤷‍♀️ Unexpected settings in the Ursa configuration file, the domain name in server.tls cert_path and key_path should be equal. Make the necessary changes and save the file before retrying..."
+    echo
 
     exit 1
   fi
+
+  while read -rp "🙋‍♀️ The Ursa configuration for server has the domain set as $domainCertPath. Is this correct? (yes/no)" answer; do
+    if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+      break;
+    elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+      read -rp "🙋‍♀️ What's the domain name?" answer
+      if ! sed -i "s|$domainCertPath|$answer|" "$defaultUrsaConfigPath"; then
+        echo "👹 Oh no! Failed to update the domain name in the config.toml, make the changes manually before retrying."
+        echo
+
+        exit 1
+      fi
+
+      echo "✅ Updated the config.toml by replacing the domain name to $answer"
+      echo
+    fi
+  done
 
   return 0
 fi
