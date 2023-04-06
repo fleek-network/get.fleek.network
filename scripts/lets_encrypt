@@ -6,7 +6,7 @@
 # By providing scripts to automate the installation process of our software,
 # we believe that it can help improve the onboarding experience of our users.
 #
-# Quick install: `curl https://get.fleek.network/install_native | bash`
+# Quick install: `curl https://get.fleek.network/lets_encrypt | bash`
 #
 # This script automates the process illustrated in our guide "Securing a node with SSL/TLS"
 # advanced users might find it better to follow the instructions in the guide
