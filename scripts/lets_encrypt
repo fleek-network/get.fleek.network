@@ -24,9 +24,6 @@
 [ "$BASH" ] || { printf >&2 '🙏 Run the script with Bash, please!\n'; exit 1; }
 (( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
 
-# Date
-dateRuntime=$(date '+%Y%m%d%H%M%S')
-
 # Defaults
 defaultUrsaPath="$HOME/fleek-network/ursa"
 defaultUrsaConfigFilename="config.toml"
@@ -34,10 +31,25 @@ defaultUrsaBasePath="$HOME/.ursa"
 defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
 defaultUrsaProxyDir="$defaultUrsaBasePath/proxy"
 defaultUrsaProxyConfigPath="$defaultUrsaProxyDir/config.toml"
-defaultACMEChallengeMsgPlaceholder="_domain_ ACME Challenge directory is healthy!"
 defaultLetsEncryptCertificatesLivePath="/etc/letsencrypt/live"
 
-declare -a requiredPorts=(80 443 4069 6009)
+# Only interest in 80 and 443, as Ursa might already be running
+declare -a requiredPorts=(80 443)
+
+hasPortsAvailable=0
+for port in "${requiredPorts[@]}"; do
+  if lsof -i :"$port" >/dev/null; then
+    printf "💩 Uh-oh! The port %s is required but is in use...\n" "$port"
+
+    hasPortsAvailable=1
+  fi
+done
+
+if [[ "$hasPortsAvailable" -eq 1 ]]; then
+  printf "👹 Oops! Required port(s) are in use, make sure the ports are open before retrying, please!\n"
+
+  exit 1
+fi
 
 # User data
 selectedDomainName=""
@@ -58,6 +70,12 @@ confirmDomainName() {
   fi
 
   [[ $1 =~ $validate ]]
+}
+
+confirmEmailAddress() {
+  local validate="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+$"
+
+  [[ "$1" =~ $validate ]]
 }
 
 validateIpAddress() {
@@ -104,14 +122,14 @@ domainNameConfSettingsVerificationHandler() {
   domainCertPath=$(grep -i "cert_path" "$defaultUrsaConfigPath" | cut -d '/' -f 5)
   domainKeyPaty=$(grep -i "key_path" "$defaultUrsaConfigPath" | cut -d '/' -f 5)
 
-  if [[ ! "$domainCertPath" -eq "$domainKeyPaty" ]]; then
+  if [[ ! "$domainCertPath" == "$domainKeyPaty" ]]; then
     echo "🤷‍♀️ Unexpected settings in the Ursa configuration file, the domain name in server.tls cert_path and key_path should be equal. Make the necessary changes and save the file before retrying..."
     echo
 
     exit 1
   fi
 
-  if [[ "$domainCertPath" -eq "$selectedDomainName" ]]; then
+  if [[ "$domainCertPath" == "$selectedDomainName" ]]; then
     echo "✅ The Ursa configuration file has server settings and user provided domain name matches the settings"
     echo
 
@@ -360,20 +378,23 @@ while ! curl -s localhost/ping | grep -q pong; do
   ((pingAttempts++))
 done
 
-printf "🚑 ACME Challenge health-check\n"
-if ! curl -s "http://$selectedDomainName/.well-known/acme-challenge/healthcheck" | grep -q "${defaultACMEChallengeMsgPlaceholder/_domain_/$selectedDomainName}"; then
-  printf "💩 Uh-oh! The ACME Challenge health-check failed for some reason, make sure you don't have any firewall or apps blocking ports %s...\n" "${requiredPorts[*]}"
-fi
+echo "🤖 Create web directory for acme-challenge"
+mkdir -p "/var/www/$selectedDomainName/.well-known/acme-challenge"
 
-printf "🤖 Get and install your certificates\n"
-sudo certbot certonly \
+printf "🤖 Get and install your certificates (will generate temporary file at /var/www/your-domain/.well-known/acme-challenge)\n"
+if ! sudo certbot certonly \
   --webroot -w /var/www/"$selectedDomainName" \
   --email "$selectedEmailAddress" \
   --domain "$selectedDomainName" \
   --rsa-key-size 4096 \
   --agree-tos -n \
   --force-renewal \
-  -v
+  -v; then
+  echo "👹 Oops! Failed to create the certificate"
+  echo
+
+  exit 1
+fi
 
 printf "🤖 Set Ursa server IP Address in the configuration file\n"
 if [[ -f "$defaultUrsaConfigPath" ]]; then
