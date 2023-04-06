@@ -278,4 +278,10 @@ if ! sudo certbot renew --dry-run; then
       exit 1
     fi
   fi
+
+  echo "🤖 Set Ursa proxy configuration for SSL/TLS"
+  ursaServerConfigurationHandler 2
+
+  echo "🤖 Reload the Ursa proxy configuration file"
+  curl --request POST http://0.0.0.0:8881/reload-tls-config
 fi
