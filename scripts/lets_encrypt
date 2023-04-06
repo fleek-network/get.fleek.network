@@ -177,10 +177,20 @@ addr = \"0.0.0.0:8881\"
 " > "$defaultUrsaConfigPath"
 fi
 
-
 echo "✅ Updated the config.toml by including the [server] settings"
 echo
 }
+
+hasCommand() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+if ! hasCommand ursa-proxy; then
+  echo "💩 Oh no! The ursa-proxy was not found in the system PATH. Make sure you install it correctly before retrying."
+  echo
+
+  exit 1
+fi
 
 if ! sudo certbot renew --dry-run; then
   detectedIpAddress=$(getIpAddress)
