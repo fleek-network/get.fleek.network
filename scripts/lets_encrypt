@@ -31,6 +31,8 @@ dateRuntime=$(date '+%Y%m%d%H%M%S')
 defaultUrsaConfigFilename="config.toml"
 defaultUrsaBasePath="$HOME/.ursa"
 defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
+defaultUrsaProxyDir="$defaultUrsaBasePath/proxy"
+defaultUrsaProxyConfigPath="$defaultUrsaProxyDir/config.toml"
 defaultACMEChallengeMsgPlaceholder="_domain_ ACME Challenge directory is healthy!"
 
 declare -a requiredPorts=(80 443 4069 6009)
@@ -119,11 +121,17 @@ if grep -qi "/etc/letsencrypt/live" "$defaultUrsaConfigPath" && grep -qi "[[serv
   echo
 
   # Check if domain name is correct in the settings file
-  domainNameConfSettingsVerificationHandler
+  domainNameConfSettingsVerificationHandler "$1"
 
   return 0
 fi
 
+if [[ -d "$defaultUrsaProxyConfigPath" ]]; then
+  echo "✅ Create Ursa proxy directory"
+  mkdir -p "$defaultUrsaProxyConfigPath"
+fi
+
+if [[ $1 -eq "1" ]]; then
 # Here "no identation" is intentional, do not change
 # The top empty line at the top is intentional
 echo "
@@ -148,7 +156,27 @@ key_path = \"/etc/letsencrypt/live/$selectedDomainName/privkey.pem\"
 # You can omit this section as this is the default.
 [admin]
 addr = \"0.0.0.0:8881\"
-" >> "$defaultUrsaConfigPath"
+" > "$defaultUrsaConfigPath"
+elif [[ $1 -eq "2" ]]; then
+# Here "no identation" is intentional, do not change
+# The top empty line at the top is intentional
+echo "
+# Server with TLS
+[[server]]
+proxy_pass = \"127.0.0.1:4069\"
+listen_addr = \"0.0.0.0:443\"
+
+[server.tls]
+cert_path = \"/etc/letsencrypt/live/$selectedDomainName/fullchain.pem\"
+key_path = \"/etc/letsencrypt/live/$selectedDomainName/privkey.pem\"
+
+# Admin service.
+# You can omit this section as this is the default.
+[admin]
+addr = \"0.0.0.0:8881\"
+" > "$defaultUrsaConfigPath"
+fi
+
 
 echo "✅ Updated the config.toml by including the [server] settings"
 echo
@@ -205,7 +233,7 @@ if ! sudo certbot renew --dry-run; then
   done
 
   # Ursa server configuration handler to ensure the settings exist and correct
-  ursaServerConfigurationHandler
+  ursaServerConfigurationHandler 1
 
   printf "🚑 ACME Challenge health-check\n"
   if ! curl -s "http://$selectedDomainName/.well-known/acme-challenge/healthcheck" | grep -q "${defaultACMEChallengeMsgPlaceholder/_domain_/$selectedDomainName}"; then
