@@ -35,6 +35,7 @@ defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
 defaultUrsaProxyDir="$defaultUrsaBasePath/proxy"
 defaultUrsaProxyConfigPath="$defaultUrsaProxyDir/config.toml"
 defaultACMEChallengeMsgPlaceholder="_domain_ ACME Challenge directory is healthy!"
+defaultLetsEncryptCertificatesLivePath="/etc/letsencrypt/live"
 
 declare -a requiredPorts=(80 443 4069 6009)
 
@@ -90,11 +91,11 @@ domainNameConfSettingsVerificationHandler() {
     return 0
   fi
 
-  while read -rp "🙋‍♀️ The Ursa configuration for server has the domain set as $domainCertPath. Is this correct? (yes/no)" answer; do
+  while read -rp "🙋‍♀️ The Ursa configuration for server has the domain set as $domainCertPath. Is this correct? (yes/no) " answer; do
     if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
       break;
     elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-      while read -rp "🙋‍♀️ We'll update the configuration domain to $selectedDomainName. Is this ok? Type \"no\" to change (yes/no)" answer; do
+      while read -rp "🙋‍♀️ We'll update the configuration domain to $selectedDomainName. Is this ok? Type \"no\" to change (yes/no) " answer; do
         if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
           break;
         elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
@@ -118,7 +119,7 @@ domainNameConfSettingsVerificationHandler() {
 }
 
 ursaServerConfigurationHandler() {
-if grep -qi "/etc/letsencrypt/live" "$defaultUrsaConfigPath" && grep -qi "[[server]]" "$defaultUrsaConfigPath"; then
+if grep -qi "$defaultLetsEncryptCertificatesLivePath" "$defaultUrsaConfigPath" && grep -qi "[[server]]" "$defaultUrsaConfigPath"; then
   echo "✅ Ursa server proxy configuration exists"
   echo
 
@@ -151,8 +152,8 @@ proxy_pass = \"127.0.0.1:4069\"
 listen_addr = \"0.0.0.0:443\"
 
 [server.tls]
-cert_path = \"/etc/letsencrypt/live/$selectedDomainName/fullchain.pem\"
-key_path = \"/etc/letsencrypt/live/$selectedDomainName/privkey.pem\"
+cert_path = \"$defaultLetsEncryptCertificatesLivePath/$selectedDomainName/fullchain.pem\"
+key_path = \"$defaultLetsEncryptCertificatesLivePath/$selectedDomainName/privkey.pem\"
 
 # Admin service.
 # You can omit this section as this is the default.
@@ -169,8 +170,8 @@ proxy_pass = \"127.0.0.1:4069\"
 listen_addr = \"0.0.0.0:443\"
 
 [server.tls]
-cert_path = \"/etc/letsencrypt/live/$selectedDomainName/fullchain.pem\"
-key_path = \"/etc/letsencrypt/live/$selectedDomainName/privkey.pem\"
+cert_path = \"$defaultLetsEncryptCertificatesLivePath/$selectedDomainName/fullchain.pem\"
+key_path = \"$defaultLetsEncryptCertificatesLivePath/$selectedDomainName/privkey.pem\"
 
 # Admin service.
 # You can omit this section as this is the default.
@@ -188,13 +189,13 @@ hasCommand() {
 }
 
 if ! hasCommand ursa-proxy; then
-  echo "💩 Oh no! The ursa-proxy was not found in the system PATH. Make sure you install it correctly before retrying."
+  echo "💩 Oh no! The ursa-proxy was not found in the system PATH or user bin. Make sure you install it correctly before retrying."
   echo
 
   exit 1
 fi
 
-while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaConfigPath? Type \"no\" to change the location (yes/no)"; do
+while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaConfigPath? Type \"no\" to change the location (yes/no) " answer; do
   if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
     while read -rp "🙋‍♀️ What's the location where the Ursa repository is?" answer; do
       if [[ -d "$answer" ]]; then
