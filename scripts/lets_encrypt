@@ -224,4 +224,6 @@ key_path = \"/etc/letsencrypt/live/$selectedDomainName/privkey.pem\"
 addr = \"0.0.0.0:8881\"
 " >> "$defaultUrsaConfigPath"
 
+echo "✅ Updated the config.toml by including the [server] settings"
+echo
 }
