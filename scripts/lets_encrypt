@@ -68,6 +68,92 @@ getIpAddress() {
   echo "ERROR_IP_ADDRESS_NOT_AVAILABLE"
 }
 
+domainNameConfSettingsVerificationHandler() {
+  domainCertPath=$(grep -i "cert_path" "$defaultUrsaConfigPath" | cut -d '/' -f 5)
+  domainKeyPaty=$(grep -i "key_path" "$defaultUrsaConfigPath" | cut -d '/' -f 5)
+
+  if [[ ! "$domainCertPath" -eq "$domainKeyPaty" ]]; then
+    echo "🤷‍♀️ Unexpected settings in the Ursa configuration file, the domain name in server.tls cert_path and key_path should be equal. Make the necessary changes and save the file before retrying..."
+    echo
+
+    exit 1
+  fi
+
+  if [[ "$domainCertPath" -eq "$selectedDomainName" ]]; then
+    echo "✅ The Ursa configuration file has server settings and user provided domain name matches the settings"
+    echo
+
+    return 0
+  fi
+
+  while read -rp "🙋‍♀️ The Ursa configuration for server has the domain set as $domainCertPath. Is this correct? (yes/no)" answer; do
+    if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+      break;
+    elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+      while read -rp "🙋‍♀️ We'll update the configuration domain to $selectedDomainName. Is this ok? Type \"no\" to change (yes/no)" answer; do
+        if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+          break;
+        elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+          read -rp "🙋‍♀️ What's the domain name" answer
+          selectedDomainName="$answer"
+          break;
+        fi
+      done
+
+      if ! sed -i "s|$domainCertPath|$selectedDomainName|" "$defaultUrsaConfigPath"; then
+        echo "👹 Oh no! Failed to update the domain name in the config.toml, make the changes manually before retrying."
+        echo
+
+        exit 1
+      fi
+
+      echo "✅ Updated the config.toml by replacing the domain name to $selectedDomainName"
+      echo
+    fi
+  done
+}
+
+ursaServerConfigurationHandler() {
+if grep -qi "/etc/letsencrypt/live" "$defaultUrsaConfigPath" && grep -qi "[[server]]" "$defaultUrsaConfigPath"; then
+  echo "✅ Ursa server proxy configuration exists"
+  echo
+
+  # Check if domain name is correct in the settings file
+  domainNameConfSettingsVerificationHandler
+
+  return 0
+fi
+
+# Here "no identation" is intentional, do not change
+# The top empty line at the top is intentional
+echo "
+# Server without TLS.
+[[server]]
+proxy_pass = \"127.0.0.1:4069\"
+listen_addr = \"0.0.0.0:80\"
+# Certobot needs to serve from this directory
+# to complete the challenge. See current NGINX conf.
+serve_dir_path = \".well-known\"
+
+ # Server with TLS.
+[[server]]
+proxy_pass = \"127.0.0.1:4069\"
+listen_addr = \"0.0.0.0:443\"
+
+[server.tls]
+cert_path = \"/etc/letsencrypt/live/$selectedDomainName/fullchain.pem\"
+key_path = \"/etc/letsencrypt/live/$selectedDomainName/privkey.pem\"
+
+# Admin service.
+# You can omit this section as this is the default.
+[admin]
+addr = \"0.0.0.0:8881\"
+" >> "$defaultUrsaConfigPath"
+
+echo "✅ Updated the config.toml by including the [server] settings"
+echo
+}
+
 if ! sudo certbot renew --dry-run; then
   detectedIpAddress=$(getIpAddress)
 
@@ -118,14 +204,15 @@ if ! sudo certbot renew --dry-run; then
     printf "💩 Oh no! The email address doesn't seem valid, try again...\n"
   done
 
-  # Ursa proxy configuration file
-  addUrsaProxyConfig
+  # Ursa server configuration handler to ensure the settings exist and correct
+  ursaServerConfigurationHandler
 
   printf "🚑 ACME Challenge health-check\n"
   if ! curl -s "http://$selectedDomainName/.well-known/acme-challenge/healthcheck" | grep -q "${defaultACMEChallengeMsgPlaceholder/_domain_/$selectedDomainName}"; then
     printf "💩 Uh-oh! The ACME Challenge health-check failed for some reason, make sure you don't have any firewall or apps blocking ports %s...\n" "${requiredPorts[*]}"
   fi
 
+  printf "🤖 Get and install your certificates\n"
   sudo certbot certonly \
     --webroot -w /var/www/"$selectedDomainName" \
     --email "$selectedEmailAddress" \
@@ -164,83 +251,3 @@ if ! sudo certbot renew --dry-run; then
     fi
   fi
 fi
-
-domainNameConfSettingsVerificationHandler() {
-  domainCertPath=$(grep -i "cert_path" "$defaultUrsaConfigPath" | cut -d '/' -f 5)
-  domainKeyPaty=$(grep -i "key_path" "$defaultUrsaConfigPath" | cut -d '/' -f 5)
-
-  if [[ ! "$domainCertPath" -eq "$domainKeyPaty" ]]; then
-    echo "🤷‍♀️ Unexpected settings in the Ursa configuration file, the domain name in server.tls cert_path and key_path should be equal. Make the necessary changes and save the file before retrying..."
-    echo
-
-    exit 1
-  fi
-
-  while read -rp "🙋‍♀️ The Ursa configuration for server has the domain set as $domainCertPath. Is this correct? (yes/no)" answer; do
-    if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-      break;
-    elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-      while read -rp "🙋‍♀️ We'll update the configuration domain to $selectedDomainName. Is this ok? Type \"no\" to change (yes/no)" answer; do
-        if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-          break;
-        elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-          read -rp "🙋‍♀️ What's the domain name" answer
-          selectedDomainName="$answer"
-          break;
-        fi
-      done
-
-      if ! sed -i "s|$domainCertPath|$selectedDomainName|" "$defaultUrsaConfigPath"; then
-        echo "👹 Oh no! Failed to update the domain name in the config.toml, make the changes manually before retrying."
-        echo
-
-        exit 1
-      fi
-
-      echo "✅ Updated the config.toml by replacing the domain name to $selectedDomainName"
-      echo
-    fi
-  done
-}
-
-addUrsaProxyConfig() {
-if grep -qi "/etc/letsencrypt/live" "$defaultUrsaConfigPath" && grep -qi "[[server]]" "$defaultUrsaConfigPath"; then
-  echo "✅ Ursa server proxy configuration exists"
-  echo
-  echo ""
-
-  # Check if domain name is correct in the settings file
-  domainNameConfSettingsVerificationHandler
-
-  return 0
-fi
-
-# Here "no identation" is intentional, do not change
-# The top empty line at the top is intentional
-echo "
-# Server without TLS.
-[[server]]
-proxy_pass = \"127.0.0.1:4069\"
-listen_addr = \"0.0.0.0:80\"
-# Certobot needs to serve from this directory
-# to complete the challenge. See current NGINX conf.
-serve_dir_path = \".well-known\"
-
- # Server with TLS.
-[[server]]
-proxy_pass = \"127.0.0.1:4069\"
-listen_addr = \"0.0.0.0:443\"
-
-[server.tls]
-cert_path = \"/etc/letsencrypt/live/$selectedDomainName/fullchain.pem\"
-key_path = \"/etc/letsencrypt/live/$selectedDomainName/privkey.pem\"
-
-# Admin service.
-# You can omit this section as this is the default.
-[admin]
-addr = \"0.0.0.0:8881\"
-" >> "$defaultUrsaConfigPath"
-
-echo "✅ Updated the config.toml by including the [server] settings"
-echo
-}
