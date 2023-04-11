@@ -164,7 +164,7 @@ domainNameConfSettingsVerificationHandler() {
 }
 
 ursaServerConfigurationHandler() {
-if [[ -d "$defaultUrsaProxyDir" ]]; then
+if [[ ! -d "$defaultUrsaProxyDir" ]]; then
   echo "✅ Create Ursa proxy directory"
   mkdir -p "$defaultUrsaProxyDir"
   touch "$defaultUrsaProxyConfigPath"
