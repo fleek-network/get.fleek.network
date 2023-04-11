@@ -190,21 +190,7 @@ proxy_pass = \"127.0.0.1:4069\"
 listen_addr = \"0.0.0.0:80\"
 # Certobot needs to serve from this directory
 # to complete the challenge. See current NGINX conf.
-serve_dir_path = \".well-known\"
-
- # Server with TLS.
-[[server]]
-proxy_pass = \"127.0.0.1:4069\"
-listen_addr = \"0.0.0.0:443\"
-
-[server.tls]
-cert_path = \"$defaultLetsEncryptCertificatesLivePath/$selectedDomainName/fullchain.pem\"
-key_path = \"$defaultLetsEncryptCertificatesLivePath/$selectedDomainName/privkey.pem\"
-
-# Admin service.
-# You can omit this section as this is the default.
-[admin]
-addr = \"0.0.0.0:8881\"
+serve_dir_path = \"/var/www/$selectedDomainName/.well-known\"
 " > "$defaultUrsaProxyConfigPath" || exit 1
 elif [[ $1 -eq "2" ]]; then
 # Here "no identation" is intentional, do not change
