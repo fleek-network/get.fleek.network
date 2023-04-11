@@ -38,7 +38,7 @@ declare -a requiredPorts=(80 443)
 
 hasPortsAvailable=0
 for port in "${requiredPorts[@]}"; do
-  if lsof -i :"$port" >/dev/null; then
+  if lsof -i :"$port" >/dev/null && ! lsof -i :"$port" +c0 | grep 'ursa-proxy'; then
     printf "💩 Uh-oh! The port %s is required but is in use...\n" "$port"
 
     hasPortsAvailable=1
