@@ -44,9 +44,11 @@ hasCommand() {
   defaultUrsaDiagnosticFilename="diagnostic.log"
   defaultUrsaOutputFilename="output.log"
   defaultUrsaProxySystemdServiceName="ursa-proxy"
+  defaultUrsaSystemdServicePath="/etc/systemd/system/$defaultUrsaProxySystemdServiceName.service"
+  defaultExecCargoProxyCmd="ursa-proxy daemon"
+  # TODO: Disabled as ursa-proxy has no output at time of writing
   defaultUrsaDiagnosticLogAbsPath="$defaultUrsaLogPath/$defaultUrsaDiagnosticFilename"
   defaultUrsaOutputLogAbsPath="$defaultUrsaLogPath/$defaultUrsaOutputFilename"
-  defaultUrsaSystemdServicePath="/etc/systemd/system/$defaultUrsaProxySystemdServiceName.service"
   defaultCargoBinUrsaProxyPath="$HOME/.cargo/bin/$defaultUrsaProxySystemdServiceName"
 
   # User data
@@ -112,9 +114,9 @@ Type=simple
 MemoryHigh=1G
 RestartSec=15s
 Restart=always
-ExecStart=$defaultCargoBinUrsaProxyPath
-StandardOutput=append:$defaultUrsaOutputLogAbsPath
-StandardError=append:$defaultUrsaDiagnosticLogAbsPath
+ExecStart=$defaultExecCargoProxyCmd
+StandardOutput=null
+StandardError=null
 
 [Install]
 WantedBy=multi-user.target
@@ -135,11 +137,14 @@ URSA_PROXY_SERVICE
   echo
   echo "🌈 The Ursa proxy server is running!"
   echo
-  echo "You can watch the ursa-proxy output by running the command:"
-  echo "tail -f $defaultUrsaOutputLogAbsPath"
-  echo
-  echo "For diagnostics run the command:"
-  echo "tail -f $defaultUrsaDiagnosticLogAbsPath"
+  # TODO: At time of writing the ursa-proxy does not have output
+  # for this reason the StandardOutput and Error is set to null otherwise it'd exit 209
+  # so, enable the StandardOutput and Error afterwards
+  # echo "You can watch the ursa-proxy output by running the command:"
+  # echo "tail -f $defaultUrsaOutputLogAbsPath"
+  # echo
+  # echo "For diagnostics run the command:"
+  # echo "tail -f $defaultUrsaDiagnosticLogAbsPath"
   echo
   echo "Launch or stop the ursa-proxy by running:"
   echo "sudo systemctl stop ursa-proxy"
