@@ -20,165 +20,166 @@
 #
 # Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
 
-exec < /dev/tty;
+(
+  exec < /dev/tty;
 
-# 🚑 Check if running in Bash and supported version
-[ "$BASH" ] || { printf >&2 '🙏 Run the script with Bash, please!\n'; exit 1; }
-(( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
+  # 🚑 Check if running in Bash and supported version
+  [ "$BASH" ] || { printf >&2 '🙏 Run the script with Bash, please!\n'; exit 1; }
+  (( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
 
-# Defaults
-defaultUrsaPath="$HOME/fleek-network/ursa"
-defaultUrsaConfigFilename="config.toml"
-defaultUrsaBasePath="$HOME/.ursa"
-defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
-defaultUrsaProxyDir="$defaultUrsaBasePath/proxy"
-defaultUrsaProxyConfigPath="$defaultUrsaProxyDir/config.toml"
-defaultLetsEncryptCertificatesLivePath="/etc/letsencrypt/live"
+  # Defaults
+  defaultUrsaPath="$HOME/fleek-network/ursa"
+  defaultUrsaConfigFilename="config.toml"
+  defaultUrsaBasePath="$HOME/.ursa"
+  defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
+  defaultUrsaProxyDir="$defaultUrsaBasePath/proxy"
+  defaultUrsaProxyConfigPath="$defaultUrsaProxyDir/config.toml"
+  defaultLetsEncryptCertificatesLivePath="/etc/letsencrypt/live"
 
-# Only interest in 80 and 443, as Ursa might already be running
-declare -a requiredPorts=(80 443)
+  # Only interest in 80 and 443, as Ursa might already be running
+  declare -a requiredPorts=(80 443)
 
-hasPortsAvailable=0
-for port in "${requiredPorts[@]}"; do
-  if lsof -i :"$port" >/dev/null && ! (lsof -i :"$port" +c0 | grep -q 'ursa-proxy'); then
-    printf "💩 Uh-oh! The port %s is required but is in use...\n" "$port"
+  hasPortsAvailable=0
+  for port in "${requiredPorts[@]}"; do
+    if lsof -i :"$port" >/dev/null && ! (lsof -i :"$port" +c0 | grep -q 'ursa-proxy'); then
+      printf "💩 Uh-oh! The port %s is required but is in use...\n" "$port"
 
-    hasPortsAvailable=1
-  fi
-done
+      hasPortsAvailable=1
+    fi
+  done
 
-if [[ "$hasPortsAvailable" -eq 1 ]]; then
-  printf "👹 Oops! Required port(s) are in use, make sure the ports are open before retrying, please!\n"
-
-  exit 1
-fi
-
-# User data
-selectedDomainName=""
-selectedEmailAddress=""
-selectedIpAddress=""
-selectedUrsaPath=""
-
-# Confirm validators
-confirmDomainName() {
-  local validate="^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\.)+[a-zA-Z]{2,}$"
-
-  if ! hasCommand whois; then
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install whois -yq
-  fi
-
-  if whois "$1" | grep -Ei '[Uu]nallocated|returned 0 objects' > /dev/null; then
-    return 1
-  fi
-
-  [[ $1 =~ $validate ]]
-}
-
-confirmEmailAddress() {
-  local validate="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+$"
-
-  [[ "$1" =~ $validate ]]
-}
-
-validateIpAddress() {
-  local validate="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
-
-  [[ "$1" =~ $validate ]] && ping -c1 -W1 "$1" > /dev/null
-}
-
-getIpAddress() {
-  detectedIpAddress=$(curl -s ifconfig.me)
-
-  if validateIpAddress "$detectedIpAddress"; then
-    echo "$detectedIpAddress"
-
-    return
-  fi
-
-  detectedIpAddress=$(curl -s icanhazip.com)
-
-  if validateIpAddress "$detectedIpAddress"; then
-    echo "$detectedIpAddress"
-
-    return
-  fi
-
-  detectedIpAddress=$(curl -s ident.me)
-
-  if validateIpAddress "$detectedIpAddress"; then
-    echo "$detectedIpAddress"
-
-    return
-  fi
-
-  echo "ERROR_IP_ADDRESS_NOT_AVAILABLE"
-}
-
-domainNameConfSettingsVerificationHandler() {
-  domainCertPath=$(grep -i "cert_path" "$defaultUrsaConfigPath" | cut -d '/' -f 5)
-  domainKeyPaty=$(grep -i "key_path" "$defaultUrsaConfigPath" | cut -d '/' -f 5)
-
-  if [[ ! "$domainCertPath" == "$domainKeyPaty" ]]; then
-    echo "🤷‍♀️ Unexpected settings in the Ursa configuration file, the domain name in server.tls cert_path and key_path should be equal. Make the necessary changes and save the file before retrying..."
-    echo
+  if [[ "$hasPortsAvailable" -eq 1 ]]; then
+    printf "👹 Oops! Required port(s) are in use, make sure the ports are open before retrying, please!\n"
 
     exit 1
   fi
 
-  if [[ "$domainCertPath" == "$selectedDomainName" ]]; then
-    echo "✅ The Ursa configuration file has server settings and user provided domain name matches the settings"
-    echo
+  # User data
+  selectedDomainName=""
+  selectedEmailAddress=""
+  selectedIpAddress=""
+  selectedUrsaPath=""
 
-    return 0
-  fi
+  # Confirm validators
+  confirmDomainName() {
+    local validate="^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\.)+[a-zA-Z]{2,}$"
 
-  while read -rp "🙋‍♀️ The Ursa configuration for server has the domain set as $domainCertPath. Is this correct? (yes/no) " answer; do
-    if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-      break;
-    elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-      while read -rp "🙋‍♀️ We'll update the configuration domain to $selectedDomainName. Is this ok? Type \"no\" to change (yes/no) " answer; do
-        if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-          break;
-        elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-          read -rp "🙋‍♀️ What's the domain name" answer
-          selectedDomainName="$answer"
-          break;
-        fi
-      done
-
-      if ! sed -i "s|$domainCertPath|$selectedDomainName|" "$defaultUrsaProxyConfigPath"; then
-        echo "👹 Oh no! Failed to update the domain name in the config.toml, make the changes manually before retrying."
-        echo
-
-        exit 1
-      fi
-
-      echo "✅ Updated the config.toml by replacing the domain name to $selectedDomainName"
-      echo
+    if ! hasCommand whois; then
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install whois -yq
     fi
-  done
-}
 
-ursaServerConfigurationHandler() {
-if [[ ! -d "$defaultUrsaProxyDir" ]]; then
-  echo "✅ Create Ursa proxy directory"
-  mkdir -p "$defaultUrsaProxyDir"
-  touch "$defaultUrsaProxyConfigPath"
-else
-  if grep -qi "$defaultLetsEncryptCertificatesLivePath" "$defaultUrsaProxyConfigPath" && grep -qi "[[server]]" "$defaultUrsaProxyConfigPath"; then
-    echo "✅ Ursa server proxy configuration exists"
-    echo
+    if whois "$1" | grep -Ei '[Uu]nallocated|returned 0 objects' > /dev/null; then
+      return 1
+    fi
 
-    # Check if domain name is correct in the settings file
-    domainNameConfSettingsVerificationHandler "$1"
+    [[ $1 =~ $validate ]]
+  }
 
-    return 0
+  confirmEmailAddress() {
+    local validate="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+$"
+
+    [[ "$1" =~ $validate ]]
+  }
+
+  validateIpAddress() {
+    local validate="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
+
+    [[ "$1" =~ $validate ]] && ping -c1 -W1 "$1" > /dev/null
+  }
+
+  getIpAddress() {
+    detectedIpAddress=$(curl -s ifconfig.me)
+
+    if validateIpAddress "$detectedIpAddress"; then
+      echo "$detectedIpAddress"
+
+      return
+    fi
+
+    detectedIpAddress=$(curl -s icanhazip.com)
+
+    if validateIpAddress "$detectedIpAddress"; then
+      echo "$detectedIpAddress"
+
+      return
+    fi
+
+    detectedIpAddress=$(curl -s ident.me)
+
+    if validateIpAddress "$detectedIpAddress"; then
+      echo "$detectedIpAddress"
+
+      return
+    fi
+
+    echo "ERROR_IP_ADDRESS_NOT_AVAILABLE"
+  }
+
+  domainNameConfSettingsVerificationHandler() {
+    domainCertPath=$(grep -i "cert_path" "$defaultUrsaConfigPath" | cut -d '/' -f 5)
+    domainKeyPaty=$(grep -i "key_path" "$defaultUrsaConfigPath" | cut -d '/' -f 5)
+
+    if [[ ! "$domainCertPath" == "$domainKeyPaty" ]]; then
+      echo "🤷‍♀️ Unexpected settings in the Ursa configuration file, the domain name in server.tls cert_path and key_path should be equal. Make the necessary changes and save the file before retrying..."
+      echo
+
+      exit 1
+    fi
+
+    if [[ "$domainCertPath" == "$selectedDomainName" ]]; then
+      echo "✅ The Ursa configuration file has server settings and user provided domain name matches the settings"
+      echo
+
+      return 0
+    fi
+
+    while read -rp "🙋‍♀️ The Ursa configuration for server has the domain set as $domainCertPath. Is this correct? (yes/no) " answer; do
+      if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+        break;
+      elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+        while read -rp "🙋‍♀️ We'll update the configuration domain to $selectedDomainName. Is this ok? Type \"no\" to change (yes/no) " answer; do
+          if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+            break;
+          elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+            read -rp "🙋‍♀️ What's the domain name" answer
+            selectedDomainName="$answer"
+            break;
+          fi
+        done
+
+        if ! sed -i "s|$domainCertPath|$selectedDomainName|" "$defaultUrsaProxyConfigPath"; then
+          echo "👹 Oh no! Failed to update the domain name in the config.toml, make the changes manually before retrying."
+          echo
+
+          exit 1
+        fi
+
+        echo "✅ Updated the config.toml by replacing the domain name to $selectedDomainName"
+        echo
+      fi
+    done
+  }
+
+  ursaServerConfigurationHandler() {
+  if [[ ! -d "$defaultUrsaProxyDir" ]]; then
+    echo "✅ Create Ursa proxy directory"
+    mkdir -p "$defaultUrsaProxyDir"
+    touch "$defaultUrsaProxyConfigPath"
+  else
+    if grep -qi "$defaultLetsEncryptCertificatesLivePath" "$defaultUrsaProxyConfigPath" && grep -qi "[[server]]" "$defaultUrsaProxyConfigPath"; then
+      echo "✅ Ursa server proxy configuration exists"
+      echo
+
+      # Check if domain name is correct in the settings file
+      domainNameConfSettingsVerificationHandler "$1"
+
+      return 0
+    fi
   fi
-fi
 
-if [[ $1 -eq "1" ]]; then
-# Here "no identation" is intentional, do not change
-# The top empty line at the top is intentional
+  if [[ $1 -eq "1" ]]; then
+  # Here "no identation" is intentional, do not change
+  # The top empty line at the top is intentional
 echo "
 # Server without TLS.
 [[server]]
@@ -206,246 +207,247 @@ addr = \"0.0.0.0:8881\"
 " > "$defaultUrsaProxyConfigPath" || exit 1
 fi
 
-echo "✅ Updated the config.toml by including the [server] settings"
-echo
-}
+  echo "✅ Updated the config.toml by including the [server] settings"
+  echo
+  }
 
-hasCommand() {
-  command -v "$1" >/dev/null 2>&1
-}
+  hasCommand() {
+    command -v "$1" >/dev/null 2>&1
+  }
 
-echo "🤖 Ursa proxy"
-ursaProxyPID=$(pidof ursa-proxy | tr ' ' '\n')
+  echo "🤖 Ursa proxy"
+  ursaProxyPID=$(pidof ursa-proxy | tr ' ' '\n')
 
-if [[ ! "$ursaProxyPID" ]]; then
-  if hasCommand ursa-proxy; then
-    while read -rp "🙋‍♀️ We found ursa-proxy. Would you like to start it now? (yes/no)" answer; do
-      if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-        if ! sudo systemctl restart ursa-proxy; then
-          printf "👹 Oops! Failed to start the ursa-proxy systemd service\n"
+  if [[ ! "$ursaProxyPID" ]]; then
+    if hasCommand ursa-proxy; then
+      while read -rp "🙋‍♀️ We found ursa-proxy. Would you like to start it now? (yes/no)" answer; do
+        if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+          if ! sudo systemctl restart ursa-proxy; then
+            printf "👹 Oops! Failed to start the ursa-proxy systemd service\n"
+
+            exit 1
+          fi
+
+          ursaProxyPID=$(pidof ursa-proxy | tr ' ' '\n')
+          break;
+        elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+          echo "🦖 The Lets Encrypt setup was interrupted because the ursa-proxy has not started. Make sure that you start the ursa-proxy before you retry..."
 
           exit 1
         fi
+      done
+    else
+      printf "👹 Oops! The ursa-proxy process has to be running. Make sure that you start the ursa-proxy before you retry...\n"
 
-        ursaProxyPID=$(pidof ursa-proxy | tr ' ' '\n')
-        break;
+      exit 1
+    fi
+  fi
+
+  while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaPath? Type \"no\" to change the location (yes/no) " answer; do
+    if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+      while read -rp "🙋‍♀️ What's the location where the Ursa repository is?" answer; do
+        if [[ -d "$answer" ]]; then
+          selectedUrsaPath="$answer"
+          
+          break
+        fi
+
+        echo "💩 Uh oh! The path ($answer) doesn't exist, let's try that again..."
+      done
+    elif [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+      selectedUrsaPath="$defaultUrsaPath"
+
+      break;
+    fi
+  done
+
+  echo "🤖 Change work directory to $selectedUrsaPath"
+  if ! cd "$selectedUrsaPath"; then
+    echo "👹 Oops! Failed to change work directory to \"$selectedUrsaPath\" for some reason..."
+    echo
+
+    exit 1
+  fi
+
+  detectedIpAddress=$(getIpAddress)
+
+  printf -v prompt "🤖 What's your domain name address?"
+  while read -rp "$prompt"$'\n> ' answer; do
+    if confirmDomainName "$answer"; then
+      selectedDomainName="$answer"
+      break
+    fi
+
+    printf "💩 The domain name provided is not valid!\n"
+
+    [[ "$answer" =~ http* ]] && echo "💡 Just type the domain name address, there's no need for http:// or https:// e.g. mynode.example.com"
+  done
+
+  echo
+
+  printf "The server public IP address the domain is pointing to is required! We found the public IP address for this machine to be %s\n" "$detectedIpAddress"
+  printf -v prompt "🤖 Is the domain name %s pointing to the public IP address %s? (yes/no) " "$selectedDomainName" "$detectedIpAddress"
+  while read -rp "$prompt"$'\n> ' answer; do
+    if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+      printf "💩 Oh no! The %s has to point to the server public IP address %s. Alternatively, you can check our guides and install the Ursa CLI on your own, but is likely that the security of your server will be taken into account by the rewards mechanism. To avoid disappointment follow the recomendations!\n" "$selectedDomainName" "$detectedIpAddress"  
+
+      continue
+    fi
+
+    if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+      # Dig is required for the next step
+      if ! dpkg -s bind9-dnsutils >/dev/null; then
+        echo "🙋‍♀️ bind9-dnsutils is required, we'll go ahead and install it"
+        printf "🤖 Update and upgrade apt-get\n"
+        sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
+        sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
+
+        if ! sudo DEBIAN_FRONTEND=noninteractive apt-get install bind9-dnsutils -y; then
+          printf "👹 Oops! Failed to install dnsutils for some reason...\n"
+        fi
+      fi
+
+      if ! dig "$selectedDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$detectedIpAddress" >/dev/null 2>&1 ; then
+        printf "💩 Oh no! The %s doesn't seem to point to the IP address %s\n" "$selectedDomainName" "$detectedIpAddress"
+
+        continue
+      fi
+
+      selectedIpAddress="$detectedIpAddress"
+
+      break
+    fi
+
+    printf "😅 Sorry! Try that again...\n"
+  done
+
+  echo
+
+  if [[ -d "$defaultLetsEncryptCertificatesLivePath/$selectedDomainName" ]]; then
+    echo "⚠️ Lets Encrypt certificates already found in $defaultLetsEncryptCertificatesLivePath/$selectedDomainName."
+
+    while read -rp "🙋‍♀️ Would you like to renew the certificates? (yes/no) " answer; do
+      if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+        if ! sudo certbot renew; then
+          echo "👹 Oops! Failed to renew the certificates for some reason"
+
+          exit 1
+        fi
+        echo "✅ The certficates were renewed!"
+
+        exit 0
       elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-        echo "🦖 The Lets Encrypt setup was interrupted because the ursa-proxy has not started. Make sure that you start the ursa-proxy before you retry..."
+        echo "💩 Oh no! Backup your certificates and clear the directory to retry and run this process"
+        echo
 
         exit 1
       fi
     done
   else
-    printf "👹 Oops! The ursa-proxy process has to be running. Make sure that you start the ursa-proxy before you retry...\n"
+    echo "💡 The Let's Encrypt path $defaultLetsEncryptCertificatesLivePath will be created during this process..."
+    echo
+  fi
+
+  echo
+
+  printf "Let's Encrypt provides SSL/TLS Certificates for securing the communications. A valid email address is required by the Let's Encrypt organisation (Fleek Network is not affiliated and does NOT store the email address).\n"
+  printf -v prompt "What's your email address?"
+  while read -rp "$prompt"$'\n> ' answer; do
+    if confirmEmailAddress "$answer"; then
+      selectedEmailAddress="$answer"
+      break
+    fi
+
+    printf "💩 Oh no! The email address doesn't seem valid, try again...\n"
+  done
+
+  echo
+
+  # Ursa server configuration handler to ensure the settings exist and correct
+  ursaServerConfigurationHandler 1
+
+  printf "🚑 Ursa proxy health-check\n"
+  pingAttempts=0
+  while ! curl -s localhost/ping | grep -q pong; do
+    if [[ "$pingAttempts" -gt 10 ]]; then
+      echo "👹 Oh no! Failed to health-check the ursa proxy"
+      echo
+
+      break;
+    fi
+
+    printf "🤖 Awaiting for Ursa proxy on port 80, attempt number %s...\n" "$pingAttempts"
+    sleep 1
+
+    ((pingAttempts++))
+  done
+
+  echo
+
+  printf "🤖 Get and install your certificates (will generate temporary file at %s)\n" "$selectedUrsaPath"
+  if ! sudo certbot certonly \
+    --webroot -w "$selectedUrsaPath" \
+    --email "$selectedEmailAddress" \
+    --domain "$selectedDomainName" \
+    --rsa-key-size 4096 \
+    --agree-tos -n; then
+    echo "👹 Oops! Failed to create the certificate"
+    echo
 
     exit 1
   fi
-fi
 
-while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaPath? Type \"no\" to change the location (yes/no) " answer; do
-  if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-    while read -rp "🙋‍♀️ What's the location where the Ursa repository is?" answer; do
-      if [[ -d "$answer" ]]; then
-        selectedUrsaPath="$answer"
-        
-        break
-      fi
-
-      echo "💩 Uh oh! The path ($answer) doesn't exist, let's try that again..."
-    done
-  elif [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-    selectedUrsaPath="$defaultUrsaPath"
-
-    break;
-  fi
-done
-
-echo "🤖 Change work directory to $selectedUrsaPath"
-if ! cd "$selectedUrsaPath"; then
-  echo "👹 Oops! Failed to change work directory to \"$selectedUrsaPath\" for some reason..."
-  echo
-
-  exit 1
-fi
-
-detectedIpAddress=$(getIpAddress)
-
-printf -v prompt "🤖 What's your domain name address?"
-while read -rp "$prompt"$'\n> ' answer; do
-  if confirmDomainName "$answer"; then
-    selectedDomainName="$answer"
-    break
+  if [[ -d "$selectedUrsaPath/.well-known" ]]; then
+    echo "💩 Uh oh! The temporary directory $selectedUrsaPath/.well-known should've been removed. Feel free to delete it!"
+    echo
   fi
 
-  printf "💩 The domain name provided is not valid!\n"
+  printf "🤖 Set Ursa server IP Address in the configuration file\n"
+  if [[ -f "$defaultUrsaConfigPath" ]]; then
+    echo "🤖 The installer found that a Ursa config directory already exists at $defaultUrsaConfigPath. The install wizard will update the addresses in the config.toml with your server IP addresss."
 
-  [[ "$answer" =~ http* ]] && echo "💡 Just type the domain name address, there's no need for http:// or https:// e.g. mynode.example.com"
-done
-
-echo
-
-printf "The server public IP address the domain is pointing to is required! We found the public IP address for this machine to be %s\n" "$detectedIpAddress"
-printf -v prompt "🤖 Is the domain name %s pointing to the public IP address %s? (yes/no) " "$selectedDomainName" "$detectedIpAddress"
-while read -rp "$prompt"$'\n> ' answer; do
-  if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-    printf "💩 Oh no! The %s has to point to the server public IP address %s. Alternatively, you can check our guides and install the Ursa CLI on your own, but is likely that the security of your server will be taken into account by the rewards mechanism. To avoid disappointment follow the recomendations!\n" "$selectedDomainName" "$detectedIpAddress"  
-
-    continue
-  fi
-
-  if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-    # Dig is required for the next step
-    if ! dpkg -s bind9-dnsutils >/dev/null; then
-      echo "🙋‍♀️ bind9-dnsutils is required, we'll go ahead and install it"
-      printf "🤖 Update and upgrade apt-get\n"
-      sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
-      sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
-
-      if ! sudo DEBIAN_FRONTEND=noninteractive apt-get install bind9-dnsutils -y; then
-        printf "👹 Oops! Failed to install dnsutils for some reason...\n"
-      fi
-    fi
-
-    if ! dig "$selectedDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$detectedIpAddress" >/dev/null 2>&1 ; then
-      printf "💩 Oh no! The %s doesn't seem to point to the IP address %s\n" "$selectedDomainName" "$detectedIpAddress"
-
-      continue
-    fi
-
-    selectedIpAddress="$detectedIpAddress"
-
-    break
-  fi
-
-  printf "😅 Sorry! Try that again...\n"
-done
-
-echo
-
-if [[ -d "$defaultLetsEncryptCertificatesLivePath/$selectedDomainName" ]]; then
-  echo "⚠️ Lets Encrypt certificates already found in $defaultLetsEncryptCertificatesLivePath/$selectedDomainName."
-
-  while read -rp "🙋‍♀️ Would you like to renew the certificates? (yes/no) " answer; do
-    if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-      if ! sudo certbot renew; then
-        echo "👹 Oops! Failed to renew the certificates for some reason"
-
-        exit 1
-      fi
-      echo "✅ The certficates were renewed!"
-
-      exit 0
-    elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-      echo "💩 Oh no! Backup your certificates and clear the directory to retry and run this process"
-      echo
+    if ! sed -i "s|addresses =.*|addresses = [\"/ip4/$selectedIpAddress/tcp/80\"]|" "$defaultUrsaConfigPath"; then
+      printf "👹 Oh no! Failed to update the addresses with your server IP adress (%s) in the config.toml\n" "$selectedIpAddress"
 
       exit 1
     fi
-  done
-else
-  echo "💡 The Let's Encrypt path $defaultLetsEncryptCertificatesLivePath will be created during this process..."
-  echo
-fi
+  else
+    if ! mkdir -p "$defaultUrsaBasePath"; then
+      printf "👹 Oh no! Failed to create the directory %s\n" "$defaultUrsaBasePath"
 
-echo
+      exit 1
+    fi
 
-printf "Let's Encrypt provides SSL/TLS Certificates for securing the communications. A valid email address is required by the Let's Encrypt organisation (Fleek Network is not affiliated and does NOT store the email address).\n"
-printf -v prompt "What's your email address?"
-while read -rp "$prompt"$'\n> ' answer; do
-  if confirmEmailAddress "$answer"; then
-    selectedEmailAddress="$answer"
-    break
+    if ! touch "$defaultUrsaConfigPath"; then
+      printf "👹 Oh no! Failed to create the config.toml at %s\n" "$defaultUrsaBasePath"
+
+      exit 1
+    fi
+
+    if ! echo "[server_config]" >> "$defaultUrsaConfigPath" || ! echo "addresses = [\"/ip4/$selectedIpAddress/tcp/80\"]" >> "$defaultUrsaConfigPath"; then
+      printf "👹 Oh no! Failed to populate the config file %s\n" "$defaultUrsaConfigPath"
+
+      exit 1
+    fi
   fi
 
-  printf "💩 Oh no! The email address doesn't seem valid, try again...\n"
-done
-
-echo
-
-# Ursa server configuration handler to ensure the settings exist and correct
-ursaServerConfigurationHandler 1
-
-printf "🚑 Ursa proxy health-check\n"
-pingAttempts=0
-while ! curl -s localhost/ping | grep -q pong; do
-  if [[ "$pingAttempts" -gt 10 ]]; then
-    echo "👹 Oh no! Failed to health-check the ursa proxy"
-    echo
-
-    break;
-  fi
-
-  printf "🤖 Awaiting for Ursa proxy on port 80, attempt number %s...\n" "$pingAttempts"
-  sleep 1
-
-  ((pingAttempts++))
-done
-
-echo
-
-printf "🤖 Get and install your certificates (will generate temporary file at %s)\n" "$selectedUrsaPath"
-if ! sudo certbot certonly \
-  --webroot -w "$selectedUrsaPath" \
-  --email "$selectedEmailAddress" \
-  --domain "$selectedDomainName" \
-  --rsa-key-size 4096 \
-  --agree-tos -n; then
-  echo "👹 Oops! Failed to create the certificate"
   echo
 
-  exit 1
-fi
+  echo "🤖 Set Ursa proxy configuration for SSL/TLS"
+  ursaServerConfigurationHandler 2
 
-if [[ -d "$selectedUrsaPath/.well-known" ]]; then
-  echo "💩 Uh oh! The temporary directory $selectedUrsaPath/.well-known should've been removed. Feel free to delete it!"
   echo
-fi
 
-printf "🤖 Set Ursa server IP Address in the configuration file\n"
-if [[ -f "$defaultUrsaConfigPath" ]]; then
-  echo "🤖 The installer found that a Ursa config directory already exists at $defaultUrsaConfigPath. The install wizard will update the addresses in the config.toml with your server IP addresss."
+  echo "🤖 Reload the Ursa proxy configuration file"
+  curl --request POST http://0.0.0.0:8881/reload-tls-config
 
-  if ! sed -i "s|addresses =.*|addresses = [\"/ip4/$selectedIpAddress/tcp/80\"]|" "$defaultUrsaConfigPath"; then
-    printf "👹 Oh no! Failed to update the addresses with your server IP adress (%s) in the config.toml\n" "$selectedIpAddress"
+  echo
 
-    exit 1
+  printf "🚑 Health check %s via HTTPS /ping endpoint\n" "$selectedDomainName"
+  if ! curl -s https://$selectedDomainName/ping | grep -q pong; then
+    printf "💩 Uh-oh! Failed to health-check the domain %s\n" "$selectedDomainName"
+    echo "The ursa-proxy failed to reload the TLS config. Restart the ursa-proxy manually for the TLS configuration to take effect, please!"
+  else
+    printf "✅ Health checked!\n"
   fi
-else
-  if ! mkdir -p "$defaultUrsaBasePath"; then
-    printf "👹 Oh no! Failed to create the directory %s\n" "$defaultUrsaBasePath"
-
-    exit 1
-  fi
-
-  if ! touch "$defaultUrsaConfigPath"; then
-    printf "👹 Oh no! Failed to create the config.toml at %s\n" "$defaultUrsaBasePath"
-
-    exit 1
-  fi
-
-  if ! echo "[server_config]" >> "$defaultUrsaConfigPath" || ! echo "addresses = [\"/ip4/$selectedIpAddress/tcp/80\"]" >> "$defaultUrsaConfigPath"; then
-    printf "👹 Oh no! Failed to populate the config file %s\n" "$defaultUrsaConfigPath"
-
-    exit 1
-  fi
-fi
-
-echo
-
-echo "🤖 Set Ursa proxy configuration for SSL/TLS"
-ursaServerConfigurationHandler 2
-
-echo
-
-echo "🤖 Reload the Ursa proxy configuration file"
-curl --request POST http://0.0.0.0:8881/reload-tls-config
-
-echo
-
-printf "🚑 Health check %s via HTTPS /ping endpoint\n" "$selectedDomainName"
-if ! curl -s https://$selectedDomainName/ping | grep -q pong; then
-  printf "💩 Uh-oh! Failed to health-check the domain %s\n" "$selectedDomainName"
-  echo "The ursa-proxy failed to reload the TLS config. Restart the ursa-proxy manually for the TLS configuration to take effect, please!"
-else
-  printf "✅ Health checked!\n"
-fi
+)
