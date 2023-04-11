@@ -259,6 +259,8 @@ while read -rp "$prompt"$'\n> ' answer; do
   [[ "$answer" =~ http* ]] && echo "💡 Just type the domain name address, there's no need for http:// or https:// e.g. mynode.example.com"
 done
 
+echo
+
 printf "The server public IP address the domain is pointing to is required! We found the public IP address for this machine to be %s\n" "$detectedIpAddress"
 printf -v prompt "🤖 Is the domain name %s pointing to the public IP address %s? (yes/no) " "$selectedDomainName" "$detectedIpAddress"
 while read -rp "$prompt"$'\n> ' answer; do
@@ -295,6 +297,8 @@ while read -rp "$prompt"$'\n> ' answer; do
   printf "😅 Sorry! Try that again...\n"
 done
 
+echo
+
 if [[ -d "$defaultLetsEncryptCertificatesLivePath/$selectedDomainName" ]]; then
   echo "⚠️ Lets Encrypt certificates already found in $defaultLetsEncryptCertificatesLivePath/$selectedDomainName."
 
@@ -320,6 +324,8 @@ else
   echo
 fi
 
+echo
+
 printf "Let's Encrypt provides SSL/TLS Certificates for securing the communications. A valid email address is required by the Let's Encrypt organisation (Fleek Network is not affiliated and does NOT store the email address).\n"
 printf -v prompt "What's your email address?"
 while read -rp "$prompt"$'\n> ' answer; do
@@ -331,14 +337,18 @@ while read -rp "$prompt"$'\n> ' answer; do
   printf "💩 Oh no! The email address doesn't seem valid, try again...\n"
 done
 
+echo
+
 # Ursa server configuration handler to ensure the settings exist and correct
 ursaServerConfigurationHandler 1
+
+echo
 
 echo "🤖 Ursa proxy"
 ursaProxyPID=$(pidof ursa-proxy | tr ' ' '\n')
 
 if [[ ! "$ursaProxyPID" ]]; then
-  printf "👹 Oops! The ursa-proxy process has to be running...\n"
+  printf "👹 Oops! The ursa-proxy process has to be running. Make sure that you start the ursa-proxy before you retry...\n"
 
   exit 1
 fi
@@ -358,6 +368,8 @@ while ! curl -s localhost/ping | grep -q pong; do
 
   ((pingAttempts++))
 done
+
+echo
 
 printf "🤖 Get and install your certificates (will generate temporary file at %s)\n" "$selectedUrsaPath"
 if ! sudo certbot certonly \
@@ -406,11 +418,17 @@ else
   fi
 fi
 
+echo
+
 echo "🤖 Set Ursa proxy configuration for SSL/TLS"
 ursaServerConfigurationHandler 2
 
+echo
+
 echo "🤖 Reload the Ursa proxy configuration file"
 curl --request POST http://0.0.0.0:8881/reload-tls-config
+
+echo
 
 printf "🚑 Health check %s via HTTPS /ping endpoint\n" "$selectedDomainName"
 if ! curl -s https://$selectedDomainName/ping | grep -q pong; then
