@@ -1,0 +1,206 @@
+#!/bin/bash
+
+# <!-- IGNORE: This line is intentional DO NOT MODIFY --><pre><script>document.querySelector('body').firstChild.textContent = '#!/bin/bash'</script>
+
+# "Get Fleek Network" is an attempt to make our software more accessible.
+# By providing scripts to automate the installation process of our software,
+# we believe that it can help improve the onboarding experience of our users.
+#
+# Quick install: `curl https://get.fleek.network/install_ursa_proxy | bash`
+#
+# This script automates the setup process for ursa-proxy
+# advanced users might find it better to compile and install it from source
+# If that's your preference, go ahead and check our repo https://github.com/fleek-network/ursa
+#
+# For the users happy to have the script assist in the installation process of Fleek Network
+# and the required dependencies, run the script at your own risk. 
+#
+# Contributing?
+# - If you'd like to test changes locally use the env var `USE_BRANCH_NAME_FOR_GH_RAW`, for remote locales pulls
+#
+# Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
+
+# 🚑 Check if running in Bash and supported version
+[ "$BASH" ] || { printf >&2 '🙏 Run the script with Bash, please!\n'; exit 1; }
+(( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
+
+if [[ ! $PATH =~ .cargo/bin ]]; then
+  echo "⚠️ Warning! Your Rust setup is missing an important step. Add the ~/.cargo/bin to the operating system PATH, otherwise you'll not be able to execute Rust binaries globally, e.g. ursa-proxy."
+
+  exit 1
+fi
+
+hasCommand() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+cat << "URSA_START_SCRIPT"
+
+          |
+          |   .
+   `.  *  |     .'
+     `. ._|_* .'  .
+   . * .'   `.  *
+-------|     |-------
+   .  *`.___.' *  .
+      .'  |* `.  *
+    .' *  |  . `.
+        . |
+          |
+URSA_START_SCRIPT
+
+echo
+echo "⭐️ Ursa-proxy, for the Decentralized Content Delivery Network (DCDN) ⭐️"
+echo
+echo "★★★★★★★★★ 🌍 Website https://fleek.network"
+echo "★★★★★★★★★ 📚 Documentation https://docs.fleek.network"
+echo "★★★★★★★★★ 💾 Git repository https://github.com/fleek-network/ursa"
+echo "★★★★★★★★★ 🤖 Discord https://discord.gg/fleekxyz"
+echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
+echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
+echo
+
+(
+  exec < /dev/tty;
+
+  # Defaults
+  defaultUrsaPath="$HOME/fleek-network/ursa"
+  defaultUrsaLogPath="/var/log/ursa-proxy"
+  defaultUrsaDiagnosticFilename="diagnostic.log"
+  defaultUrsaOutputFilename="output.log"
+  defaultUrsaProxySystemdServiceName="ursa-proxy"
+  defaultUrsaSystemdServicePath="/etc/systemd/system/$defaultUrsaProxySystemdServiceName.service"
+  defaultExecCargoProxyCmd="ursa-proxy daemon"
+  # TODO: Disabled as ursa-proxy has no output at time of writing
+  defaultUrsaDiagnosticLogAbsPath="$defaultUrsaLogPath/$defaultUrsaDiagnosticFilename"
+  defaultUrsaOutputLogAbsPath="$defaultUrsaLogPath/$defaultUrsaOutputFilename"
+  defaultCargoBinUrsaProxyPath="$HOME/.cargo/bin/$defaultUrsaProxySystemdServiceName"
+
+  # User data
+  selectedUrsaPath=""
+
+  while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaPath? Type \"no\" to change the location (yes/no) " answer; do
+    if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+      while read -rp "🙋‍♀️ What's the location where the Ursa repository is?" answer; do
+        if [[ -d "$answer" ]]; then
+          selectedUrsaPath="$answer"
+          
+          break
+        fi
+
+        echo "💩 Uh oh! The path ($answer) doesn't exist, let's try that again..."
+      done
+    elif [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+      selectedUrsaPath="$defaultUrsaPath"
+
+      break;
+    fi
+  done
+
+  echo "🤖 Change work directory to $selectedUrsaPath"
+  if ! cd "$selectedUrsaPath"; then
+    echo "👹 Oops! Failed to change work directory to \"$selectedUrsaPath\" for some reason..."
+    echo
+
+    exit 1
+  fi
+
+  echo
+
+  if [[ ! -d ./crates/ursa-proxy ]]; then
+    echo "👹 Oops! The ursa-proxy crate was not found."
+
+    exit 1
+  fi
+
+  echo "🤖 Build the ursa-proxy"
+  if ! cargo install --path crates/ursa-proxy; then
+    echo "👹 Oops! Failed to build and install the ursa-proxy from source."
+
+    exit 1
+  fi
+
+  echo
+
+  if ! hasCommand ursa-proxy; then
+    echo "👹 Oops! The ursa-proxy binary was not found for some reason."
+
+    exit 1
+  fi
+
+  printf "🤖 Declare the service and store in the system path\n"
+# Here "no identation" is intentional, do not change
+cat << URSA_PROXY_SERVICE > "$defaultUrsaSystemdServicePath"
+[Unit]
+Description=Ursa-proxy, for the Decentralized Content Delivery Network (DCDN)
+
+[Service]
+Type=simple
+MemoryHigh=1G
+RestartSec=15s
+Restart=always
+ExecStart=$defaultExecCargoProxyCmd
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=multi-user.target
+URSA_PROXY_SERVICE
+
+  printf "🤖 Set service file permissions\n"
+  if ! sudo chmod 644 "$defaultUrsaSystemdServicePath"; then
+    echo "💩 Uh oh! Failed to update the file permissions for $defaultUrsaSystemdServicePath"
+  else
+    echo "✅ Updated the ursa-proxy service file permissions"
+  fi
+
+  echo
+
+  printf "🤖 System control daemon reload\n"
+  if ! sudo systemctl daemon-reload; then
+    echo "💩 Uh oh! The systemctl daemon reload failed"
+  else
+    echo "✅ The systemctl daemon reload was successful!"
+  fi
+
+  echo
+
+  printf "🤖 Start the ursa-proxy service\n"
+  if ! sudo systemctl start "$defaultUrsaProxySystemdServiceName"; then
+    echo "💩 Uh oh! Failed to start the ursa-proxy service"
+  else
+    echo "✅ Started the ursa-proxy service"
+  fi
+
+  echo
+
+  printf "🤖 Enable the ursa-proxy service on startup when the system boots\n"
+  if ! sudo systemctl enable "$defaultUrsaProxySystemdServiceName"; then
+    echo "💩 Uh oh! Failed to enable the ursa-proxy on system startup"
+  else
+    echo "✅ Enabled the ursa-proxy on system startup"
+  fi
+
+  echo
+  echo "🌈 The Ursa proxy server is running!"
+  echo
+  # TODO: At time of writing the ursa-proxy does not have output
+  # for this reason the StandardOutput and Error is set to null otherwise it'd exit 209
+  # so, enable the StandardOutput and Error afterwards
+  # echo "You can watch the ursa-proxy output by running the command:"
+  # echo "tail -f $defaultUrsaOutputLogAbsPath"
+  # echo
+  # echo "For diagnostics run the command:"
+  # echo "tail -f $defaultUrsaDiagnosticLogAbsPath"
+  echo
+  echo "Launch or stop the ursa-proxy by running:"
+  echo "sudo systemctl stop ursa-proxy"
+  echo "sudo systemctl restart ursa-proxy"
+  echo
+  echo "Check the status of the service:"
+  echo "sudo systemctl status ursa-proxy"
+  echo
+  echo "Learn more by checking our guides at https://docs.fleek.network"
+  echo "✨ That's all!"
+  echo
+)
