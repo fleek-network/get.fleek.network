@@ -30,6 +30,11 @@ if [[ ! $PATH =~ .cargo/bin ]]; then
   exit 1
 fi
 
+
+hasCommand() {
+  command -v "$1" >/dev/null 2>&1
+}
+
 (
   exec < /dev/tty;
 
@@ -77,7 +82,7 @@ fi
   fi
 
   echo "🤖 Build the ursa-proxy"
-  if ! cargo install --path  crates/ursa-proxy; then
+  if ! cargo install --path crates/ursa-proxy; then
     echo "👹 Oops! Failed to build and install the ursa-proxy from source."
 
     exit 1
@@ -85,5 +90,9 @@ fi
 
   echo
 
+  if ! hasCommand ursa-proxy; then
+    echo "👹 Oops! The ursa-proxy binary was not found for some reason."
 
+    exit 1
+  fi
 )
