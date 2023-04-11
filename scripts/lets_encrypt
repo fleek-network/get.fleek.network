@@ -241,7 +241,7 @@ if ! hasCommand ursa-proxy; then
   exit 1
 fi
 
-while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaConfigPath? Type \"no\" to change the location (yes/no) " answer; do
+while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaPath? Type \"no\" to change the location (yes/no) " answer; do
   if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
     while read -rp "🙋‍♀️ What's the location where the Ursa repository is?" answer; do
       if [[ -d "$answer" ]]; then
