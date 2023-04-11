@@ -417,3 +417,12 @@ ursaServerConfigurationHandler 2
 
 echo "🤖 Reload the Ursa proxy configuration file"
 curl --request POST http://0.0.0.0:8881/reload-tls-config
+
+printf "🚑 Health check %s via HTTPS /ping endpoint\n" "$selectedDomainName"
+if ! curl -s https://$selectedDomainName/ping | grep -q pong; then
+  printf "💩 Uh-oh! Failed to health-check the domain %s\n" "$selectedDomainName"
+  echo
+  echo "The ursa-proxy failed to reload the TLS config. Restart the ursa-proxy manually, please!"
+else
+  printf "✅ Health checked!\n"
+fi
