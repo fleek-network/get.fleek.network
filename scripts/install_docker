@@ -1765,10 +1765,10 @@ onLatestPreference() {
 
       break
     elif [[ "$data" -eq 0 ]]; then
-      yq -ie 'del(.services.ursa.build)' "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
-      yq -i ".services.ursa.image = \"$defaultUrsaLatestImage\"" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
+      sudo yq -ie 'del(.services.ursa.build)' "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
+      sudo yq -i ".services.ursa.image = \"$defaultUrsaLatestImage\"" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
 
-      if ! yq '.services.ursa.image' "$defaultDockerComposeYmlRelativePath" | grep -q "$defaultUrsaLatestImage" || ! yq '.services.ursa.build' "$defaultDockerComposeYmlRelativePath" | grep -qE "null|no matches found"; then
+      if ! sudo yq '.services.ursa.image' "$defaultDockerComposeYmlRelativePath" | grep -q "$defaultUrsaLatestImage" || ! yq '.services.ursa.build' "$defaultDockerComposeYmlRelativePath" | grep -qE "null|no matches found"; then
         echo
         echo "💩 ${transl[on_latest_preference_uh_oh_failed_modify_docker_compose_yaml]}"
 
