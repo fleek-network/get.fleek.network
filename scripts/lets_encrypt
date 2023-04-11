@@ -20,12 +20,30 @@
 #
 # Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
 
+# 🚑 Check if running in Bash and supported version
+[ "$BASH" ] || { printf >&2 '🙏 Run the script with Bash, please!\n'; exit 1; }
+(( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
+
+# Only interest in 80 and 443, as Ursa might already be running
+declare -a requiredPorts=(80 443)
+
+hasPortsAvailable=0
+for port in "${requiredPorts[@]}"; do
+  if lsof -i :"$port" >/dev/null && ! (lsof -i :"$port" +c0 | grep -q 'ursa-proxy'); then
+    printf "💩 Uh-oh! The port %s is required but is in use...\n" "$port"
+
+    hasPortsAvailable=1
+  fi
+done
+
+if [[ "$hasPortsAvailable" -eq 1 ]]; then
+  printf "👹 Oops! Required port(s) are in use, make sure the ports are open before retrying, please!\n"
+
+  exit 1
+fi
+
 (
   exec < /dev/tty;
-
-  # 🚑 Check if running in Bash and supported version
-  [ "$BASH" ] || { printf >&2 '🙏 Run the script with Bash, please!\n'; exit 1; }
-  (( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
 
   # Defaults
   defaultUrsaPath="$HOME/fleek-network/ursa"
@@ -35,24 +53,6 @@
   defaultUrsaProxyDir="$defaultUrsaBasePath/proxy"
   defaultUrsaProxyConfigPath="$defaultUrsaProxyDir/config.toml"
   defaultLetsEncryptCertificatesLivePath="/etc/letsencrypt/live"
-
-  # Only interest in 80 and 443, as Ursa might already be running
-  declare -a requiredPorts=(80 443)
-
-  hasPortsAvailable=0
-  for port in "${requiredPorts[@]}"; do
-    if lsof -i :"$port" >/dev/null && ! (lsof -i :"$port" +c0 | grep -q 'ursa-proxy'); then
-      printf "💩 Uh-oh! The port %s is required but is in use...\n" "$port"
-
-      hasPortsAvailable=1
-    fi
-  done
-
-  if [[ "$hasPortsAvailable" -eq 1 ]]; then
-    printf "👹 Oops! Required port(s) are in use, make sure the ports are open before retrying, please!\n"
-
-    exit 1
-  fi
 
   # User data
   selectedDomainName=""
@@ -178,8 +178,8 @@
   fi
 
   if [[ $1 -eq "1" ]]; then
-  # Here "no identation" is intentional, do not change
-  # The top empty line at the top is intentional
+# Here "no identation" is intentional, do not change
+# The top empty line at the top is intentional
 echo "
 # Server without TLS.
 [[server]]
@@ -438,16 +438,7 @@ fi
 
   echo
 
-  echo "🤖 Reload the Ursa proxy configuration file"
-  curl --request POST http://0.0.0.0:8881/reload-tls-config
-
-  echo
-
-  printf "🚑 Health check %s via HTTPS /ping endpoint\n" "$selectedDomainName"
-  if ! curl -s https://$selectedDomainName/ping | grep -q pong; then
-    printf "💩 Uh-oh! Failed to health-check the domain %s\n" "$selectedDomainName"
-    echo "The ursa-proxy failed to reload the TLS config. Restart the ursa-proxy manually for the TLS configuration to take effect, please!"
-  else
-    printf "✅ Health checked!\n"
-  fi
+  echo "✅ The certification is now complete!"
+  echo "The ursa-proxy configuration was updated, including the SSL/TLS certifications, etc."
+  echo "Restart the ursa-proxy manually for the TLS configuration to take effect, please!"
 )
