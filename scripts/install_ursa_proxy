@@ -24,6 +24,12 @@
 [ "$BASH" ] || { printf >&2 '🙏 Run the script with Bash, please!\n'; exit 1; }
 (( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
 
+if [[ ! $PATH =~ .cargo/bin ]]; then
+  echo "⚠️ Warning! Your Rust setup is missing an important step. Add the ~/.cargo/bin to the operating system PATH, otherwise you'll not be able to execute Rust binaries globally, e.g. ursa-proxy."
+
+  exit 1
+fi
+
 (
   exec < /dev/tty;
 
@@ -61,4 +67,23 @@
 
     exit 1
   fi
+
+  echo
+
+  if [[ ! -d ./crates/ursa-proxy ]]; then
+    echo "👹 Oops! The ursa-proxy crate was not found."
+
+    exit 1
+  fi
+
+  echo "🤖 Build the ursa-proxy"
+  if ! cargo install --path  crates/ursa-proxy; then
+    echo "👹 Oops! Failed to build and install the ursa-proxy from source."
+
+    exit 1
+  fi
+
+  echo
+
+
 )
