@@ -123,16 +123,38 @@ WantedBy=multi-user.target
 URSA_PROXY_SERVICE
 
   printf "🤖 Set service file permissions\n"
-  sudo chmod 644 "$defaultUrsaSystemdServicePath"
+  if ! sudo chmod 644 "$defaultUrsaSystemdServicePath"; then
+    echo "💩 Uh oh! Failed to update the file permissions for $defaultUrsaSystemdServicePath"
+  else
+    echo "✅ Updated the ursa-proxy service file permissions"
+  fi
+
+  echo
 
   printf "🤖 System control daemon reload\n"
-  sudo systemctl daemon-reload
+  if ! sudo systemctl daemon-reload; then
+    echo "💩 Uh oh! The systemctl daemon reload failed"
+  else
+    echo "✅ The systemctl daemon reload was successful!"
+  fi
+
+  echo
 
   printf "🤖 Start the ursa-proxy service\n"
-  sudo systemctl start "$defaultUrsaProxySystemdServiceName"
+  if ! sudo systemctl start "$defaultUrsaProxySystemdServiceName"; then
+    echo "💩 Uh oh! Failed to start the ursa-proxy service"
+  else
+    echo "✅ Started the ursa-proxy service"
+  fi
+
+  echo
 
   printf "🤖 Enable the ursa-proxy service on startup when the system boots\n"
-  sudo systemctl enable "$defaultUrsaProxySystemdServiceName" 
+  if ! sudo systemctl enable "$defaultUrsaProxySystemdServiceName"; then
+    echo "💩 Uh oh! Failed to enable the ursa-proxy on system startup"
+  else
+    echo "✅ Enabled the ursa-proxy on system startup"
+  fi
 
   echo
   echo "🌈 The Ursa proxy server is running!"
