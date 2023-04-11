@@ -188,9 +188,7 @@ echo "
 [[server]]
 proxy_pass = \"127.0.0.1:4069\"
 listen_addr = \"0.0.0.0:80\"
-# Certobot needs to serve from this directory
-# to complete the challenge. See current NGINX conf.
-serve_dir_path = \"/var/www/$selectedDomainName/.well-known\"
+serve_dir_path = \".well-known\"
 " > "$defaultUrsaProxyConfigPath" || exit 1
 elif [[ $1 -eq "2" ]]; then
 # Here "no identation" is intentional, do not change
@@ -367,22 +365,22 @@ while ! curl -s localhost/ping | grep -q pong; do
   ((pingAttempts++))
 done
 
-echo "🤖 Create web directory for acme-challenge"
-mkdir -p "/var/www/$selectedDomainName/.well-known/acme-challenge"
-
-printf "🤖 Get and install your certificates (will generate temporary file at /var/www/your-domain/.well-known/acme-challenge)\n"
+printf "🤖 Get and install your certificates (will generate temporary file at %s)\n" "$selectedUrsaPath"
 if ! sudo certbot certonly \
-  --webroot -w /var/www/"$selectedDomainName" \
+  --webroot -w "$selectedUrsaPath" \
   --email "$selectedEmailAddress" \
   --domain "$selectedDomainName" \
   --rsa-key-size 4096 \
-  --agree-tos -n \
-  --force-renewal \
-  -v; then
+  --agree-tos -n; then
   echo "👹 Oops! Failed to create the certificate"
   echo
 
   exit 1
+fi
+
+if [[ -d "$selectedUrsaPath/.well-known" ]]; then
+  echo "💩 Uh oh! The temporary directory $selectedUrsaPath/.well-known should've been removed. Feel free to delete it!"
+  echo
 fi
 
 printf "🤖 Set Ursa server IP Address in the configuration file\n"
