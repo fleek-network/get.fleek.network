@@ -20,3 +20,45 @@
 #
 # Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
 
+# 🚑 Check if running in Bash and supported version
+[ "$BASH" ] || { printf >&2 '🙏 Run the script with Bash, please!\n'; exit 1; }
+(( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
+
+(
+  exec < /dev/tty;
+
+  # Defaults
+  defaultUrsaPath="$HOME/fleek-network/ursa"
+  defaultUrsaConfigFilename="config.toml"
+  defaultUrsaBasePath="$HOME/.ursa"
+  defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
+
+  # User data
+  selectedUrsaPath=""
+
+  while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaPath? Type \"no\" to change the location (yes/no) " answer; do
+    if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+      while read -rp "🙋‍♀️ What's the location where the Ursa repository is?" answer; do
+        if [[ -d "$answer" ]]; then
+          selectedUrsaPath="$answer"
+          
+          break
+        fi
+
+        echo "💩 Uh oh! The path ($answer) doesn't exist, let's try that again..."
+      done
+    elif [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+      selectedUrsaPath="$defaultUrsaPath"
+
+      break;
+    fi
+  done
+
+  echo "🤖 Change work directory to $selectedUrsaPath"
+  if ! cd "$selectedUrsaPath"; then
+    echo "👹 Oops! Failed to change work directory to \"$selectedUrsaPath\" for some reason..."
+    echo
+
+    exit 1
+  fi
+)
