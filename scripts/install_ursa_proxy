@@ -43,11 +43,11 @@ hasCommand() {
   defaultUrsaLogPath="/var/log/ursa-proxy"
   defaultUrsaDiagnosticFilename="diagnostic.log"
   defaultUrsaOutputFilename="output.log"
-  defaultUrsaSystemdServiceName="ursa-proxy"
+  defaultUrsaProxySystemdServiceName="ursa-proxy"
   defaultUrsaDiagnosticLogAbsPath="$defaultUrsaLogPath/$defaultUrsaDiagnosticFilename"
   defaultUrsaOutputLogAbsPath="$defaultUrsaLogPath/$defaultUrsaOutputFilename"
-  defaultUrsaSystemdServicePath="/etc/systemd/system/$defaultUrsaSystemdServiceName.service"
-  defaultCargoBinUrsaProxyPath="$HOME/.cargo/bin/$defaultUrsaSystemdServiceName"
+  defaultUrsaSystemdServicePath="/etc/systemd/system/$defaultUrsaProxySystemdServiceName.service"
+  defaultCargoBinUrsaProxyPath="$HOME/.cargo/bin/$defaultUrsaProxySystemdServiceName"
 
   # User data
   selectedUrsaPath=""
@@ -120,5 +120,35 @@ StandardError=append:$defaultUrsaDiagnosticLogAbsPath
 WantedBy=multi-user.target
 URSA_PROXY_SERVICE
 
+  printf "🤖 Set service file permissions\n"
+  sudo chmod 644 "$defaultUrsaSystemdServicePath"
 
+  printf "🤖 System control daemon reload\n"
+  sudo systemctl daemon-reload
+
+  printf "🤖 Start the ursa-proxy service\n"
+  sudo systemctl start "$defaultUrsaProxySystemdServiceName"
+
+  printf "🤖 Enable the ursa-proxy service on startup when the system boots\n"
+  sudo systemctl enable "$defaultUrsaProxySystemdServiceName" 
+
+  echo
+  echo "🌈 The Ursa proxy server is running!"
+  echo
+  echo "You can watch the ursa-proxy output by running the command:"
+  echo "tail -f $defaultUrsaOutputLogAbsPath"
+  echo
+  echo "For diagnostics run the command:"
+  echo "tail -f $defaultUrsaDiagnosticLogAbsPath"
+  echo
+  echo "Launch or stop the ursa-proxy by running:"
+  echo "sudo systemctl stop ursa-proxy"
+  echo "sudo systemctl restart ursa-proxy"
+  echo
+  echo "Check the status of the service:"
+  echo "sudo systemctl status ursa-proxy"
+  echo
+  echo "Learn more by checking our guides at https://docs.fleek.network"
+  echo "✨ That's all!"
+  echo
 )
