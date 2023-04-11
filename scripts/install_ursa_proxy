@@ -148,6 +148,18 @@ echo
   # User data
   selectedUrsaPath=""
 
+  if [[ -f "$defaultUrsaSystemdServicePath" ]]; then
+    while read -rp "⚠️ Warning! A service of name ursa-proxy has been found at $defaultUrsaSystemdServicePath, the ursa-proxy installer script may override any custom settings if you proceed. Would you like to ignore this warning and proceed? (yes/no)" answer; do
+      if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+        echo "🦖 The ursa-proxy install and setup script has terminated."
+
+        exit 1
+      elif [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+        break;
+      fi
+    done
+  fi
+
   while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaPath? Type \"no\" to change the location (yes/no) " answer; do
     if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
       while read -rp "🙋‍♀️ What's the location where the Ursa repository is?" answer; do
