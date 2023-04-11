@@ -356,9 +356,11 @@ done
 # Ursa server configuration handler to ensure the settings exist and correct
 ursaServerConfigurationHandler 1
 
-echo "🤖 Start the Ursa proxy"
-if ! ursa-proxy daemon; then
-  printf "👹 Oops! The ursa-proxy failed to start for some reason...\n"
+echo "🤖 Ursa proxy"
+ursaProxyPID=$(pidof ursa-proxy | tr ' ' '\n')
+
+if [[ ! "$ursaProxyPID" ]]; then
+  printf "👹 Oops! The ursa-proxy process has to be running...\n"
 
   exit 1
 fi
