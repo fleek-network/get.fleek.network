@@ -27,6 +27,7 @@ jobs:
           cp ./scripts/lets_encrypt ./build
           cp ./scripts/install_docker ./build
           cp ./scripts/install_native ./build
+          cp ./scripts/install_ursa_proxy ./build
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
