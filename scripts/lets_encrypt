@@ -212,11 +212,32 @@ hasCommand() {
   command -v "$1" >/dev/null 2>&1
 }
 
-if ! hasCommand ursa-proxy; then
-  echo "💩 Oh no! The ursa-proxy was not found in the system PATH or user bin. Make sure you install it correctly before retrying."
-  echo
+echo "🤖 Ursa proxy"
+ursaProxyPID=$(pidof ursa-proxy | tr ' ' '\n')
 
-  exit 1
+if [[ ! "$ursaProxyPID" ]]; then
+  if hasCommand ursa-proxy; then
+    while read -rp "🙋‍♀️ We found ursa-proxy. Would you like to start it now? (yes/no)" answer; do
+      if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+        if ! sudo systemctl restart ursa-proxy; then
+          printf "👹 Oops! Failed to start the ursa-proxy systemd service\n"
+
+          exit 1
+        fi
+
+        ursaProxyPID=$(pidof ursa-proxy | tr ' ' '\n')
+        break;
+      elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+        echo "🦖 The Lets Encrypt setup was interrupted because the ursa-proxy has not started. Make sure that you start the ursa-proxy before you retry..."
+
+        exit 1
+      fi
+    done
+  else
+    printf "👹 Oops! The ursa-proxy process has to be running. Make sure that you start the ursa-proxy before you retry...\n"
+
+    exit 1
+  fi
 fi
 
 while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaPath? Type \"no\" to change the location (yes/no) " answer; do
@@ -341,17 +362,6 @@ echo
 
 # Ursa server configuration handler to ensure the settings exist and correct
 ursaServerConfigurationHandler 1
-
-echo
-
-echo "🤖 Ursa proxy"
-ursaProxyPID=$(pidof ursa-proxy | tr ' ' '\n')
-
-if [[ ! "$ursaProxyPID" ]]; then
-  printf "👹 Oops! The ursa-proxy process has to be running. Make sure that you start the ursa-proxy before you retry...\n"
-
-  exit 1
-fi
 
 printf "🚑 Ursa proxy health-check\n"
 pingAttempts=0
