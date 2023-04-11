@@ -40,9 +40,14 @@ hasCommand() {
 
   # Defaults
   defaultUrsaPath="$HOME/fleek-network/ursa"
-  defaultUrsaConfigFilename="config.toml"
-  defaultUrsaBasePath="$HOME/.ursa"
-  defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
+  defaultUrsaLogPath="/var/log/ursa-proxy"
+  defaultUrsaDiagnosticFilename="diagnostic.log"
+  defaultUrsaOutputFilename="output.log"
+  defaultUrsaSystemdServiceName="ursa-proxy"
+  defaultUrsaDiagnosticLogAbsPath="$defaultUrsaLogPath/$defaultUrsaDiagnosticFilename"
+  defaultUrsaOutputLogAbsPath="$defaultUrsaLogPath/$defaultUrsaOutputFilename"
+  defaultUrsaSystemdServicePath="/etc/systemd/system/$defaultUrsaSystemdServiceName.service"
+  defaultCargoBinUrsaProxyPath="$HOME/.cargo/bin/$defaultUrsaSystemdServiceName"
 
   # User data
   selectedUrsaPath=""
@@ -95,4 +100,25 @@ hasCommand() {
 
     exit 1
   fi
+
+  printf "🤖 Declare the service and store in the system path\n"
+# Here "no identation" is intentional, do not change
+cat << URSA_PROXY_SERVICE > "$defaultUrsaSystemdServicePath"
+[Unit]
+Description=Ursa-proxy, for Ursa the Decentralized Content Delivery Network (DCDN)
+
+[Service]
+Type=simple
+MemoryHigh=1G
+RestartSec=15s
+Restart=always
+ExecStart=$defaultCargoBinUrsaProxyPath
+StandardOutput=append:$defaultUrsaOutputLogAbsPath
+StandardError=append:$defaultUrsaDiagnosticLogAbsPath
+
+[Install]
+WantedBy=multi-user.target
+URSA_PROXY_SERVICE
+
+
 )
