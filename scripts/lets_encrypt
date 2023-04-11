@@ -84,12 +84,6 @@ validateIpAddress() {
   [[ "$1" =~ $validate ]] && ping -c1 -W1 "$1" > /dev/null
 }
 
-validateIpAddress() {
-  local validate="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
-
-  [[ "$1" =~ $validate ]] && ping -c1 -W1 "$1" > /dev/null
-}
-
 getIpAddress() {
   detectedIpAddress=$(curl -s ifconfig.me)
 
