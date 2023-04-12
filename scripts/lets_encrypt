@@ -390,8 +390,19 @@ fi
 
   echo
 
+  echo "🤖 Certbot"
+  if ! hasCommand whois; then
+    sudo add-apt-repository ppa:certbot/certbot
+    sudo DEBIAN_FRONTEND=noninteractive apt-get update
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install certbot -yq
+  else
+    echo "✅ Certbot is available"
+  fi
+
   printf "🤖 Get and install your certificates (will generate temporary file at %s)\n" "$selectedUrsaPath"
   if ! sudo certbot certonly \
+    --standalone \
+    --preferred-challenges http \
     --webroot -w "$selectedUrsaPath" \
     --email "$selectedEmailAddress" \
     --domain "$selectedDomainName" \
@@ -399,6 +410,7 @@ fi
     --agree-tos -n; then
     echo "👹 Oops! Failed to create the certificate"
     echo
+    echo "💡 If you already had Certbot installed, make sure you update to latest before retrying please"
 
     exit 1
   fi
