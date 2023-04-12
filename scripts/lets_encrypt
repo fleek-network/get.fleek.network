@@ -344,11 +344,10 @@ fi
   ursaServerConfigurationHandler 1
 
   echo "🤖 Ursa proxy"
-  ursaProxyPID=$(pidof ursa-proxy | tr ' ' '\n')
 
-  if [[ ! "$ursaProxyPID" ]]; then
-    if hasCommand ursa-proxy; then
-      while read -rp "🙋‍♀️ We found ursa-proxy. Would you like to start it now? (yes/no)" answer; do
+  if systemctl list-units --full -all | grep -q "ursa-proxy.service"; then
+    if ! systemctl is-active --quiet ursa-proxy; then
+      while read -rp "🙋‍♀️ The ursa-proxy proxy service is inactive. Would you like to active it now? (yes/no)" answer; do
         if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
           if ! sudo systemctl restart ursa-proxy; then
             printf "👹 Oops! Failed to start the ursa-proxy systemd service\n"
@@ -356,7 +355,6 @@ fi
             exit 1
           fi
 
-          ursaProxyPID=$(pidof ursa-proxy | tr ' ' '\n')
           break;
         elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
           echo "🦖 The Lets Encrypt setup was interrupted because the ursa-proxy has not started. Make sure that you start the ursa-proxy before you retry..."
@@ -365,10 +363,13 @@ fi
         fi
       done
     else
-      printf "👹 Oops! The ursa-proxy process has to be running. Make sure that you start the ursa-proxy before you retry...\n"
+      printf "👹 Oops! The ursa-proxy process has to be running. Make sure that you have it setup correctly before you retry...\n"
 
       exit 1
     fi
+  else
+    # TODO: Ask user if he wants the wizard to install ursa-proxy
+    echo "TODO: Ask user if he wants the wizard to install ursa-proxy"
   fi
 
   printf "🚑 Ursa proxy health-check\n"
@@ -445,5 +446,20 @@ fi
 
   echo "✅ The certification is now complete!"
   echo "The ursa-proxy configuration was updated, including the SSL/TLS certifications, etc."
-  echo "Restart the ursa-proxy manually for the TLS configuration to take effect, please!"
+  echo
+  echo "🤖 The ursa-proxy service is now going to restart"
+  if ! sudo systemctl restart ursa-proxy; then
+    printf "👹 Oops! Failed to restart the ursa-proxy systemd service\n"
+
+    exit 1
+  fi
+
+  echo
+
+  printf "🚑 Health check %s via HTTPS /ping endpoint\n" "$selectedDomainName"
+  if ! curl -s https://$selectedDomainName/ping | grep -q pong; then
+    printf "💩 Uh-oh! Failed to health-check the domain %s\n" "$selectedDomainName"
+  else
+    printf "✅ Health check was successful!\n"
+  fi
 )
