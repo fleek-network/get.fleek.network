@@ -220,6 +220,28 @@ fi
     command -v "$1" >/dev/null 2>&1
   }
 
+  if ! curl -s localhost:4069/ping | grep -q pong; then
+    echo "💩 Uh oh! The ursa network node should be running."
+
+    if systemctl list-units --full -all | grep -q "ursa.service"; then
+      while read -rp "🙋‍♀️ The ursa service is available. Would you like to start it now? (yes/no) "; do
+        if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+          echo "🦖 The Let's Encrypt setup has terminated. Make sure to have the ursa network node running before retrying..."
+
+          exit 1
+        elif [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+          if ! sudo systemctl start ursa; then
+            echo "👹 Oops! Failed to start the ursa service"
+
+            exit 1
+          fi
+        fi
+      done
+    else
+      exit 1
+    fi
+  fi
+
   while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaPath? Type \"no\" to change the location (yes/no) " answer; do
     if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
       while read -rp "🙋‍♀️ What's the location where the Ursa repository is?" answer; do
@@ -347,7 +369,7 @@ fi
 
   if systemctl list-units --full -all | grep -q "ursa-proxy.service"; then
     if ! systemctl is-active --quiet ursa-proxy; then
-      while read -rp "🙋‍♀️ The ursa-proxy proxy service is inactive. Would you like to active it now? (yes/no)" answer; do
+      while read -rp "🙋‍♀️ The ursa-proxy service is inactive. Would you like to active it now? (yes/no) " answer; do
         if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
           if ! sudo systemctl restart ursa-proxy; then
             printf "👹 Oops! Failed to start the ursa-proxy systemd service\n"
@@ -363,13 +385,26 @@ fi
         fi
       done
     else
-      printf "👹 Oops! The ursa-proxy process has to be running. Make sure that you have it setup correctly before you retry...\n"
-
-      exit 1
+      echo "✅ The Ursa-proxy is running"
     fi
   else
-    # TODO: Ask user if he wants the wizard to install ursa-proxy
-    echo "TODO: Ask user if he wants the wizard to install ursa-proxy"
+    while read -rp "🙋‍♀️ The ursa-proxy service was not found. Would you like to have it installed now? (yes/no) " answer; do
+      if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+        read -rp "💡 The ursa-proxy service installer is a separate process that will be executed, when complete, the Let's Encrypt setup will continue. Press ENTER to continue..."
+
+        if ! curl -s https://get.fleek.network/install_ursa_proxy | bash; then
+          echo "👹 Oh no! Failed to install the ursa-proxy"
+
+          exit 1
+        fi
+
+        break;
+      elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+        echo "🦖 The Lets Encrypt setup was interrupted because the ursa-proxy is not active. Make sure that you install, setup and activate the ursa-proxy before retrying..."
+
+        exit 1
+      fi
+    done
   fi
 
   printf "🚑 Ursa proxy health-check\n"
