@@ -440,7 +440,7 @@ hasCommand() {
 
   printf "🚑 Ursa proxy health-check\n"
   pingAttempts=0
-  while ! curl -s localhost/ping | grep -q pong; do
+  while ! curl -s "https://$selectedDomainName/ping" | grep -q pong; do
     if [[ "$pingAttempts" -gt 10 ]]; then
       echo "👹 Oh no! Failed to health-check the ursa proxy"
       echo
@@ -492,13 +492,4 @@ hasCommand() {
 
   echo "✅ The certification is now complete!"
   echo "The ursa-proxy configuration was updated, including the SSL/TLS certifications, etc."
-
-  echo
-
-  printf "🚑 Health check %s via HTTPS /ping endpoint\n" "$selectedDomainName"
-  if ! curl -s https://$selectedDomainName/ping | grep -q pong; then
-    printf "💩 Uh-oh! Failed to health-check the domain %s\n" "$selectedDomainName"
-  else
-    printf "✅ Health check was successful!\n"
-  fi
 )
