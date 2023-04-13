@@ -153,8 +153,7 @@ ursaServerConfigurationHandler() {
 
 # Here "no identation" is intentional, do not change
 # The top empty line at the top is intentional
-echo "
-# Server without TLS.
+echo "# Server without TLS.
 [[server]]
 proxy_pass = \"127.0.0.1:4069\"
 listen_addr = \"0.0.0.0:80\"
@@ -163,8 +162,7 @@ serve_dir_path = \".well-known\"
 elif [[ $1 -eq "2" ]]; then
 # Here "no identation" is intentional, do not change
 # The top empty line at the top is intentional
-echo "
-# Server with TLS
+echo "# Server with TLS
 [[server]]
 proxy_pass = \"127.0.0.1:4069\"
 listen_addr = \"0.0.0.0:443\"
