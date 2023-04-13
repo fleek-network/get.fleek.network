@@ -98,8 +98,8 @@ getIpAddress() {
 }
 
 domainNameConfSettingsVerificationHandler() {
-  domainCertPath=$(grep -i "cert_path" "$defaultUrsaConfigPath" | cut -d '/' -f 5)
-  domainKeyPaty=$(grep -i "key_path" "$defaultUrsaConfigPath" | cut -d '/' -f 5)
+  domainCertPath=$(grep -i "cert_path" "$defaultUrsaProxyConfigPath" | cut -d '/' -f 5)
+  domainKeyPaty=$(grep -i "key_path" "$defaultUrsaProxyConfigPath" | cut -d '/' -f 5)
 
   if [[ ! "$domainCertPath" == "$domainKeyPaty" ]]; then
     echo "🤷‍♀️ Unexpected settings in the Ursa configuration file, the domain name in server.tls cert_path and key_path should be equal. Make the necessary changes and save the file before retrying..."
@@ -115,31 +115,17 @@ domainNameConfSettingsVerificationHandler() {
     return 0
   fi
 
-  while read -rp "🙋‍♀️ The Ursa configuration for server has the domain set as $domainCertPath. Is this correct? (yes/no) " answer; do
+  while read -rp "🙋‍♀️ The Ursa configuration for server has the domain set as $domainCertPath. By proceeding the configuration settings will be reset and lost, is this ok? (yes/no) " answer; do
     if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+      rm "$defaultUrsaProxyConfigPath"
+
       break;
     elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-      while read -rp "🙋‍♀️ We'll update the configuration domain to $selectedDomainName. Is this ok? Type \"no\" to change (yes/no) " answer; do
-        if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-          break;
-        elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-          read -rp "🙋‍♀️ What's the domain name" answer
-          selectedDomainName="$answer"
-          break;
-        fi
-      done
+      echo "🦖 The Let's Encrypt process has terminated, due to existing configuration file and settings that you have decided to keep."
 
-      if ! sed -i "s|$domainCertPath|$selectedDomainName|" "$defaultUrsaProxyConfigPath"; then
-        echo "👹 Oh no! Failed to update the domain name in the config.toml, make the changes manually before retrying."
-        echo
-
-        exit 1
-      fi
-
-      echo "✅ Updated the config.toml by replacing the domain name to $selectedDomainName"
-      echo
+      exit 1
     fi
-  done
+  done  
 }
 
 ursaServerConfigurationHandler() {
@@ -200,6 +186,15 @@ fi
 
 hasCommand() {
   command -v "$1" >/dev/null 2>&1
+}
+
+runHealthCheckForHTTPS() {
+  printf "🚑 Health check %s via HTTPS /ping endpoint\n" "$selectedDomainName"
+  if ! curl -s https://$selectedDomainName/ping | grep -q pong; then
+    printf "💩 Uh-oh! Failed to health-check the domain %s\n" "$selectedDomainName"
+  else
+    printf "✅ Health check was successful!\n"
+  fi
 }
 
 (
@@ -327,12 +322,32 @@ hasCommand() {
 
     while read -rp "🙋‍♀️ Would you like to renew the certificates? (yes/no) " answer; do
       if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-        if ! sudo certbot renew; then
+
+        echo "🤖 Stop the ursa-proxy to free port 80"
+        if ! sudo systemctl stop ursa-proxy; then
+          echo "👹 Oops! Failed to stop the ursa-proxy that is required to allow the certbot to renew the certificates"
+
+          exit 1
+        fi
+
+        if ! certbot certonly \
+          --standalone \
+          --cert-name "$selectedDomainName"; then
           echo "👹 Oops! Failed to renew the certificates for some reason"
 
           exit 1
         fi
+
         echo "✅ The certficates were renewed!"
+
+        echo "🤖 Restart the ursa-proxy"
+        if ! sudo systemctl restart ursa-proxy; then
+          echo "👹 Oops! Failed to restart the ursa-proxy"
+
+          exit 1
+        fi
+
+        runHealthCheckForHTTPS
 
         exit 0
       elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
@@ -440,12 +455,12 @@ hasCommand() {
 
   printf "🚑 Ursa proxy health-check\n"
   pingAttempts=0
-  while ! curl -s "https://$selectedDomainName/ping" | grep -q pong; do
+  while ! curl -s "$selectedDomainName/ping" | grep -q pong; do
     if [[ "$pingAttempts" -gt 10 ]]; then
       echo "👹 Oh no! Failed to health-check the ursa proxy"
       echo
 
-      break;
+      exit 1
     fi
 
     printf "🤖 Awaiting for Ursa proxy on port 80, attempt number %s...\n" "$pingAttempts"
@@ -490,6 +505,35 @@ hasCommand() {
 
   echo
 
+  if [[ ! -d $defaultLetsEncryptCertificatesLivePath/$selectedDomainName ]]; then
+    echo "💩 Uh no! You have some cleaning to do because we've failed to find the $selectedDomainName certificates directory"
+    echo
+    echo "When the Let's Encrypt Certbot app creates certificates for domain names that were previously computed, a directory i$selectedDomainName-000x is created to prevent name clash. If that's the case, you can have this easily fixed."
+    echo
+    echo "Check the list of certificates:"
+    echo "sudo certbot certificates"
+    echo
+    echo "Delete a certificate:"
+    echo "sudo certbot delete --cert-name example.com"
+    echo
+    echo "✨ Once ready, run this script again."
+
+    exit 1
+  fi
+
+  echo
+
   echo "✅ The certification is now complete!"
   echo "The ursa-proxy configuration was updated, including the SSL/TLS certifications, etc."
+  echo
+  echo "🤖 The ursa-proxy service is now going to restart"
+  if ! sudo systemctl restart ursa-proxy; then
+    printf "👹 Oops! Failed to restart the ursa-proxy systemd service\n"
+
+    exit 1
+  fi
+
+  echo
+
+  runHealthCheckForHTTPS
 )
