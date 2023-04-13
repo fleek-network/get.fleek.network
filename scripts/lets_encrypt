@@ -351,7 +351,7 @@ runHealthCheckForHTTPS() {
 
         exit 0
       elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-        echo "💩 Oh no! Backup your certificates and clear the directory to retry and run this process"
+        echo "🦖 The Let's Encrypt process has terminated."
         echo
 
         exit 1
@@ -455,7 +455,7 @@ runHealthCheckForHTTPS() {
 
   printf "🚑 Ursa proxy health-check\n"
   pingAttempts=0
-  while ! curl -s "$selectedDomainName/ping" | grep -q pong; do
+  while ! curl -s "localhost:4069/ping" | grep -q pong; do
     if [[ "$pingAttempts" -gt 10 ]]; then
       echo "👹 Oh no! Failed to health-check the ursa proxy"
       echo
