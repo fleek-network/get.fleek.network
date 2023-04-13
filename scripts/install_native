@@ -549,6 +549,7 @@ echo
 
 printf "🤖 Symlink the Ursa CLI binary to /usr/bin. By default rustup should've set the .cargo/bin into your system PATH, in any case we'll attempt to symlink to ensure ursa is available globally\n"
 if [[ -f "$HOME/.cargo/bin/ursa" ]]; then
+  # TODO: move to /usr/loca/bin or use absolute path in systemd service
   if ! ln -s "$HOME/.cargo/bin/ursa" /usr/bin/ursa; then
     printf "👹 Oops! Failed to symlink %s to /usr/bin/ursa\n" "$HOME/.cargo/bin/ursa"
     echo
