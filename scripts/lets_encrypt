@@ -508,7 +508,7 @@ runHealthCheckForHTTPS() {
   if [[ ! -d $defaultLetsEncryptCertificatesLivePath/$selectedDomainName ]]; then
     echo "💩 Uh no! You have some cleaning to do because we've failed to find the $selectedDomainName certificates directory"
     echo
-    echo "When the Let's Encrypt Certbot app creates certificates for domain names that were previously computed, a directory i$selectedDomainName-000x is created to prevent name clash. If that's the case, you can have this easily fixed."
+    echo "To prevent name clashing, Let's Encrypt uses the naming convention $selectedDomainName-000x for domains that were previously certified. If that's the case, you can have this fixed by following the suggested commands."
     echo
     echo "Check the list of certificates:"
     echo "sudo certbot certificates"
