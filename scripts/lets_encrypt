@@ -437,10 +437,30 @@ echo
   fi
 
   echo "🤖 Certbot"
-  if ! hasCommand whois; then
-    sudo add-apt-repository ppa:certbot/certbot
-    sudo DEBIAN_FRONTEND=noninteractive apt-get update
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install certbot -yq
+  if ! hasCommand certbot; then
+    if ! hasCommand snap; then
+      printf "🤖 Install Snap package manager\n"
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install snapd -yq
+    else
+      printf "🤖 Ensure that your version of snapd is up to date\n"
+      sudo snap install core
+      sudo snap refresh core
+    fi
+
+    echo
+
+    printf "🤖 Remove certbot-auto and any Certbot OS packages\n"
+    sudo DEBIAN_FRONTEND=noninteractive apt-get remove certbot
+
+    echo
+
+    printf "🤖 Install certbot\n"
+    sudo snap install --classic certbot
+
+    echo
+
+    printf "🤖 Prepare the Certbot command\n"
+    sudo ln -s /snap/bin/certbot /usr/bin/certbot
   else
     echo "✅ Certbot is available"
   fi
