@@ -195,6 +195,31 @@ runHealthCheckForHTTPS() {
   fi
 }
 
+
+cat << "URSA_START_SCRIPT"
+
+         __
+ _(\    |@@|
+(__/\__ \--/ __
+   \___|----|  |   __
+       \ }{ /\ )_ / _\
+       /\__/\ \__O (__
+      (--/\--)    \__/
+      _)(  )(_
+     `---''---`
+URSA_START_SCRIPT
+
+echo
+echo "⭐️ Let's Encrypt setup script, for the Fleek Network Ursa-proxy server ⭐️"
+echo
+echo "★★★★★★★★★ 🌍 Website https://fleek.network"
+echo "★★★★★★★★★ 📚 Documentation https://docs.fleek.network"
+echo "★★★★★★★★★ 💾 Git repository https://github.com/fleek-network/ursa"
+echo "★★★★★★★★★ 🤖 Discord https://discord.gg/fleekxyz"
+echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
+echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
+echo
+
 (
   exec < /dev/tty;
 
