@@ -411,7 +411,6 @@ hasCommand() {
   if ! sudo certbot certonly \
     --standalone \
     --preferred-challenges http \
-    --webroot -w "$selectedUrsaPath" \
     --email "$selectedEmailAddress" \
     --domain "$selectedDomainName" \
     --rsa-key-size 4096 \
