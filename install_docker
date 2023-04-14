@@ -819,8 +819,21 @@ checkSystemHasRecommendedResources() {
   if [[ ("$mem" -lt "$defaultMinMemoryKBytesRequired") ]] || [[ ( "$partDiskSpace" -lt "$defaultMinDiskSpaceKBytesRequired" ) ]]; then
     echo "😬 ${transl[check_sys_has_recommended_resources_oh_no_need_at_least]}"
     echo
+    printf -v prompt "\n\n🤖 %s?" \
+      "$(printf "%s" "${transl[common_prompt_are_you_sure_continue_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
+    read -r -p "$prompt"$'\n> ' answer
 
-    exitInstaller
+    intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
+
+    if [[ "$intlAnswer" == [nN] || "$intlAnswer" == [nN][oO] ]]; then
+      exitInstaller
+    fi
+
+    echo "😅 ${transl[check_sys_has_recommended_resources_warning_below_recommendation]}"
+
+    sleep 5
+
+    return 0
   fi
   
   showOkMessage "${transl[check_sys_has_recommended_resources_great_enought_resources]}"
