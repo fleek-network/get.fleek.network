@@ -195,7 +195,6 @@ runHealthCheckForHTTPS() {
   fi
 }
 
-
 cat << "URSA_START_SCRIPT"
 
          __
@@ -260,23 +259,27 @@ echo
     fi
   fi
 
-  while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaPath? Type \"no\" to change the location (yes/no) " answer; do
-    if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-      while read -rp "🙋‍♀️ What's the location where the Ursa repository is?" answer; do
-        if [[ -d "$answer" ]]; then
-          selectedUrsaPath="$answer"
-          
-          break
-        fi
+  if [[ -z "$SELECTED_URSA_PATH" ]]; then
+    selectedUrsaPath="$SELECTED_URSA_PATH"
+  else
+    while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaPath? Type \"no\" to change the location (yes/no) " answer; do
+      if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+        while read -rp "🙋‍♀️ What's the location where the Ursa repository is?" answer; do
+          if [[ -d "$answer" ]]; then
+            selectedUrsaPath="$answer"
+            
+            break
+          fi
 
-        echo "💩 Uh oh! The path ($answer) doesn't exist, let's try that again..."
-      done
-    elif [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-      selectedUrsaPath="$defaultUrsaPath"
+          echo "💩 Uh oh! The path ($answer) doesn't exist, let's try that again..."
+        done
+      elif [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+        selectedUrsaPath="$defaultUrsaPath"
 
-      break;
-    fi
-  done
+        break;
+      fi
+    done
+  fi
 
   echo "🤖 Change work directory to $selectedUrsaPath"
   if ! cd "$selectedUrsaPath"; then
@@ -288,55 +291,63 @@ echo
 
   detectedIpAddress=$(getIpAddress)
 
-  printf -v prompt "🤖 What's your domain name address?"
-  while read -rp "$prompt"$'\n> ' answer; do
-    if confirmDomainName "$answer"; then
-      selectedDomainName="$answer"
-      break
-    fi
+  if [[ -z "$SELECTED_DOMAIN_NAME" ]]; then
+    selectedDomainName="$SELECTED_DOMAIN_NAME"
+  else
+    printf -v prompt "🤖 What's your domain name address?"
+    while read -rp "$prompt"$'\n> ' answer; do
+      if confirmDomainName "$answer"; then
+        selectedDomainName="$answer"
+        break
+      fi
 
-    printf "💩 The domain name provided is not valid!\n"
+      printf "💩 The domain name provided is not valid!\n"
 
-    [[ "$answer" =~ http* ]] && echo "💡 Just type the domain name address, there's no need for http:// or https:// e.g. mynode.example.com"
-  done
+      [[ "$answer" =~ http* ]] && echo "💡 Just type the domain name address, there's no need for http:// or https:// e.g. mynode.example.com"
+    done
+  fi
 
   echo
 
-  printf "The server public IP address the domain is pointing to is required! We found the public IP address for this machine to be %s\n" "$detectedIpAddress"
-  printf -v prompt "🤖 Is the domain name %s pointing to the public IP address %s? (yes/no) " "$selectedDomainName" "$detectedIpAddress"
-  while read -rp "$prompt"$'\n> ' answer; do
-    if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-      printf "💩 Oh no! The %s has to point to the server public IP address %s. Alternatively, you can check our guides and install the Ursa CLI on your own, but is likely that the security of your server will be taken into account by the rewards mechanism. To avoid disappointment follow the recomendations!\n" "$selectedDomainName" "$detectedIpAddress"  
-
-      continue
-    fi
-
-    if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-      # Dig is required for the next step
-      if ! dpkg -s bind9-dnsutils >/dev/null; then
-        echo "🙋‍♀️ bind9-dnsutils is required, we'll go ahead and install it"
-        printf "🤖 Update and upgrade apt-get\n"
-        sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
-        sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
-
-        if ! sudo DEBIAN_FRONTEND=noninteractive apt-get install bind9-dnsutils -y; then
-          printf "👹 Oops! Failed to install dnsutils for some reason...\n"
-        fi
-      fi
-
-      if ! dig "$selectedDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$detectedIpAddress" >/dev/null 2>&1 ; then
-        printf "💩 Oh no! The %s doesn't seem to point to the IP address %s\n" "$selectedDomainName" "$detectedIpAddress"
+  if [[ -z "$SELECTED_IP_ADDRESS" ]]; then
+    selectedIpAddress="$SELECTED_IP_ADDRESS"
+  else
+    printf "The server public IP address the domain is pointing to is required! We found the public IP address for this machine to be %s\n" "$detectedIpAddress"
+    printf -v prompt "🤖 Is the domain name %s pointing to the public IP address %s? (yes/no) " "$selectedDomainName" "$detectedIpAddress"
+    while read -rp "$prompt"$'\n> ' answer; do
+      if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+        printf "💩 Oh no! The %s has to point to the server public IP address %s. Alternatively, you can check our guides and install the Ursa CLI on your own, but is likely that the security of your server will be taken into account by the rewards mechanism. To avoid disappointment follow the recomendations!\n" "$selectedDomainName" "$detectedIpAddress"  
 
         continue
       fi
 
-      selectedIpAddress="$detectedIpAddress"
+      if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+        # Dig is required for the next step
+        if ! dpkg -s bind9-dnsutils >/dev/null; then
+          echo "🙋‍♀️ bind9-dnsutils is required, we'll go ahead and install it"
+          printf "🤖 Update and upgrade apt-get\n"
+          sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
 
-      break
-    fi
+          if ! sudo DEBIAN_FRONTEND=noninteractive apt-get install bind9-dnsutils -y; then
+            printf "👹 Oops! Failed to install dnsutils for some reason...\n"
+          fi
+        fi
 
-    printf "😅 Sorry! Try that again...\n"
-  done
+        if ! dig "$selectedDomainName" +nostats +nocomments +nocmd | tr -d '\t' | grep "A$detectedIpAddress" >/dev/null 2>&1 ; then
+          printf "💩 Oh no! The %s doesn't seem to point to the IP address %s\n" "$selectedDomainName" "$detectedIpAddress"
+
+          continue
+        fi
+
+        selectedIpAddress="$detectedIpAddress"
+
+        break
+      fi
+
+      printf "😅 Sorry! Try that again...\n"
+    done
+  fi
 
   echo
 
@@ -387,16 +398,20 @@ echo
 
   echo
 
-  printf "Let's Encrypt provides SSL/TLS Certificates for securing the communications. A valid email address is required by the Let's Encrypt organisation (Fleek Network is not affiliated and does NOT store the email address).\n"
-  printf -v prompt "What's your email address?"
-  while read -rp "$prompt"$'\n> ' answer; do
-    if confirmEmailAddress "$answer"; then
-      selectedEmailAddress="$answer"
-      break
-    fi
+  if [[ -z "$SELECTED_EMAIL_ADDRESS" ]]; then
+    selectedEmailAddress="$SELECTED_EMAIL_ADDRESS"
+  else
+    printf "Let's Encrypt provides SSL/TLS Certificates for securing the communications. A valid email address is required by the Let's Encrypt organisation (Fleek Network is not affiliated and does NOT store the email address).\n"
+    printf -v prompt "What's your email address?"
+    while read -rp "$prompt"$'\n> ' answer; do
+      if confirmEmailAddress "$answer"; then
+        selectedEmailAddress="$answer"
+        break
+      fi
 
-    printf "💩 Oh no! The email address doesn't seem valid, try again...\n"
-  done
+      printf "💩 Oh no! The email address doesn't seem valid, try again...\n"
+    done
+  fi
 
   echo
 
@@ -418,10 +433,20 @@ echo
       if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
         read -rp "💡 The ursa-proxy service installer is a separate process that will be executed, when complete, the Let's Encrypt setup will continue. Press ENTER to continue..."
 
-        if ! curl -s https://get.fleek.network/install_ursa_proxy | bash; then
-          echo "👹 Oh no! Failed to install the ursa-proxy"
+        # INFO: set `USE_BRANCH_NAME_FOR_GH_RAW` to use the Github raw locales for testing
+        # e.g., USE_BRANCH_NAME_FOR_GH_RAW="feat/localization" ./install
+        if [[ -n ${USE_BRANCH_NAME_FOR_GH_RAW+x} ]]; then
+          if ! curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$USE_BRANCH_NAME_FOR_GH_RAW/scripts/install_ursa_proxy" | bash; then
+            echo "👹 Oh no! Failed to install the ursa-proxy"
 
-          exit 1
+            exit 1
+          fi
+        else
+          if ! curl -s "https://get.fleek.network/install_ursa_proxy" | bash; then
+            echo "👹 Oh no! Failed to install the ursa-proxy"
+
+            exit 1
+          fi
         fi
 
         echo "🦖 We'll stop the ursa-proxy for now. The certbot standalone web server will launch for the certification process shortly"
