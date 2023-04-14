@@ -431,6 +431,8 @@ echo
         # INFO: set `USE_BRANCH_NAME_FOR_GH_RAW` to use the Github raw locales for testing
         # e.g., USE_BRANCH_NAME_FOR_GH_RAW="feat/localization" ./install
         if [[ -n ${USE_BRANCH_NAME_FOR_GH_RAW+x} ]]; then
+          echo "🥷 Switch to branch $USE_BRANCH_NAME_FOR_GH_RAW"
+
           if ! curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$USE_BRANCH_NAME_FOR_GH_RAW/scripts/install_ursa_proxy" | bash; then
             echo "👹 Oh no! Failed to install the ursa-proxy"
 
