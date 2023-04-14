@@ -172,7 +172,8 @@ initCertbot() {
 
   chmod +x "$letsEncryptScriptName"
 
-  if ! USE_BRANCH_NAME_FOR_GH_RAW="$USE_BRANCH_NAME_FOR_GH_RAW" \
+  if ! SKIP_INTRO="1" \
+  USE_BRANCH_NAME_FOR_GH_RAW="$USE_BRANCH_NAME_FOR_GH_RAW" \
   SELECTED_URSA_PATH="$selectedUrsaPath" \
   SELECTED_DOMAIN_NAME="$selectedDomainName" \
   SELECTED_IP_ADDRESS="$selectedIpAddress" \
