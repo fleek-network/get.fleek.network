@@ -88,13 +88,6 @@ dateRuntime=$(date '+%Y%m%d%H%M%S')
 
 # Defaults
 defaultUrsaPath="$HOME/fleek-network/ursa"
-# defaultNginxSitesAvailablePath="/etc/nginx/sites-available"
-# defaultNginxSitesEnabledPath="/etc/nginx/sites-enabled"
-# defaultUrsaNginxHttpConfFilename="ursa-http.conf"
-# defaultUrsaNginxHttpsConfFilename="ursa-https.conf"
-# defaultACMEChallengeMsgPlaceholder="_domain_ ACME Challenge directory is healthy!"
-# defaultLetsEncryptOptionsSSLNginxConf="/etc/letsencrypt/options-ssl-nginx.conf"
-# defaultLetsEncryptSSLDHParams="/etc/letsencrypt/ssl-dhparams.pem"
 defaultUrsaLogPath="/var/log/ursa"
 defaultUrsaDiagnosticFilename="diagnostic.log"
 defaultUrsaOutputFilename="output.log"
@@ -112,8 +105,6 @@ selectedUrsaPath="$defaultUrsaPath"
 selectedDomainName=""
 selectedIpAddress=""
 selectedEmailAddress=""
-# selectedNginxSitesAvailablePath=""
-# selectedNginxSitesEnabledPath=""
 vCPUsMinusOne=$(($vCPUs - 1))
 
 # Confirm validators
@@ -148,9 +139,6 @@ hasCommand() {
 }
 
 initCertbot() {
-  domain="$1"
-  email="$2"
-
   letsEncryptScriptName="lets_encrypt"
 
   letsEncryptTempDir=$(mktemp -d)
@@ -643,7 +631,12 @@ while ! curl -s localhost:4069/ping | grep -q pong; do
   ((pingAttempts++))
 done
 
-initCertbot "$selectedDomainName" "$selectedEmailAddress"
+echo "🚀 Launch the Let's Encrypt process"
+if ! initCertbot; then
+  echo "👹 Oh no! The Let's Encrypt process failed"
+
+  exit 1
+fi
 
 echo
 echo "🌈 The Fleek Network Node is running!"
