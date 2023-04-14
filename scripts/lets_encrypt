@@ -195,6 +195,8 @@ runHealthCheckForHTTPS() {
   fi
 }
 
+introAscii() {
+# Obs: The cat indentation is intentional, do not change
 cat << "URSA_START_SCRIPT"
 
          __
@@ -208,16 +210,21 @@ cat << "URSA_START_SCRIPT"
      `---''---`
 URSA_START_SCRIPT
 
-echo
-echo "⭐️ Let's Encrypt setup script, for the Fleek Network Ursa-proxy server ⭐️"
-echo
-echo "★★★★★★★★★ 🌍 Website https://fleek.network"
-echo "★★★★★★★★★ 📚 Documentation https://docs.fleek.network"
-echo "★★★★★★★★★ 💾 Git repository https://github.com/fleek-network/ursa"
-echo "★★★★★★★★★ 🤖 Discord https://discord.gg/fleekxyz"
-echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
-echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
-echo
+  echo
+  echo "⭐️ Let's Encrypt setup script, for the Fleek Network Ursa-proxy server ⭐️"
+  echo
+  echo "★★★★★★★★★ 🌍 Website https://fleek.network"
+  echo "★★★★★★★★★ 📚 Documentation https://docs.fleek.network"
+  echo "★★★★★★★★★ 💾 Git repository https://github.com/fleek-network/ursa"
+  echo "★★★★★★★★★ 🤖 Discord https://discord.gg/fleekxyz"
+  echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
+  echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
+  echo
+}
+
+if [[ -z ${SKIP_INTRO+x} ]]; then
+  introAscii
+fi
 
 (
   exec < /dev/tty;
@@ -259,7 +266,7 @@ echo
     fi
   fi
 
-  if [[ -z "$SELECTED_URSA_PATH" ]]; then
+  if [[ -n "$SELECTED_URSA_PATH" ]]; then
     selectedUrsaPath="$SELECTED_URSA_PATH"
   else
     while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaPath? Type \"no\" to change the location (yes/no) " answer; do
@@ -291,7 +298,7 @@ echo
 
   detectedIpAddress=$(getIpAddress)
 
-  if [[ -z "$SELECTED_DOMAIN_NAME" ]]; then
+  if [[ -n "$SELECTED_DOMAIN_NAME" ]]; then
     selectedDomainName="$SELECTED_DOMAIN_NAME"
   else
     printf -v prompt "🤖 What's your domain name address?"
@@ -309,7 +316,7 @@ echo
 
   echo
 
-  if [[ -z "$SELECTED_IP_ADDRESS" ]]; then
+  if [[ -n "$SELECTED_IP_ADDRESS" ]]; then
     selectedIpAddress="$SELECTED_IP_ADDRESS"
   else
     printf "The server public IP address the domain is pointing to is required! We found the public IP address for this machine to be %s\n" "$detectedIpAddress"
@@ -398,7 +405,7 @@ echo
 
   echo
 
-  if [[ -z "$SELECTED_EMAIL_ADDRESS" ]]; then
+  if [[ -n "$SELECTED_EMAIL_ADDRESS" ]]; then
     selectedEmailAddress="$SELECTED_EMAIL_ADDRESS"
   else
     printf "Let's Encrypt provides SSL/TLS Certificates for securing the communications. A valid email address is required by the Let's Encrypt organisation (Fleek Network is not affiliated and does NOT store the email address).\n"
