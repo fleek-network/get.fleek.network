@@ -148,6 +148,12 @@ echo
   echo "🤖 CPU details"
   cat /proc/cpuinfo
 
+  echo "🤖 Memory info"
+  mem=$(awk '/^MemTotal:/{print $2}' /proc/meminfo);
+  partDiskSpace=$(df --output=avail -B 1 "$PWD" |tail -n 1)
+  echo "Total memory $mem"
+  echo "Disk space $partDiskSpace"
+
   echo "🤖 User home"
   echo "$HOME"
   echo
@@ -250,6 +256,12 @@ echo
     echo "Docker version"
     docker -v
     echo
+
+    echo "Docker compose version"
+    docker compose -v
+
+    echo "Docker-compose is installed?"
+    which docker-compose
 
     echo "Docker systemd status"
     systemctl status --no-pager docker
