@@ -423,11 +423,6 @@ echo
   if systemctl list-units --full -all | grep -q "ursa-proxy.service"; then
     echo "✅ The Ursa-proxy service is available"
     echo
-
-    if systemctl is-active --quiet ursa-proxy; then
-      echo "🦖 We'll stop the ursa-proxy for a bit, for certbot standalone web server"
-      sudo systemctl stop ursa-proxy
-    fi
   else
     while read -rp "🙋‍♀️ The ursa-proxy service was not found. Would you like to have it installed now? (yes/no) " answer; do
       if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
@@ -449,9 +444,6 @@ echo
           fi
         fi
 
-        echo "🦖 We'll stop the ursa-proxy for now. The certbot standalone web server will launch for the certification process shortly"
-        sudo systemctl stop ursa-proxy
-
         break;
       elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
         echo "🦖 The Lets Encrypt setup was interrupted because the ursa-proxy is not installed. Make sure that you install, setup the ursa-proxy before retrying..."
@@ -460,6 +452,9 @@ echo
       fi
     done
   fi
+
+  echo "🦖 We'll stop the ursa-proxy for a bit, for certbot standalone web server"
+  sudo systemctl stop ursa-proxy
 
   echo "🤖 Certbot"
   if ! hasCommand certbot; then
