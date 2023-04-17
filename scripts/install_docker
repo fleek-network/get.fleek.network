@@ -64,6 +64,9 @@ defaultUrsaConfigFilename="config.toml"
 defaultUrsaBasePath="$HOME/.ursa"
 defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
 defaultDockerDaemonJson="/etc/docker/daemon.json"
+defaultUrsaProxyDir="$defaultUrsaBasePath/proxy"
+defaultUrsaProxyConfigPath="$defaultUrsaProxyDir/config.toml"
+defaultLetsEncryptCertificatesLivePath="/etc/letsencrypt/live"
 
 # App state
 userSelectedLanguage=""
@@ -1056,11 +1059,21 @@ requestPathnameForUrsaRepository() {
 }
 
 cloneUrsaRepositoryToPath() {
-  if ! sudo git clone $defaultUrsaHttpsRepository "$1"; then
-    showErrorMessage \
-      "$(printf "%s" "${transl[clone_ursa_repo_to_path_oops_failed_to_clone]}" | sed "s|_defaultUrsaHttpsRepository_|\"${defaultUrsaHttpsRepository}\"|g")"
+  if [[ -n ${URSA_BRANCH+x} ]]; then
+    echo "🥷 Switch to branch $URSA_BRANCH"
+    if ! sudo git clone -b "$URSA_BRANCH" "$defaultUrsaHttpsRepository" "$1"; then
+      showErrorMessage \
+        "$(printf "%s" "${transl[clone_ursa_repo_to_path_oops_failed_to_clone]}" | sed "s|_defaultUrsaHttpsRepository_|\"${defaultUrsaHttpsRepository}\"|g")"
 
-    exitInstaller
+      exitInstaller
+    fi
+  else
+    if ! sudo git clone $defaultUrsaHttpsRepository "$1"; then
+      showErrorMessage \
+        "$(printf "%s" "${transl[clone_ursa_repo_to_path_oops_failed_to_clone]}" | sed "s|_defaultUrsaHttpsRepository_|\"${defaultUrsaHttpsRepository}\"|g")"
+
+      exitInstaller
+    fi
   fi
 
   showOkMessage \
@@ -1073,19 +1086,13 @@ restartDockerStack() {
   echo "🤖 ${transl[restart_docker_stack_is_going_to_restart]}"
   echo
 
-  # TODO: Use health check instead
-  sleep 10
   dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" stop
 
   showOkMessage "${transl[restart_docker_stack_is_going_to_start]}"
 
-  # TODO: Use health check instead
-  sleep 10
   dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" up -d
 
   showOkMessage "${transl[restart_docker_stack_has_restarted]}"
-
-  sleep 3
 }
 
 showDockerStackLog() {
@@ -1168,6 +1175,51 @@ showDockerStackLog() {
   dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" logs -f
 }
 
+
+ursaServerConfigurationHandler() {
+  if [[ ! -d "$defaultUrsaProxyDir" ]]; then
+    echo "✅ Create Ursa proxy directory"
+    mkdir -p "$defaultUrsaProxyDir"
+    touch "$defaultUrsaProxyConfigPath"
+  fi
+
+  if [[ $1 -eq "1" ]]; then
+
+    if [[ ! -f "$defaultUrsaProxyConfigPath" ]]; then
+      touch "$defaultUrsaProxyConfigPath"
+    fi
+
+# Here "no identation" is intentional, do not change
+# The top empty line at the top is intentional
+echo "# Server without TLS.
+[[server]]
+proxy_pass = \"127.0.0.1:4069\"
+listen_addr = \"0.0.0.0:80\"
+serve_dir_path = \".well-known\"
+" > "$defaultUrsaProxyConfigPath" || exit 1
+elif [[ $1 -eq "2" ]]; then
+# Here "no identation" is intentional, do not change
+# The top empty line at the top is intentional
+echo "# Server with TLS
+[[server]]
+proxy_pass = \"127.0.0.1:4069\"
+listen_addr = \"0.0.0.0:443\"
+
+[server.tls]
+cert_path = \"$defaultLetsEncryptCertificatesLivePath/$userDomainName/fullchain.pem\"
+key_path = \"$defaultLetsEncryptCertificatesLivePath/$userDomainName/privkey.pem\"
+
+# Admin service.
+# You can omit this section as this is the default.
+[admin]
+addr = \"0.0.0.0:8881\"
+" > "$defaultUrsaProxyConfigPath" || exit 1
+fi
+
+  echo "✅ Updated the config.toml by including the [server] settings"
+  echo
+}
+
 initLetsEncrypt() {
   email="$1"
   domain="$2"
@@ -1178,134 +1230,27 @@ initLetsEncrypt() {
     exitInstaller
   fi
 
-  rsa_key_size=4096
-  base_path=./docker/full-node
-  config_path="$defaultDockerComposeYmlRelativePath"
-  data_path="$defaultDockerFullNodeRelativePath/data/certbot"
-  staging=0
+  # Ursa server configuration handler to ensure the settings exist and correct
+  ursaServerConfigurationHandler 1
 
-  # TODO: Move this checkup much earlier, in the init of installer
-  # Do we have the required files, if not interrupt the process?
-  if [[ ! -d "$base_path" || ! "$(ls -A $base_path)" ]]; then
-    showErrorMessage "${transl[init_lets_encrypt_oops_missing_required_files]} 🙏"
-
-    exitInstaller
-  fi
-
-  if [[ ! -e "$data_path/conf/options-ssl-nginx.conf" || ! -e "$data_path/conf/ssl-dhparams.pem" ]]; then
+  if ! dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" run \
+      -p 80:80 \
+      --rm --entrypoint "\
+      certbot certonly \
+        --standalone \
+        --preferred-challenges http \
+        --email $email \
+        --domain $domain \
+        --rsa-key-size 4096 \
+        --agree-tos -n" certbot; then
+    echo "👹 Oops! Failed to create the certificate"
     echo
-    echo "🤖 ${transl[init_lets_encrypt_download_recommended_tls]}..."
-    echo
+    echo "💡 If you already had Certbot installed, make sure you update to latest before retrying please"
 
-    sudo mkdir -p "$data_path/conf"
-
-    curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf | sudo tee "$data_path/conf/options-ssl-nginx.conf"
-    curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem | sudo tee "$data_path/conf/ssl-dhparams.pem"
-    echo
+    exit 1
+  else
+    echo "✅ Certbot process completed"
   fi
-
-  echo
-  echo "🤖 ${transl[init_lets_encrypt_create_dummy_certificates]/_domain_/$domain} 🙏"
-  echo
-
-  path="/etc/letsencrypt/live/$domain"
-  sudo mkdir -p "$data_path/conf/live/$domain"
-
-  if ! dockerComposeExec -f "$config_path" \
-    run --rm --entrypoint "\
-    openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1\
-      -keyout '$path/privkey.pem' \
-      -out '$path/fullchain.pem' \
-      -subj '/CN=localhost'" certbot; then    
-    showErrorMessage "${transl[init_lets_encrypt_oops_failed_create_dummy_certificate]}"
-
-    exitInstaller
-  fi
-
-  echo
-  echo "🤖 ${transl[init_lets_encrypt_starting_nginx]} 🙏"
-  echo
-
-  if ! dockerComposeExec -f "$config_path" up --force-recreate -d nginx; then
-    showErrorMessage "${transl[init_lets_encrypt_failed_start_nginx]}..."
-
-    exitInstaller
-  fi
-  
-  echo
-  echo "🤖 ${transl[init_lets_encrypt_deleting_dummy_certificate]/_domain_/$domain}..."
-  echo
-
-  if ! dockerComposeExec -f "$config_path" \
-    run --rm --entrypoint "\
-    rm -Rf /etc/letsencrypt/live/$domain && \
-    rm -Rf /etc/letsencrypt/archive/$domain && \
-    rm -Rf /etc/letsencrypt/renewal/$domain.conf" certbot; then
-
-    showErrorMessage "${transl[init_lets_encrypt_oops_failed_delete_certificates]/_domain_/$domain}..."
-
-    exitInstaller
-  fi
-
-  echo
-  echo "🤖 ${transl[init_lets_encrypt_requesting_lets_encrypt_certificates]/_domain_/$domain}..."
-  echo
-
-  # Enable staging mode if needed
-  if [ $staging != "0" ]; then staging_arg="--staging"; fi
-
-  if ! dockerComposeExec -f "$config_path" run --rm --entrypoint "\
-    certbot certonly --webroot -w /var/www/certbot \
-      $staging_arg \
-      --email $email \
-      --domain $domain \
-      --rsa-key-size $rsa_key_size \
-      --agree-tos -n \
-      --force-renewal" certbot; then
-    showErrorMessage "${transl[init_lets_encrypt_oops_failed_create_tls_certificates]} https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
-
-    printf -v prompt "\n💡 %s\n\n🙋‍♀️ %s\n%s" \
-      "${transl[init_lets_encrypt_prompt_recommend_try_again]}" \
-      "${transl[init_lets_encrypt_prompt_recommend_try_again_ask]}" \
-      "$(printf "%s" "${transl[init_lets_encrypt_prompt_recommend_try_again_y_or_quit]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_quit_|${transl[common_prompt_quit_as_q]}|g")"
-    while read -r -p "$prompt"$'\n> ' answer; do
-      intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
-    
-      if [[ "$intlAnswer" == "" || "$intlAnswer" == [yY] || "$intlAnswer" == [qQ] ]]; then
-        break
-      fi
-    done
-
-    if [[ "$intlAnswer" == [qQ] ]]; then
-      printf "🦖 %s" "${transl[init_lets_encrypt_prompt_recommend_you_have_quit]}" | sed "s|_defaultFleekNetworkDocsWebsite_|\"${defaultFleekNetworkDocsWebsite}\"|g"
-
-      exit 1
-    fi
-
-    if [[ "$intlAnswer" == "" || "$intlAnswer" == [yY] || "$intlAnswer" == [yY][eE][sS] ]]; then    
-      echo
-      echo "💡 ${transl[init_lets_encrypt_if_issue_persists]}"
-      echo "${transl[init_lets_encrypt_linux_os_dns_config_location_1_of_2]}"
-      echo "${transl[init_lets_encrypt_linux_os_dns_config_location_2_of_2]}"
-      echo
-      echo "🤖 ${transl[init_lets_encrypt_restart_docker_stack]}..."
-      echo
-      dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" down      
-      dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" start
-
-      initLetsEncrypt "$email" "$domain"
-    fi
-
-    dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" down
-
-    exitInstaller
-  fi
-
-  echo
-  echo "🤖 ${transl[init_lets_encrypt_reloading_nginx]}..."
-  echo
-
-  dockerComposeExec -f "$config_path" exec nginx nginx -s reload
 
   showOkMessage "${transl[init_lets_encrypt_success_secured_message]}"
 }
@@ -1569,90 +1514,6 @@ verifyUserHasDomain() {
   echo "$userDomainName;$emailAddress;$serverIpAddress"
 }
 
-replaceNginxConfFileForHttp() {
-  echo "
-    proxy_cache_path /cache keys_zone=nodecache:100m levels=1:2 inactive=31536000s max_size=10g use_temp_path=off;
-
-    server {
-        listen 80;
-        listen [::]:80;
-        server_name $1;
-
-        location /.well-known/acme-challenge/ {
-            root /var/www/certbot;
-        }
-
-        location /stub_status {
-          stub_status;
-        }
-
-        proxy_redirect          off;
-        client_max_body_size    10m;
-        client_body_buffer_size 128k;
-        proxy_connect_timeout   90;
-        proxy_send_timeout      90;
-        proxy_read_timeout      90;
-        proxy_buffers           32 128k;
-
-        location / {
-          add_header content-type  application/vnd.ipld.raw;
-          add_header content-type  application/vnd.ipld.car;
-          add_header content-type  application/octet-stream;
-          add_header cache-control public,max-age=31536000,immutable;
-
-          proxy_cache nodecache;
-          proxy_cache_valid 200 31536000s;
-          add_header X-Proxy-Cache \$upstream_cache_status;
-          proxy_cache_methods GET HEAD POST;
-          proxy_cache_key \"\$request_uri|\$request_body\";
-          client_max_body_size 1G;
-
-          proxy_pass http://ursa:4069;
-        }
-    }
-  " | sudo tee "$defaultDockerFullNodeRelativePath"/data/nginx/http.conf
-}
-
-replaceNginxConfFileForHttps() {
-  echo "
-    server {
-        listen 443 ssl http2;
-        listen [::]:443 ssl http2;
-        server_name $1;
-
-        server_tokens off;
-
-        # SSL code
-        ssl_certificate /etc/letsencrypt/live/$1/fullchain.pem;
-        ssl_certificate_key /etc/letsencrypt/live/$1/privkey.pem;
-
-        include /etc/letsencrypt/options-ssl-nginx.conf;
-        ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-
-        location /stub_status {
-          stub_status;
-        }
-
-        location / {
-          add_header content-type  application/vnd.ipld.raw;
-          add_header content-type  application/vnd.ipld.car;
-          add_header content-type  application/octet-stream;
-          add_header cache-control public,max-age=31536000,immutable;
-
-          proxy_cache nodecache;
-          proxy_cache_valid 200 31536000s;
-          add_header X-Proxy-Cache \$upstream_cache_status;
-          proxy_cache_methods GET HEAD POST;
-          proxy_cache_key \"\$request_uri|\$request_body\";
-          client_max_body_size 1G;
-
-
-          proxy_pass http://ursa:4069;
-        }
-    }
-  " | sudo tee "$defaultDockerFullNodeRelativePath"/data/nginx/https.conf
-}
-
 setupSSLTLS() {
   echo "⚠️ ${transl[setup_ssl_tls_you_are_required]}"
   echo
@@ -1677,50 +1538,14 @@ setupSSLTLS() {
   emailAddress=$(echo "$trimData" | cut -d ";" -f 2)
   serverIpAddress=$(echo "$trimData" | cut -d ";" -f 3)
 
-  if ! sudo rm "$defaultDockerFullNodeRelativePath"/data/nginx/app.conf; then
-    showErrorMessage "${transl[setup_ssl_tls_oops_failed_clear_nginx]} 🙏"
-
-    exitInstaller
-  fi
-
-  if ! replaceNginxConfFileForHttp "$userDomainName"; then
-    showErrorMessage "${transl[setup_ssl_tls_oops_failed_update_http_server_name]/_userDomainName_/$userDomainName} 🙏"
-
-    exitInstaller
-  fi
-
-  sudo chmod +x "$defaultDockerFullNodeRelativePath"/init-letsencrypt.sh
-
-  showOkMessage "${transl[setup_ssl_tls_updated_file_permissions_lets_encrypt_execution]} (set +x)!"
-
-  # Intentional, used to provide space after msg
-  echo
-
-  # start stack in bg, as lets encrypt will need the nginx to validate
-  COMPOSE_DOCKER_CLI_BUILD=1 dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" up -d
-
-  # TODO: add health check in the docker compose file
-
-  # Health check
-  statusCode=$(curl --write-out "%{http_code}" --silent --output /dev/null http://"$userDomainName"/ping)
-
-  if [[ "$statusCode" -ne 200 ]]; then
-    showPoopMessage "${transl[setup_ssl_tls_uh_oh_cant_communicate_with_reverse_proxy]}"
-
-    read -r -p "😅 ${transl[setup_ssl_tls_lets_encrypt_likely_fail_if_continue]}..."
-  fi
-
   if ! initLetsEncrypt "$emailAddress" "$userDomainName"; then
     exitInstaller
   fi
 
-  printf "\n"
+  echo "🤖 Set Ursa proxy configuration for SSL/TLS"
+  ursaServerConfigurationHandler 2
 
-  if ! replaceNginxConfFileForHttps "$userDomainName"; then
-    showErrorMessage "${transl[setup_ssl_tls_oops_failed_update_https_server_name_directive]/_userDomainName_/$userDomainName} 🙏"
-
-    exitInstaller
-  fi
+  restartDockerStack
 }
 
 changeDirectoryToPathOrFailure() {
