@@ -6,7 +6,7 @@
 # By providing scripts to automate the installation process of our software,
 # we believe that it can help improve the onboarding experience of our users.
 #
-# Quick install: `curl https://get.fleek.network| bash`
+# Quick install: `curl https://get.fleek.network/install_native | bash`
 #
 # This script automates the process illustrated in our guide "how to install rust and the dependencies for ursa cli"
 # advanced users might find it better to follow the instructions in the guide
@@ -107,6 +107,10 @@ selectedIpAddress=""
 selectedEmailAddress=""
 vCPUsMinusOne=$(($vCPUs - 1))
 
+# Filenames
+letsEncryptScriptName="lets_encrypt"
+ursaProxyInstallScript="install_ursa_proxy"
+
 # Confirm validators
 confirmDomainName() {
   local validate="^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\.)+[a-zA-Z]{2,}$"
@@ -139,8 +143,6 @@ hasCommand() {
 }
 
 initCertbot() {
-  letsEncryptScriptName="lets_encrypt"
-
   letsEncryptTempDir=$(mktemp -d)
 
   if ! cd "$letsEncryptTempDir"; then
@@ -549,7 +551,21 @@ if systemctl list-units --full -all | grep -q "ursa-proxy.service"; then
 else
   read -rp "💡 The ursa-proxy service installer is a separate process that will be executed, when complete, the Native installer setup will continue. Press ENTER to continue..."
 
-  if ! curl -s https://get.fleek.network/install_ursa_proxy | bash; then
+  # INFO: set `USE_BRANCH_NAME_FOR_GH_RAW` to use the Github raw locales for testing
+  # e.g., USE_BRANCH_NAME_FOR_GH_RAW="feat/localization" ./install
+  if [[ -n ${USE_BRANCH_NAME_FOR_GH_RAW+x} ]]; then
+    echo "🥷 Switch to branch $USE_BRANCH_NAME_FOR_GH_RAW"
+    curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$USE_BRANCH_NAME_FOR_GH_RAW/scripts/$ursaProxyInstallScript?$dateRuntime" > "$ursaProxyInstallScript"
+  else
+    curl -s "https://get.fleek.network/$ursaProxyInstallScript" > "$ursaProxyInstallScript"
+  fi
+
+  chmod +x "$ursaProxyInstallScript"
+
+  if ! SKIP_INTRO="1" \
+  USE_BRANCH_NAME_FOR_GH_RAW="$USE_BRANCH_NAME_FOR_GH_RAW" \
+  SELECTED_URSA_PATH="$selectedUrsaPath" \
+  ./"$ursaProxyInstallScript"; then
     echo "👹 Oh no! Failed to install the ursa-proxy"
 
     exit 1
