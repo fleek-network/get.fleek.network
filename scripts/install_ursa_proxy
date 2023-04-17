@@ -99,6 +99,7 @@ isOSSupported() {
   fi
 }
 
+introAscii() {
 cat << "URSA_START_SCRIPT"
 
           |
@@ -124,6 +125,11 @@ echo "★★★★★★★★★ 🤖 Discord https://discord.gg/fleekxyz"
 echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
 echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
 echo
+}
+
+if [[ -z ${SKIP_INTRO+x} ]]; then
+  introAscii
+fi
 
 printf "🤖 Check if operating system is supported\n"
 isOSSupported
@@ -161,23 +167,27 @@ echo
     done
   fi
 
-  while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaPath? Type \"no\" to change the location (yes/no) " answer; do
-    if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-      while read -rp "🙋‍♀️ What's the location where the Ursa repository is?" answer; do
-        if [[ -d "$answer" ]]; then
-          selectedUrsaPath="$answer"
-          
-          break
-        fi
+  if [[ -n "$SELECTED_URSA_PATH" ]]; then
+    selectedUrsaPath="$SELECTED_URSA_PATH"
+  else
+    while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaPath? Type \"no\" to change the location (yes/no) " answer; do
+      if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+        while read -rp "🙋‍♀️ What's the location where the Ursa repository is?" answer; do
+          if [[ -d "$answer" ]]; then
+            selectedUrsaPath="$answer"
+            
+            break
+          fi
 
-        echo "💩 Uh oh! The path ($answer) doesn't exist, let's try that again..."
-      done
-    elif [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-      selectedUrsaPath="$defaultUrsaPath"
+          echo "💩 Uh oh! The path ($answer) doesn't exist, let's try that again..."
+        done
+      elif [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+        selectedUrsaPath="$defaultUrsaPath"
 
-      break;
-    fi
-  done
+        break;
+      fi
+    done
+  fi
 
   echo "🤖 Change work directory to $selectedUrsaPath"
   if ! cd "$selectedUrsaPath"; then
@@ -203,9 +213,7 @@ echo
   fi
 
   if ! ln -s "$HOME/.cargo/bin/ursa-proxy" /usr/local/bin/ursa-proxy; then
-    printf "👹 Oops! Failed to symlink %s to /usr/local/bin/ursa-proxy\n" "$HOME/.cargo/bin/ursa-proxy"
-
-    exit 1
+    printf "💩 Uh oh! Failed to symlink %s to /usr/local/bin/ursa-proxy\n" "$HOME/.cargo/bin/ursa-proxy"
   fi
 
   echo

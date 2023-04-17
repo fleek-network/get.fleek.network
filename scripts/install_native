@@ -6,7 +6,7 @@
 # By providing scripts to automate the installation process of our software,
 # we believe that it can help improve the onboarding experience of our users.
 #
-# Quick install: `curl https://get.fleek.network| bash`
+# Quick install: `curl https://get.fleek.network/install_native | bash`
 #
 # This script automates the process illustrated in our guide "how to install rust and the dependencies for ursa cli"
 # advanced users might find it better to follow the instructions in the guide
@@ -93,13 +93,6 @@ dateRuntime=$(date '+%Y%m%d%H%M%S')
 
 # Defaults
 defaultUrsaPath="$HOME/fleek-network/ursa"
-defaultNginxSitesAvailablePath="/etc/nginx/sites-available"
-defaultNginxSitesEnabledPath="/etc/nginx/sites-enabled"
-defaultUrsaNginxHttpConfFilename="ursa-http.conf"
-defaultUrsaNginxHttpsConfFilename="ursa-https.conf"
-defaultACMEChallengeMsgPlaceholder="_domain_ ACME Challenge directory is healthy!"
-defaultLetsEncryptOptionsSSLNginxConf="/etc/letsencrypt/options-ssl-nginx.conf"
-defaultLetsEncryptSSLDHParams="/etc/letsencrypt/ssl-dhparams.pem"
 defaultUrsaLogPath="/var/log/ursa"
 defaultUrsaDiagnosticFilename="diagnostic.log"
 defaultUrsaOutputFilename="output.log"
@@ -117,9 +110,11 @@ selectedUrsaPath="$defaultUrsaPath"
 selectedDomainName=""
 selectedIpAddress=""
 selectedEmailAddress=""
-selectedNginxSitesAvailablePath=""
-selectedNginxSitesEnabledPath=""
 vCPUsMinusOne=$(($vCPUs - 1))
+
+# Filenames
+letsEncryptScriptName="lets_encrypt"
+ursaProxyInstallScript="install_ursa_proxy"
 
 # Confirm validators
 confirmDomainName() {
@@ -153,53 +148,36 @@ hasCommand() {
 }
 
 initCertbot() {
-  domain="$1"
-  email="$2"
+  letsEncryptTempDir=$(mktemp -d)
 
-  if ! hasCommand snap; then
-    printf "🤖 Install Snap package manager\n"
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install snapd -yq
-  else
-    printf "🤖 Ensure that your version of snapd is up to date\n"
-    sudo snap install core
-    sudo snap refresh core
+  if ! cd "$letsEncryptTempDir"; then
+    echo "👹 Oops! Failed to create a temporary directory to run the Lets Encrypt script"
+
+    exit 1
   fi
 
-  echo
+  # INFO: set `USE_BRANCH_NAME_FOR_GH_RAW` to use the Github raw locales for testing
+  # e.g., USE_BRANCH_NAME_FOR_GH_RAW="feat/localization" ./install
+  if [[ -n ${USE_BRANCH_NAME_FOR_GH_RAW+x} ]]; then
+    echo "🥷 Switch to branch $USE_BRANCH_NAME_FOR_GH_RAW"
+    curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$USE_BRANCH_NAME_FOR_GH_RAW/scripts/lets_encrypt?$dateRuntime" > "$letsEncryptScriptName"
+  else
+    curl -s "https://get.fleek.network/lets_encrypt" > "$letsEncryptScriptName"
+  fi
 
-  printf "🤖 Remove certbot-auto and any Certbot OS packages\n"
-  sudo DEBIAN_FRONTEND=noninteractive apt-get remove certbot
+  chmod +x "$letsEncryptScriptName"
 
-  echo
+  if ! SKIP_INTRO="1" \
+  USE_BRANCH_NAME_FOR_GH_RAW="$USE_BRANCH_NAME_FOR_GH_RAW" \
+  SELECTED_URSA_PATH="$selectedUrsaPath" \
+  SELECTED_DOMAIN_NAME="$selectedDomainName" \
+  SELECTED_IP_ADDRESS="$selectedIpAddress" \
+  SELECTED_EMAIL_ADDRESS="$selectedEmailAddress" \
+  ./"$letsEncryptScriptName"; then
+    echo "👹 Oops! The Let's Encrypt setup failed!"
 
-  printf "🤖 Install certbot\n"
-  sudo snap install --classic certbot
-
-  echo
-
-  printf "🤖 Prepare the Certbot command\n"
-  sudo ln -s /snap/bin/certbot /usr/bin/certbot
-
-  echo
-
-  printf "🤖 Get and install your certificates\n"
-  sudo certbot certonly \
-    --webroot -w /var/www/"$selectedDomainName" \
-    --email "$email" \
-    --domain "$domain" \
-    --rsa-key-size 4096 \
-    --agree-tos -n \
-    --force-renewal \
-    -v
-
-  echo
-
-  printf "🤖 Test automatic renewal\n"
-  sudo certbot renew --dry-run
-
-  echo
-
-  printf "🤖 Health check\n"
+    exit 1
+  fi
 }
 
 identifyOS() {
@@ -569,194 +547,35 @@ printf "The Ursa CLI should be available globally, there's a symlink to the /usr
 
 echo
 
-printf "🔓 Our wizard will now attempt to install additional applications, to help secure the server e.g. Nginx (reverse proxy), secure the communications with SSL/TLS, etc. Be patient, please 🙏\n"
+printf "🔓 Our wizard will now attempt to install additional applications, to help secure the server e.g. Ursa-proxy, secure the communications with SSL/TLS, etc. Be patient, please 🙏\n"
 
 echo
 
-if ! hasCommand nginx; then
-  selectedNginxSitesAvailablePath="$defaultNginxSitesAvailablePath"
-  selectedNginxSitesEnabledPath="$defaultNginxSitesEnabledPath"
-
-  printf "🤖 Install Nginx\n"
-  sudo DEBIAN_FRONTEND=noninteractive apt install nginx -yq
+if systemctl list-units --full -all | grep -q "ursa-proxy.service"; then
+  echo "✅ The Ursa-proxy service is available"
 else
-  printf "💡 The install process encountered Nginx already installed\nIt'll assume that the location for sites-available and sites-enabled are the default paths %s and %s\n" "$defaultNginxSitesAvailablePath" "$defaultNginxSitesEnabledPath"
-  printf -v prompt "Use the default paths for Nginx sites-available and sites-enabled? (yes/no)"
-  while read -rp "$prompt"$'\n> ' answer; do
-    if [[ $answer == [yY][eE][sS] || $answer == [yY] ]]; then
-      selectedNginxSitesAvailablePath="$defaultNginxSitesAvailablePath"
-      selectedNginxSitesEnabledPath="$defaultNginxSitesEnabledPath"
+  read -rp "💡 The ursa-proxy service installer is a separate process that will be executed, when complete, the Native installer setup will continue. Press ENTER to continue..."
 
-      break;
-    fi
+  # INFO: set `USE_BRANCH_NAME_FOR_GH_RAW` to use the Github raw locales for testing
+  # e.g., USE_BRANCH_NAME_FOR_GH_RAW="feat/localization" ./install
+  if [[ -n ${USE_BRANCH_NAME_FOR_GH_RAW+x} ]]; then
+    echo "🥷 Switch to branch $USE_BRANCH_NAME_FOR_GH_RAW"
+    curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$USE_BRANCH_NAME_FOR_GH_RAW/scripts/$ursaProxyInstallScript?$dateRuntime" > "$ursaProxyInstallScript"
+  else
+    curl -s "https://get.fleek.network/$ursaProxyInstallScript" > "$ursaProxyInstallScript"
+  fi
 
-    if [[ $answer == [nN][oO] || $answer == [nN] ]]; then
-      while read -rp "What's the path for sites-available?" answer; do
-        if [[ ! -d "$answer" ]]; then
-          printf "💩 Uh-oh! The directory (%s) was not found. You might want to create it first, try again...\n" "$answer"
+  chmod +x "$ursaProxyInstallScript"
 
-          continue;
-        fi
+  if ! SKIP_INTRO="1" \
+  USE_BRANCH_NAME_FOR_GH_RAW="$USE_BRANCH_NAME_FOR_GH_RAW" \
+  SELECTED_URSA_PATH="$selectedUrsaPath" \
+  ./"$ursaProxyInstallScript"; then
+    echo "👹 Oh no! Failed to install the ursa-proxy"
 
-        selectedNginxSitesAvailablePath="$answer"
-        break;
-      done
-
-      while read -rp "What's the path for sites-enabled?" answer; do
-        if [[ ! -d "$answer" ]]; then
-          printf "💩 Uh-oh! The directory (%s) was not found. You might want to create it first, try again...\n" "$answer"
-
-          continue;
-        fi
-
-        selectedNginxSitesEnabledPath="$answer"
-        break;
-      done
-    fi
-  done
+    exit 1
+  fi
 fi
-
-echo
-
-printf "🤖 Remove Nginx default config\n"
-rm -f /etc/nginx/sites-available/default
-rm -f /etc/nginx/sites-enabled/default
-
-echo
-
-if [[ -f "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename" ]]; then
-  rm "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename"
-fi
-
-touch "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename"
-
-if [[ -f "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename" ]]; then
-  rm "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename"
-fi
-
-touch "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename"
-
-printf "🤖 Create the Nginx directories for ACME Challenge\n"
-mkdir -p "/var/www/$selectedDomainName/.well-known/acme-challenge"
-
-echo
-
-printf "🤖 Create ACME Challenge directory health check placeholder\n"
-if [[ -f "/var/www/$selectedDomainName/.well-known/acme-challenge/healthcheck" ]]; then
-  rm "/var/www/$selectedDomainName/.well-known/acme-challenge/healthcheck"
-fi
-echo "${defaultACMEChallengeMsgPlaceholder/_domain_/$selectedDomainName}" >> "/var/www/$selectedDomainName/.well-known/acme-challenge/healthcheck"
-
-echo
-
-printf "🤖 Create the HTTP Nginx config file for Ursa\n"
-echo "
-proxy_cache_path /cache keys_zone=nodecache:100m levels=1:2 inactive=31536000s max_size=10g use_temp_path=off;
-
-server {
-  listen 80;
-  listen [::]:80;
-  server_name $selectedDomainName;
-
-  location ^~ /.well-known/acme-challenge/ {
-    # No auth required
-    allow all;
-
-    # Safe type
-    default_type \"text/plain\";
-
-    # Path given to certbot as -w param of the webroot plugin
-    root         /var/www/$selectedDomainName;
-    break;
-  }
-
-  # Hides /acme-challenge subdir returning 404 on all requests
-  # Keep the ending slash
-  location = /.well-known/acme-challenge/ {
-    return 404;
-  }
-
-  location /stub_status {
-    stub_status;
-  }
-
-  proxy_redirect          off;
-  client_max_body_size    10m;
-  client_body_buffer_size 128k;
-  proxy_connect_timeout   90;
-  proxy_send_timeout      90;
-  proxy_read_timeout      90;
-  proxy_buffers           32 128k;
-
-  location / {
-    add_header content-type  application/vnd.ipld.raw;
-    add_header content-type  application/vnd.ipld.car;
-    add_header content-type  application/octet-stream;
-    add_header cache-control public,max-age=31536000,immutable;
-
-    proxy_cache nodecache;
-    proxy_cache_valid 200 31536000s;
-    add_header X-Proxy-Cache \$upstream_cache_status;
-    proxy_cache_methods GET HEAD POST;
-    proxy_cache_key \"\$request_uri|\$request_body\";
-    client_max_body_size 1G;
-
-    proxy_pass http://localhost:4069;
-  }
-  
-  location /metrics {
-    proxy_pass http://localhost:4069;
-  }
-}
-" > "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename"
-
-printf "🤖 Create the HTTPS Nginx config file for Ursa\n"
-echo "
-server {
-  listen 443 ssl http2;
-  listen [::]:443 ssl http2;
-  server_name $selectedDomainName;
-
-  server_tokens off;
-
-  # SSL code
-  ssl_certificate /etc/letsencrypt/live/$selectedDomainName/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/$selectedDomainName/privkey.pem;
-
-  include $defaultLetsEncryptOptionsSSLNginxConf;
-  ssl_dhparam $defaultLetsEncryptSSLDHParams;
-
-  location /stub_status {
-    stub_status;
-  }
-
-  location / {
-    add_header content-type  application/vnd.ipld.raw;
-    add_header content-type  application/vnd.ipld.car;
-    add_header content-type  application/octet-stream;
-    add_header cache-control public,max-age=31536000,immutable;
-
-    proxy_cache nodecache;
-    proxy_cache_valid 200 31536000s;
-    add_header X-Proxy-Cache \$upstream_cache_status;
-    proxy_cache_methods GET HEAD POST;
-    proxy_cache_key \"\$request_uri|\$request_body\";
-    client_max_body_size 1G;
-
-    proxy_pass http://localhost:4069;
-  }
-  
-  location /metrics {
-    proxy_pass http://localhost:4069;
-  }
-}
-" > "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename"
-
-printf "🤖 Enable Nginx HTTP config for now, HTTPS will be enabled after the SSL/TLS setup from Let's Encrypt\n"
-if [[ -f "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpConfFilename" ]]; then
-  rm "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpConfFilename"
-fi
-sudo ln -s "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpConfFilename" "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpConfFilename"
 
 echo
 
@@ -780,117 +599,6 @@ else
   read -rp "$prompt"
 fi
 
-echo
-
-printf "🤖 Start Nginx\n"
-if systemctl -q is-active nginx; then
-  if ! sudo systemctl restart nginx; then
-    printf "💩 Uh-oh! Failed to restart Nginx for some reason...\n"
-
-    exit 1
-  fi
-else
-  if ! sudo systemctl start nginx; then
-    printf "💩 Uh-oh! Failed to start Nginx for some reason...\n"
-
-    exit 1
-  fi
-fi
-
-echo
-
-printf "🚑 ACME Challenge health-check\n"
-if ! curl -s "http://$selectedDomainName/.well-known/acme-challenge/healthcheck" | grep -q "${defaultACMEChallengeMsgPlaceholder/_domain_/$selectedDomainName}"; then
-  printf "💩 Uh-oh! The ACME Challenge health-check failed for some reason, make sure you don't have any firewall or apps blocking ports %s...\n" "${requiredPorts[*]}"
-fi
-
-initCertbot "$selectedDomainName" "$selectedEmailAddress"
-
-echo
-
-printf "🤖 Enable Nginx HTTPS\n"
-if [[ -f "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename" ]]; then
-  rm "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
-fi
-sudo ln -s "$selectedNginxSitesAvailablePath/$defaultUrsaNginxHttpsConfFilename" "$selectedNginxSitesEnabledPath/$defaultUrsaNginxHttpsConfFilename"
-
-if [[ ! -f "$defaultLetsEncryptOptionsSSLNginxConf" ]]; then
-  printf "🧐 Hmm, missing file! Will create Lets Encrypt options SSL Nginx configuration\n"
-  curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > "$defaultLetsEncryptOptionsSSLNginxConf"
-fi
-
-if [[ ! -f "$defaultLetsEncryptSSLDHParams" ]]; then
-  printf "🧐 Hmm, missing file! Will create Lets Encrypt SSLDHParams\n"
-  curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$defaultLetsEncryptSSLDHParams"
-fi
-
-echo
-
-printf "🤖 Nginx reload\n"
-service nginx reload
-
-# Verify the syntax of your configuration edits
-if sudo nginx -t; then
-  sudo systemctl restart nginx
-else
-  printf "👹 Oh no! The Nginx configuration syntax is invalid, looks like a bug. Help us improve and report in our discord channel, please!\n"
-
-  exit 1
-fi
-
-if ! sudo certbot renew --dry-run; then
-  printf "😓 This is very unfortunate! The certbot renewal verification process failed for %s\nThe installer will continue, but is likely that when the SSL/TLS Certificate expires, the scheduled renewal will fail" "$selectedDomainName"
-
-  sleep 8
-fi
-
-printf "🤖 Set Ursa server IP Address in the configuration file\n"
-if [[ -f "$defaultUrsaConfigPath" ]]; then
-  echo "🤖 The installer found that a Ursa config directory already exists at $defaultUrsaConfigPath. The install wizard will update the addresses in the config.toml with your server IP addresss."
-
-  if ! sed -i "s|addresses =.*|addresses = [\"/ip4/$selectedIpAddress/tcp/80\"]|" "$defaultUrsaConfigPath"; then
-    printf "👹 Oh no! Failed to update the addresses with your server IP adress (%s) in the config.toml\n" "$selectedIpAddress"
-
-    exit 1
-  fi
-else
-  if ! mkdir -p "$defaultUrsaBasePath"; then
-    printf "👹 Oh no! Failed to create the directory %s\n" "$defaultUrsaBasePath"
-
-    exit 1
-  fi
-
-  if ! touch "$defaultUrsaConfigPath"; then
-    printf "👹 Oh no! Failed to create the config.toml at %s\n" "$defaultUrsaBasePath"
-
-    exit 1
-  fi
-
-  if ! echo "[server_config]" >> "$defaultUrsaConfigPath" || ! echo "addresses = [\"/ip4/$selectedIpAddress/tcp/80\"]" >> "$defaultUrsaConfigPath"; then
-    printf "👹 Oh no! Failed to populate the config file %s\n" "$defaultUrsaConfigPath"
-
-    exit 1
-  fi
-fi
-
-while read -rp "🤗 Would you like to start the Network Node now? (yes/no) " answer; do
-  if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-    break;
-  elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-    printf "🤗 All done!\n"
-    exit 1
-  fi
-done
-
-echo
-# The extra-whitespace between emoji and text is intentional
-# used for alignment
-echo "⚠️  Be aware that the Network Node outputs a lot of messages, the messages are quite verbose and you shouldn't worry about it! To keep it simple and not confusing, we'll keep the output of the Node in $defaultUrsaLogPath."
-echo
-echo "The log messages have many types INFO, DEBUG, WARNINGS, ERRORS, etc. Be patient! To understand what they mean, read our Node Health-check guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
-echo
-
-read -rp "Press ENTER to continue..."
 echo
 
 printf "🤖 Create a Systemd Ursa service\n"
@@ -944,13 +652,11 @@ while ! curl -s localhost:4069/ping | grep -q pong; do
   ((pingAttempts++))
 done
 
-printf "🚑 Health check %s via HTTPS /ping endpoint\n" "$selectedDomainName"
-if ! curl -s https://$selectedDomainName/ping | grep -q pong; then
-  printf "💩 Uh-oh! Failed to health-check the domain %s\n" "$selectedDomainName"
-  echo
-  echo "Learn how to do a Health Check by following the guide https://docs.fleek.network/guides/Network%20nodes/fleek-network-node-health-check-guide"
-else
-  printf "✅ Health checked!\n"
+echo "🚀 Launch the Let's Encrypt process"
+if ! initCertbot; then
+  echo "👹 Oh no! The Let's Encrypt process failed"
+
+  exit 1
 fi
 
 echo
