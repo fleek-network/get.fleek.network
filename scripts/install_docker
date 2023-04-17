@@ -67,6 +67,7 @@ defaultDockerDaemonJson="/etc/docker/daemon.json"
 defaultUrsaProxyDir="$defaultUrsaBasePath/proxy"
 defaultUrsaProxyConfigPath="$defaultUrsaProxyDir/config.toml"
 defaultLetsEncryptCertificatesLivePath="/etc/letsencrypt/live"
+defaultDockerNetworkUrsaHostname="full-node-ursa-1"
 
 # App state
 userSelectedLanguage=""
@@ -1193,7 +1194,7 @@ ursaServerConfigurationHandler() {
 # The top empty line at the top is intentional
 echo "# Server without TLS.
 [[server]]
-proxy_pass = \"127.0.0.1:4069\"
+proxy_pass = \"$defaultDockerNetworkUrsaHostname:4069\"
 listen_addr = \"0.0.0.0:80\"
 serve_dir_path = \".well-known\"
 " > "$defaultUrsaProxyConfigPath" || exit 1
@@ -1202,7 +1203,7 @@ elif [[ $1 -eq "2" ]]; then
 # The top empty line at the top is intentional
 echo "# Server with TLS
 [[server]]
-proxy_pass = \"127.0.0.1:4069\"
+proxy_pass = \"$defaultDockerNetworkUrsaHostname:4069\"
 listen_addr = \"0.0.0.0:443\"
 
 [server.tls]
