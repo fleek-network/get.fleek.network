@@ -575,6 +575,10 @@ else
 
     exit 1
   fi
+
+  # TODO: Use a tempdir instead for $ursaProxyInstallScript
+  # for the moment, clear $ursaProxyInstallScript
+  rm ./"$ursaProxyInstallScript"
 fi
 
 echo
