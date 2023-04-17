@@ -213,9 +213,7 @@ echo
   fi
 
   if ! ln -s "$HOME/.cargo/bin/ursa-proxy" /usr/local/bin/ursa-proxy; then
-    printf "👹 Oops! Failed to symlink %s to /usr/local/bin/ursa-proxy\n" "$HOME/.cargo/bin/ursa-proxy"
-
-    exit 1
+    printf "💩 Uh oh! Failed to symlink %s to /usr/local/bin/ursa-proxy\n" "$HOME/.cargo/bin/ursa-proxy"
   fi
 
   echo
