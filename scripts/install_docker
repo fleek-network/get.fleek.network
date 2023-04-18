@@ -1178,6 +1178,7 @@ showDockerStackLog() {
 
 ursaServerConfigurationHandler() {
   if [[ ! -d "$defaultUrsaProxyDir" ]]; then
+    # TODO: Create translation
     echo "✅ Create Ursa proxy directory"
     sudo mkdir -p "$defaultUrsaProxyDir"
     sudo touch "$defaultUrsaProxyConfigPath"
@@ -1215,7 +1216,7 @@ key_path = \"$defaultLetsEncryptCertificatesLivePath/$userDomainName/privkey.pem
 addr = \"0.0.0.0:8881\"
 " | sudo tee "$defaultUrsaProxyConfigPath" || exit 1
 fi
-
+  # TODO: Create translation
   echo "✅ Updated the config.toml by including the [server] settings"
   echo
 }
@@ -1234,6 +1235,7 @@ initLetsEncrypt() {
   ursaServerConfigurationHandler 1
 
   if [[ ! -f "$defaultUrsaProxyConfigPath" ]]; then
+    # TODO: Create translation
     echo "💩 Uh oh! This is embarrassing, but we tried to create $defaultUrsaProxyConfigPath but is missing for some reason..."
     echo
   fi
@@ -1248,12 +1250,14 @@ initLetsEncrypt() {
         --domain $domain \
         --rsa-key-size 4096 \
         --agree-tos -n" certbot; then
+    # TODO: Create translation
     echo "👹 Oops! Failed to create the certificate"
     echo
     echo "💡 If you already had Certbot installed, make sure you update to latest before retrying please"
 
     exit 1
   else
+    # TODO: Create translation
     echo "✅ Certbot process completed"
   fi
 
@@ -1547,10 +1551,12 @@ setupSSLTLS() {
     exitInstaller
   fi
 
+  # TODO: Create translation
   echo "🤖 Set Ursa proxy configuration for SSL/TLS"
   ursaServerConfigurationHandler 2
 
   if [[ ! -f "$defaultUrsaProxyConfigPath" ]]; then
+    # TODO: Create translation
     echo "💩 Uh oh! We tried to modify $defaultUrsaProxyConfigPath but is missing."
     echo
   fi
@@ -1674,12 +1680,14 @@ createUrsaInitialConfig() {
   # Warning for none root users
   if [ "$(id -u)" -ne 0 ]; then
     if test -z "$(sudo -n -v 2>&1)"; then
+      # TODO: Create translation
       echo "👻 You're running the installer as a non-root user. The installer will use sudo througout the process, meaning that the Ursa configuration and sensitive data files will be stored under /root/.ursa, e.g. /root/.ursa/keystore/default.pem"
       echo
       echo "If you'd like to customise it, learn more to manage file permissions read our guide \"Securing the Ursa files\" https://docs.fleek.network/guides/Network%20nodes/securing-the-ursa-files"
       echo
       read -rp "Keep a note on that and when happy press ENTER to continue..."
     else
+      # TODO: Create translation
       echo "👹 Ooops! You're running the installer as a non-root user or non-sudoer. You need administrative rights to run the install process! Change to a root or sudoer user before retrying, please!"
 
       exit 1
@@ -1725,7 +1733,8 @@ createUrsaInitialConfig() {
   # Pull the `ursa` project repository to the preferred target directory via HTTPS
   cloneUrsaRepositoryToPath "$selectedUrsaPath"
   changeDirectoryToPathOrFailure "Ursa" "$selectedUrsaPath"
-
+  
+  # TODO: Create translation
   echo "🤖 Restart docker for Docker daemon settings to take effect"
   sudo systemctl restart docker
 
