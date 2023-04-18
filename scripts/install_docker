@@ -61,7 +61,7 @@ defaultDockerComposeYmlRelativePath="$defaultDockerFullNodeRelativePath/docker-c
 defaultMinMemoryKBytesRequired=8000000
 defaultMinDiskSpaceKBytesRequired=1000000
 defaultUrsaConfigFilename="config.toml"
-defaultUrsaBasePath="$/root/.ursa"
+defaultUrsaBasePath="/root/.ursa"
 defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
 defaultDockerDaemonJson="/etc/docker/daemon.json"
 defaultUrsaProxyDir="$defaultUrsaBasePath/proxy"
@@ -1176,7 +1176,6 @@ showDockerStackLog() {
   dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" logs -f
 }
 
-
 ursaServerConfigurationHandler() {
   if [[ ! -d "$defaultUrsaProxyDir" ]]; then
     echo "✅ Create Ursa proxy directory"
@@ -1233,6 +1232,11 @@ initLetsEncrypt() {
 
   # Ursa server configuration handler to ensure the settings exist and correct
   ursaServerConfigurationHandler 1
+
+  if [[ ! -f "$defaultUrsaProxyConfigPath" ]]; then
+    echo "💩 Uh oh! This is embarrassing, but we tried to create $defaultUrsaProxyConfigPath but is missing for some reason..."
+    echo
+  fi
 
   if ! dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" run \
       -p 80:80 \
@@ -1546,6 +1550,11 @@ setupSSLTLS() {
   echo "🤖 Set Ursa proxy configuration for SSL/TLS"
   ursaServerConfigurationHandler 2
 
+  if [[ ! -f "$defaultUrsaProxyConfigPath" ]]; then
+    echo "💩 Uh oh! We tried to modify $defaultUrsaProxyConfigPath but is missing."
+    echo
+  fi
+
   restartDockerStack
 }
 
@@ -1660,11 +1669,14 @@ createUrsaInitialConfig() {
   # Check if system has recommended resources (disk space and memory)
   checkSystemHasRecommendedResources "$os"
 
+  echo
+  
   # Warning for none root users
   if [ "$(id -u)" -ne 0 ]; then
     if test -z "$(sudo -n -v 2>&1)"; then
       echo "👻 You're running the installer as a non-root user. The installer will use sudo througout the process, meaning that the Ursa configuration and sensitive data files will be stored under /root/.ursa, e.g. /root/.ursa/keystore/default.pem"
-      echo "If you'd like to modify this, or learn more about managing file permissions read our guide \"Securing the Ursa files\" https://docs.fleek.network/guides/Network%20nodes/securing-the-ursa-files"
+      echo
+      echo "If you'd like to customise it, learn more to manage file permissions read our guide \"Securing the Ursa files\" https://docs.fleek.network/guides/Network%20nodes/securing-the-ursa-files"
       echo
       read -rp "Keep a note on that and when happy press ENTER to continue..."
     else
