@@ -61,6 +61,10 @@ defaultDockerComposeYmlRelativePath="$defaultDockerFullNodeRelativePath/docker-c
 defaultMinMemoryKBytesRequired=8000000
 defaultMinDiskSpaceKBytesRequired=1000000
 defaultUrsaConfigFilename="config.toml"
+# Obs: For Docker users and sudoers, as otherwise $HOME/.ursa will not be populated, 
+# since exec with sudo generates /root/.ursa and can cause confusion
+# Users can customise this paths by reading the file permission guide
+# https://docs.fleek.network/guides/Network%20nodes/securing-the-ursa-files
 defaultUrsaBasePath="/root/.ursa"
 defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
 defaultDockerDaemonJson="/etc/docker/daemon.json"
