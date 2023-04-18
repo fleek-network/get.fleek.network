@@ -61,7 +61,7 @@ defaultDockerComposeYmlRelativePath="$defaultDockerFullNodeRelativePath/docker-c
 defaultMinMemoryKBytesRequired=8000000
 defaultMinDiskSpaceKBytesRequired=1000000
 defaultUrsaConfigFilename="config.toml"
-defaultUrsaBasePath="$HOME/.ursa"
+defaultUrsaBasePath="$/root/.ursa"
 defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
 defaultDockerDaemonJson="/etc/docker/daemon.json"
 defaultUrsaProxyDir="$defaultUrsaBasePath/proxy"
@@ -1003,7 +1003,7 @@ checkIfDockerInstalled() {
       echo
 
       jqTmpDockerDaemonJsonFile="tmp.$dateRuntime"
-      jq '.features.buildkit=true' "$defaultDockerDaemonJson" > "$jqTmpDockerDaemonJsonFile" && mv "$jqTmpDockerDaemonJsonFile" "$defaultDockerDaemonJson" && cat "$defaultDockerDaemonJson"
+      jq '.features.buildkit=true' "$defaultDockerDaemonJson" > "$jqTmpDockerDaemonJsonFile" && sudo mv "$jqTmpDockerDaemonJsonFile" "$defaultDockerDaemonJson" && cat "$defaultDockerDaemonJson"
 
       echo
     fi
@@ -1180,14 +1180,14 @@ showDockerStackLog() {
 ursaServerConfigurationHandler() {
   if [[ ! -d "$defaultUrsaProxyDir" ]]; then
     echo "✅ Create Ursa proxy directory"
-    mkdir -p "$defaultUrsaProxyDir"
-    touch "$defaultUrsaProxyConfigPath"
+    sudo mkdir -p "$defaultUrsaProxyDir"
+    sudo touch "$defaultUrsaProxyConfigPath"
   fi
 
   if [[ $1 -eq "1" ]]; then
 
     if [[ ! -f "$defaultUrsaProxyConfigPath" ]]; then
-      touch "$defaultUrsaProxyConfigPath"
+      sudo touch "$defaultUrsaProxyConfigPath"
     fi
 
 # Here "no identation" is intentional, do not change
@@ -1197,7 +1197,7 @@ echo "# Server without TLS.
 proxy_pass = \"$defaultDockerNetworkUrsaHostname:4069\"
 listen_addr = \"0.0.0.0:80\"
 serve_dir_path = \".well-known\"
-" > "$defaultUrsaProxyConfigPath" || exit 1
+" | sudo tee "$defaultUrsaProxyConfigPath" || exit 1
 elif [[ $1 -eq "2" ]]; then
 # Here "no identation" is intentional, do not change
 # The top empty line at the top is intentional
@@ -1214,7 +1214,7 @@ key_path = \"$defaultLetsEncryptCertificatesLivePath/$userDomainName/privkey.pem
 # You can omit this section as this is the default.
 [admin]
 addr = \"0.0.0.0:8881\"
-" > "$defaultUrsaProxyConfigPath" || exit 1
+" | sudo tee "$defaultUrsaProxyConfigPath" || exit 1
 fi
 
   echo "✅ Updated the config.toml by including the [server] settings"
@@ -1659,6 +1659,20 @@ createUrsaInitialConfig() {
 
   # Check if system has recommended resources (disk space and memory)
   checkSystemHasRecommendedResources "$os"
+
+  # Warning for none root users
+  if [ "$(id -u)" -ne 0 ]; then
+    if test -z "$(sudo -n -v 2>&1)"; then
+      echo "👻 You're running the installer as a non-root user. The installer will use sudo througout the process, meaning that the Ursa configuration and sensitive data files will be stored under /root/.ursa, e.g. /root/.ursa/keystore/default.pem"
+      echo "If you'd like to modify this, or learn more about managing file permissions read our guide \"Securing the Ursa files\" https://docs.fleek.network/guides/Network%20nodes/securing-the-ursa-files"
+      echo
+      read -rp "Keep a note on that and when happy press ENTER to continue..."
+    else
+      echo "👹 Ooops! You're running the installer as a non-root user or non-sudoer. You need administrative rights to run the install process! Change to a root or sudoer user before retrying, please!"
+
+      exit 1
+    fi
+  fi
 
   # Check if has dependencies installed
   for dep in "${dependencies[@]}"; do
