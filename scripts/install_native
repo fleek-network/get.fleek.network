@@ -16,7 +16,7 @@
 # and the required dependencies, run the script at your own risk. 
 #
 # Contributing?
-# - If you'd like to test changes locally use the env var `USE_BRANCH_NAME_FOR_GH_RAW`, for remote locales pulls
+# - If you'd like to test changes locally use the env var `USE_BRANCH_NAME_FOR_GH_RAW`, `URSA_BRANCH`, for remote locales pulls
 #
 # Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
 
@@ -104,6 +104,7 @@ defaultUrsaConfigFilename="config.toml"
 defaultUrsaBasePath="$HOME/.ursa"
 defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
 defaultUrsaConfigBackupPath="$defaultUrsaConfigPath.backup.$dateRuntime"
+defaultUrsaHttpsRepository="https://github.com/fleek-network/ursa.git"
 
 # App state
 selectedUrsaPath="$defaultUrsaPath"
@@ -463,7 +464,20 @@ fi
 echo
 
 printf "🤖 Clone the Ursa source-code (git repository) to %s\n" "$selectedUrsaPath"
-git clone https://github.com/fleek-network/ursa.git "$selectedUrsaPath"
+if [[ -n ${URSA_BRANCH+x} ]]; then
+  echo "🥷 Switch to branch $URSA_BRANCH"
+  if ! sudo git clone -b "$URSA_BRANCH" "$defaultUrsaHttpsRepository" "$selectedUrsaPath"; then
+    echo "👹 Oops! Failed to clone the ursa repository"
+
+    exit 1
+  fi
+else
+  if ! sudo git clone $defaultUrsaHttpsRepository "$selectedUrsaPath"; then
+    echo "👹 Oops! Failed to clone the ursa repository"
+
+    exit 1
+  fi
+fi
 
 echo
 
