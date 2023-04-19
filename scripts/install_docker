@@ -437,13 +437,11 @@ dockerComposeExec() {
 }
 
 yqExec() {
-  # if yq --version >/dev/null 2>&1; then
-  #   sudo yq "$@"
-  # else
-  #   sudo /snap/bin/yq "$@"
-  # fi
-
-  sudo /snap/bin/yq "$@"
+  if ! sudo yq "$@" >/dev/null 2>&1; then
+    if ! sudo /snap/bin/yq "$@"; then
+      echo "😅 The yq fallback failed"
+    fi
+  fi
 }
 
 # Confirm validators
