@@ -55,7 +55,7 @@ defaultFleekNetworkTwitterUrl="https://twitter.com/fleek_net"
 defaultGetFleekNetworkRepository="https://github.com/fleek-network/get.fleek.network"
 defaultUrsaHttpsRepository="https://github.com/fleek-network/ursa.git"
 defaultUrsaPath="$HOME/fleek-network/ursa"
-defaultUrsaLatestImage="ghcr.io/fleek-network/ursa:latest"
+defaultGHCRImagePlaceholderUrl="ghcr.io/fleek-network/_imageName_:latest"
 defaultDockerFullNodeRelativePath="./docker/full-node"
 defaultDockerComposeYmlRelativePath="$defaultDockerFullNodeRelativePath/docker-compose.yml"
 defaultMinMemoryKBytesRequired=8000000
@@ -1610,18 +1610,31 @@ onLatestPreference() {
 
       break
     elif [[ "$data" -eq 0 ]]; then
-      sudo yq -ie 'del(.services.ursa.build)' "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
-      sudo yq -i ".services.ursa.image = \"$defaultUrsaLatestImage\"" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
+      for name in "ursa" "ursa-proxy"; do
+        if ! sudo yq -ie "del(.services.$name.build)" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1; then
+          echo "👹 Oops! Failed to remove declare service build $name from $defaultDockerComposeYmlRelativePath"
+        else
+          echo "✅ Deleted docker-compose.yml .services.$name.build"
+        fi
 
-      if ! sudo yq '.services.ursa.image' "$defaultDockerComposeYmlRelativePath" | grep -q "$defaultUrsaLatestImage" || ! sudo yq '.services.ursa.build' "$defaultDockerComposeYmlRelativePath" | grep -qE "null|no matches found"; then
-        echo
-        echo "💩 ${transl[on_latest_preference_uh_oh_failed_modify_docker_compose_yaml]}"
+        currentImageName="${defaultGHCRImagePlaceholderUrl/_imageName_/$name}"
 
-        printf "%s 🙏" "${transl[on_latest_preference_uh_oh_failed_modify_docker_compose_yaml_apologies]}" | sed "s|_defaultDiscordUrl_|\"${defaultDiscordUrl}\"|g"
-        echo
+        if ! sudo yq -i ".services.$name.image = \"$currentImageName\"" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1; then
+          echo "👹 Oops! Failed to set service $name image in $defaultDockerComposeYmlRelativePath"
+        else
+          echo "✅ Set service in docker-compose.yml .services.$name.image"
+        fi
 
-        exitInstaller
-      fi
+        if ! sudo yq ".services.$name.image" "$defaultDockerComposeYmlRelativePath" | grep -q "$currentImageName" || ! sudo yq ".services.$name.build" "$defaultDockerComposeYmlRelativePath" | grep -qE "null|no matches found"; then
+          echo
+          echo "💩 ${transl[on_latest_preference_uh_oh_failed_modify_docker_compose_yaml]}"
+
+          printf "%s 🙏" "${transl[on_latest_preference_uh_oh_failed_modify_docker_compose_yaml_apologies]}" | sed "s|_defaultDiscordUrl_|\"${defaultDiscordUrl}\"|g"
+          echo
+
+          exitInstaller
+        fi
+      done
 
       break
     fi
