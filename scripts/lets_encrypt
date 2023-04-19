@@ -117,7 +117,11 @@ domainNameConfSettingsVerificationHandler() {
 
   while read -rp "🙋‍♀️ The Ursa configuration for server has the domain set as $domainCertPath. By proceeding the configuration settings will be reset and lost, is this ok? (yes/no) " answer; do
     if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-      rm "$defaultUrsaProxyConfigPath"
+      if ! rm "$defaultUrsaProxyConfigPath"; then
+        echo "💩 Uh oh! failed to remove the $defaultUrsaProxyConfigPath"
+      fi
+
+      createUrsaProxyDir
 
       break;
     elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
@@ -128,11 +132,15 @@ domainNameConfSettingsVerificationHandler() {
   done  
 }
 
+createUrsaProxyDir() {
+  echo "✅ Create Ursa proxy directory"
+  mkdir -p "$defaultUrsaProxyDir"
+  touch "$defaultUrsaProxyConfigPath"  
+}
+
 ursaServerConfigurationHandler() {
   if [[ ! -d "$defaultUrsaProxyDir" ]]; then
-    echo "✅ Create Ursa proxy directory"
-    mkdir -p "$defaultUrsaProxyDir"
-    touch "$defaultUrsaProxyConfigPath"
+    createUrsaProxyDir
   else
     if grep -qi "$defaultLetsEncryptCertificatesLivePath" "$defaultUrsaProxyConfigPath" && grep -qi "[[server]]" "$defaultUrsaProxyConfigPath"; then
       echo "✅ Ursa server proxy configuration exists"
@@ -589,7 +597,12 @@ fi
 
   echo "🤖 Set Ursa proxy configuration for SSL/TLS"
   # ursaServerConfigurationHandler 2
-  curl -X POST 0.0.0.0:8881/reload-tls-config
+  if ! curl -X POST 0.0.0.0:8881/reload-tls-config; then
+    echo "💩 Uh oh! Failed to reload the ursa-proxy TLS configuration."
+    echo
+
+    sleep 3
+  fi
 
   echo
 
