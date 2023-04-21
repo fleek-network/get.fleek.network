@@ -437,7 +437,7 @@ dockerComposeExec() {
 }
 
 yqExec() {
-  if ! sudo yq "$@" >/dev/null 2>&1; then
+  if ! sudo yq "$@"; then
     if ! sudo /snap/bin/yq "$@"; then
       echo "😅 The yq fallback failed"
     fi
