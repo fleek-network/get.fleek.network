@@ -725,7 +725,7 @@ installGit() {
     distro=$(identifyDistro)
 
     if [[ "$distro" == "ubuntu" ]] || [[ "$distro" == "debian" ]]; then
-      sudo apt-get install git
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install git -yq
     elif [[ "$distro" =~ "arch"  ]]; then
       sudo pacman -Syu git
     else
@@ -901,11 +901,12 @@ installDocker() {
 
     if [[ "$distro" == "ubuntu" ]]; then
       sudo apt-get update
-      sudo apt-get install \
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install \
         ca-certificates \
         curl \
         gnupg \
-        lsb-release
+        lsb-release \
+        -yq
 
       sudo mkdir -p /etc/apt/keyrings
       curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
@@ -916,23 +917,25 @@ installDocker() {
 
       sudo apt-get update
 
-      sudo apt-get install \
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install \
           docker-ce \
           docker-ce-cli \
           containerd.io \
-          docker-compose-plugin
+          docker-compose-plugin \
+          -yq
 
       # https://docs.docker.com/build/buildkit/
       createDockerDaemonJsonForBuildKit
     elif [[ "$distro" == "debian" ]]; then
       sudo apt-get update
-      sudo apt-get install \
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install \
         ca-certificates \
         curl \
         gnupg \
         lsb-release \
         dnsutils \
-        docker-compose-plugin
+        docker-compose-plugin \
+        -yq
 
       sudo mkdir -p /etc/apt/keyrings
       curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
@@ -943,10 +946,11 @@ installDocker() {
 
       sudo apt-get update
 
-      sudo apt-get install \
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install \
           docker-ce \
           docker-ce-cli \
-          containerd.io
+          containerd.io \
+          -yq
 
       # https://docs.docker.com/build/buildkit/
       sudo mkdir -p /etc/docker
@@ -1294,7 +1298,7 @@ installMandatory() {
   if [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
     if [[ "$distro" == "ubuntu" ]] || [[ "$distro" == "debian" ]]; then
-      if ! sudo apt update || ! sudo apt-get install "$1"; then
+      if ! sudo apt update || ! sudo DEBIAN_FRONTEND=noninteractive apt-get install "$1" -yq; then
         exitInstaller
       fi
     elif [[ "$distro" =~ "arch"  ]]; then
@@ -1369,7 +1373,7 @@ verifyDepsOrInstall() {
     if [[ "$distro" == "ubuntu" || "$distro" == "debian" ]]; then
       if [[ $pkgManagerName == "snap" ]]; then
         if ! hasCommand "snap"; then
-          sudo apt-get install snapd
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install snapd -yq
         fi
 
         if ! sudo snap install "$pkg"; then
@@ -1384,7 +1388,7 @@ verifyDepsOrInstall() {
         return 0
       fi
 
-      if ! sudo apt update || ! sudo apt-get install "$pkg"; then
+      if ! sudo apt update || ! sudo DEBIAN_FRONTEND=noninteractive apt-get install "$pkg" -yq; then
         exitInstaller
       fi
 
