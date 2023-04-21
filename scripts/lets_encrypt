@@ -117,7 +117,11 @@ domainNameConfSettingsVerificationHandler() {
 
   while read -rp "🙋‍♀️ The Ursa configuration for server has the domain set as $domainCertPath. By proceeding the configuration settings will be reset and lost, is this ok? (yes/no) " answer; do
     if [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-      rm "$defaultUrsaProxyConfigPath"
+      if ! rm "$defaultUrsaProxyConfigPath"; then
+        echo "💩 Uh oh! failed to remove the $defaultUrsaProxyConfigPath"
+      fi
+
+      createUrsaProxyDir
 
       break;
     elif [[ $answer == [nN] || $answer == [nN][oO] ]]; then
@@ -128,28 +132,30 @@ domainNameConfSettingsVerificationHandler() {
   done  
 }
 
+createUrsaProxyDir() {
+  echo "✅ Create Ursa proxy directory"
+  mkdir -p "$defaultUrsaProxyDir"
+  touch "$defaultUrsaProxyConfigPath"  
+}
+
 ursaServerConfigurationHandler() {
   if [[ ! -d "$defaultUrsaProxyDir" ]]; then
-    echo "✅ Create Ursa proxy directory"
-    mkdir -p "$defaultUrsaProxyDir"
-    touch "$defaultUrsaProxyConfigPath"
+    createUrsaProxyDir
   else
     if grep -qi "$defaultLetsEncryptCertificatesLivePath" "$defaultUrsaProxyConfigPath" && grep -qi "[[server]]" "$defaultUrsaProxyConfigPath"; then
       echo "✅ Ursa server proxy configuration exists"
       echo
 
       # Check if domain name is correct in the settings file
-      domainNameConfSettingsVerificationHandler "$1"
+      domainNameConfSettingsVerificationHandler
 
       return 0
     fi
   fi
 
-  if [[ $1 -eq "1" ]]; then
-
-    if [[ ! -f "$defaultUrsaProxyConfigPath" ]]; then
-      touch "$defaultUrsaProxyConfigPath"
-    fi
+  if [[ ! -f "$defaultUrsaProxyConfigPath" ]]; then
+    touch "$defaultUrsaProxyConfigPath"
+  fi
 
 # Here "no identation" is intentional, do not change
 # The top empty line at the top is intentional
@@ -158,11 +164,8 @@ echo "# Server without TLS.
 proxy_pass = \"127.0.0.1:4069\"
 listen_addr = \"0.0.0.0:80\"
 serve_dir_path = \".well-known\"
-" > "$defaultUrsaProxyConfigPath" || exit 1
-elif [[ $1 -eq "2" ]]; then
-# Here "no identation" is intentional, do not change
-# The top empty line at the top is intentional
-echo "# Server with TLS
+
+# Server with TLS
 [[server]]
 proxy_pass = \"127.0.0.1:4069\"
 listen_addr = \"0.0.0.0:443\"
@@ -176,7 +179,6 @@ key_path = \"$defaultLetsEncryptCertificatesLivePath/$selectedDomainName/privkey
 [admin]
 addr = \"0.0.0.0:8881\"
 " > "$defaultUrsaProxyConfigPath" || exit 1
-fi
 
   echo "✅ Updated the config.toml by including the [server] settings"
   echo
@@ -423,7 +425,7 @@ fi
   echo
 
   # Ursa server configuration handler to ensure the settings exist and correct
-  ursaServerConfigurationHandler 1
+  ursaServerConfigurationHandler
 
   echo "🤖 Ursa proxy"
 
@@ -573,7 +575,12 @@ fi
   echo
 
   echo "🤖 Set Ursa proxy configuration for SSL/TLS"
-  ursaServerConfigurationHandler 2
+  if ! curl -X POST 0.0.0.0:8881/reload-tls-config; then
+    echo "💩 Uh oh! Failed to reload the ursa-proxy TLS configuration."
+    echo
+
+    sleep 3
+  fi
 
   echo
 
