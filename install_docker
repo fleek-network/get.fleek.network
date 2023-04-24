@@ -19,23 +19,8 @@
 # is best to follow the instructions in our guide, as otherwise risk changing
 # or overriding your custom setup.
 #
-# Ideally, the script will:
-# - Check if the system has enough disk space and memory, otherwise warn the user
-# - Verify if the user is in Docker, as Docker in Docker is not supported
-# - Verify if Git is installed, if not install it
-# - It'll do a quick health check to confirm Git is installed correctly 
-# - Verify if Docker is installed, if not install it
-# - It'll do a quick health check to confirm Docker is installed correctly
-# - Request a pathname where to store the Ursa repository, otherwise providing a default,
-#   e.g., `$HOME/fleek-network/ursa`
-# - Pull the `ursa` project repository to the preferred target directory via HTTPS
-#   instead of SSH for simplicity
-# - Optionally, assist in setting up and securing domain name via SSL/TLS
-# - Run the Docker stack
-# - Do a health check to confirm the Fleek Network Node is running
-#
 # Contributing?
-# - If you'd like to test changes locally use the env var `USE_BRANCH_NAME_FOR_GH_RAW`, for remote locales pulls
+# - If you'd like to test changes locally use the env var `USE_BRANCH_NAME_FOR_GH_RAW` and `URSA_BRANCH`, for remote locales pulls
 #
 # Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
 
@@ -55,15 +40,24 @@ defaultFleekNetworkTwitterUrl="https://twitter.com/fleek_net"
 defaultGetFleekNetworkRepository="https://github.com/fleek-network/get.fleek.network"
 defaultUrsaHttpsRepository="https://github.com/fleek-network/ursa.git"
 defaultUrsaPath="$HOME/fleek-network/ursa"
-defaultUrsaLatestImage="ghcr.io/fleek-network/ursa:latest"
+defaultGHCRImagePlaceholderUrl="ghcr.io/fleek-network/_imageName_:latest"
 defaultDockerFullNodeRelativePath="./docker/full-node"
 defaultDockerComposeYmlRelativePath="$defaultDockerFullNodeRelativePath/docker-compose.yml"
 defaultMinMemoryKBytesRequired=8000000
 defaultMinDiskSpaceKBytesRequired=1000000
 defaultUrsaConfigFilename="config.toml"
-defaultUrsaBasePath="$HOME/.ursa"
+# Obs: For Docker users and sudoers, as otherwise $HOME/.ursa will not be populated, 
+# since exec with sudo generates /root/.ursa and can cause confusion
+# Users can customise this paths by reading the file permission guide
+# https://docs.fleek.network/guides/Network%20nodes/securing-the-ursa-files
+defaultUrsaBasePath="/root/.ursa"
 defaultUrsaConfigPath="$defaultUrsaBasePath/$defaultUrsaConfigFilename"
 defaultDockerDaemonJson="/etc/docker/daemon.json"
+defaultUrsaProxyDir="$defaultUrsaBasePath/proxy"
+defaultUrsaProxyConfigPath="$defaultUrsaProxyDir/config.toml"
+defaultLetsEncryptCertificatesLivePath="/etc/letsencrypt/live"
+defaultDockerNetworkUrsaHostname="full-node-ursa-1"
+defaultDockerNetworkUrsaProxyHostname="full-node-ursa-proxy-1"
 
 # App state
 userSelectedLanguage=""
@@ -427,6 +421,14 @@ dockerComposeExec() {
   fi
 }
 
+yqExec() {
+  if ! sudo yq "$@"; then
+    if ! sudo /snap/bin/yq "$@"; then
+      echo "😅 The yq fallback failed"
+    fi
+  fi
+}
+
 # Confirm validators
 confirmDomainName() {
   local validate="^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\.)+[a-zA-Z]{2,}$"
@@ -708,7 +710,7 @@ installGit() {
     distro=$(identifyDistro)
 
     if [[ "$distro" == "ubuntu" ]] || [[ "$distro" == "debian" ]]; then
-      sudo apt-get install git
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install git -yq
     elif [[ "$distro" =~ "arch"  ]]; then
       sudo pacman -Syu git
     else
@@ -844,10 +846,12 @@ checkIfGitInstalled() {
     echo "😅 ${transl[check_if_git_installed_oops]}"
     echo
 
-    requestAuthorizationAndExec \
-      "${transl[common_check_installed_we_can_start_install]}" \
-      "${transl[check_if_git_installed_need_git_installed]}" \
-      installGit
+    # TODO: Disabled to reduce the number of promps, as most users seem to not be interested
+    # requestAuthorizationAndExec \
+    #   "${transl[common_check_installed_we_can_start_install]}" \
+    #   "${transl[check_if_git_installed_need_git_installed]}" \
+    #   installGit
+    installGit
 
     if [[ "$?" = 1 ]]; then
       showErrorMessage "${transl[check_if_git_installed_oops_failed_install]}"
@@ -884,11 +888,12 @@ installDocker() {
 
     if [[ "$distro" == "ubuntu" ]]; then
       sudo apt-get update
-      sudo apt-get install \
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install \
         ca-certificates \
         curl \
         gnupg \
-        lsb-release
+        lsb-release \
+        -yq
 
       sudo mkdir -p /etc/apt/keyrings
       curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
@@ -899,23 +904,25 @@ installDocker() {
 
       sudo apt-get update
 
-      sudo apt-get install \
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install \
           docker-ce \
           docker-ce-cli \
           containerd.io \
-          docker-compose-plugin
+          docker-compose-plugin \
+          -yq
 
       # https://docs.docker.com/build/buildkit/
       createDockerDaemonJsonForBuildKit
     elif [[ "$distro" == "debian" ]]; then
       sudo apt-get update
-      sudo apt-get install \
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install \
         ca-certificates \
         curl \
         gnupg \
         lsb-release \
         dnsutils \
-        docker-compose-plugin
+        docker-compose-plugin \
+        -yq
 
       sudo mkdir -p /etc/apt/keyrings
       curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
@@ -926,10 +933,11 @@ installDocker() {
 
       sudo apt-get update
 
-      sudo apt-get install \
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install \
           docker-ce \
           docker-ce-cli \
-          containerd.io
+          containerd.io \
+          -yq
 
       # https://docs.docker.com/build/buildkit/
       sudo mkdir -p /etc/docker
@@ -981,10 +989,12 @@ checkIfDockerInstalled() {
   if ! hasCommand docker; then
     printf "😅 %s\n" "${transl[check_if_docker_installed]}"
 
-    requestAuthorizationAndExec \
-      "${transl[common_check_installed_we_can_start_install]}" \
-      "${transl[check_if_docker_need_docker_installed]}" \
-      installDocker
+    # TODO: Disabled to reduce the number of promps, as most users seem to not be interested
+    # requestAuthorizationAndExec \
+    #   "${transl[common_check_installed_we_can_start_install]}" \
+    #   "${transl[check_if_docker_need_docker_installed]}" \
+    #   installDocker
+    installDocker
 
     if [[ "$?" = 1 ]]; then
       showErrorMessage "${transl[check_if_docker_oops_failed_install_docker]}"
@@ -999,7 +1009,7 @@ checkIfDockerInstalled() {
       echo
 
       jqTmpDockerDaemonJsonFile="tmp.$dateRuntime"
-      jq '.features.buildkit=true' "$defaultDockerDaemonJson" > "$jqTmpDockerDaemonJsonFile" && mv "$jqTmpDockerDaemonJsonFile" "$defaultDockerDaemonJson" && cat "$defaultDockerDaemonJson"
+      jq '.features.buildkit=true' "$defaultDockerDaemonJson" > "$jqTmpDockerDaemonJsonFile" && sudo mv "$jqTmpDockerDaemonJsonFile" "$defaultDockerDaemonJson" && cat "$defaultDockerDaemonJson"
 
       echo
     fi
@@ -1056,11 +1066,21 @@ requestPathnameForUrsaRepository() {
 }
 
 cloneUrsaRepositoryToPath() {
-  if ! sudo git clone $defaultUrsaHttpsRepository "$1"; then
-    showErrorMessage \
-      "$(printf "%s" "${transl[clone_ursa_repo_to_path_oops_failed_to_clone]}" | sed "s|_defaultUrsaHttpsRepository_|\"${defaultUrsaHttpsRepository}\"|g")"
+  if [[ -n ${URSA_BRANCH+x} ]]; then
+    echo "🥷 Switch to branch $URSA_BRANCH"
+    if ! sudo git clone -b "$URSA_BRANCH" "$defaultUrsaHttpsRepository" "$1"; then
+      showErrorMessage \
+        "$(printf "%s" "${transl[clone_ursa_repo_to_path_oops_failed_to_clone]}" | sed "s|_defaultUrsaHttpsRepository_|\"${defaultUrsaHttpsRepository}\"|g")"
 
-    exitInstaller
+      exitInstaller
+    fi
+  else
+    if ! sudo git clone $defaultUrsaHttpsRepository "$1"; then
+      showErrorMessage \
+        "$(printf "%s" "${transl[clone_ursa_repo_to_path_oops_failed_to_clone]}" | sed "s|_defaultUrsaHttpsRepository_|\"${defaultUrsaHttpsRepository}\"|g")"
+
+      exitInstaller
+    fi
   fi
 
   showOkMessage \
@@ -1073,19 +1093,13 @@ restartDockerStack() {
   echo "🤖 ${transl[restart_docker_stack_is_going_to_restart]}"
   echo
 
-  # TODO: Use health check instead
-  sleep 10
   dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" stop
 
   showOkMessage "${transl[restart_docker_stack_is_going_to_start]}"
 
-  # TODO: Use health check instead
-  sleep 10
   dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" up -d
 
   showOkMessage "${transl[restart_docker_stack_has_restarted]}"
-
-  sleep 3
 }
 
 showDockerStackLog() {
@@ -1168,6 +1182,46 @@ showDockerStackLog() {
   dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" logs -f
 }
 
+ursaServerConfigurationHandler() {
+  if [[ ! -d "$defaultUrsaProxyDir" ]]; then
+    # TODO: Create translation
+    echo "✅ Create Ursa proxy directory"
+    sudo mkdir -p "$defaultUrsaProxyDir"
+    sudo touch "$defaultUrsaProxyConfigPath"
+  fi
+
+  if [[ ! -f "$defaultUrsaProxyConfigPath" ]]; then
+    sudo touch "$defaultUrsaProxyConfigPath"
+  fi
+
+# Here "no identation" is intentional, do not change
+# The top empty line at the top is intentional
+echo "# Server without TLS.
+[[server]]
+proxy_pass = \"$defaultDockerNetworkUrsaHostname:4069\"
+listen_addr = \"0.0.0.0:80\"
+serve_dir_path = \".well-known\"
+
+# Server with TLS
+[[server]]
+proxy_pass = \"$defaultDockerNetworkUrsaHostname:4069\"
+listen_addr = \"0.0.0.0:443\"
+
+[server.tls]
+cert_path = \"$defaultLetsEncryptCertificatesLivePath/$userDomainName/fullchain.pem\"
+key_path = \"$defaultLetsEncryptCertificatesLivePath/$userDomainName/privkey.pem\"
+
+# Admin service.
+# You can omit this section as this is the default.
+[admin]
+addr = \"0.0.0.0:8881\"
+" | sudo tee "$defaultUrsaProxyConfigPath" || exit 1
+
+  # TODO: Create translation
+  echo "✅ Updated the config.toml by including the [server] settings"
+  echo
+}
+
 initLetsEncrypt() {
   email="$1"
   domain="$2"
@@ -1178,134 +1232,35 @@ initLetsEncrypt() {
     exitInstaller
   fi
 
-  rsa_key_size=4096
-  base_path=./docker/full-node
-  config_path="$defaultDockerComposeYmlRelativePath"
-  data_path="$defaultDockerFullNodeRelativePath/data/certbot"
-  staging=0
+  # Ursa server configuration handler to ensure the settings exist and correct
+  ursaServerConfigurationHandler
 
-  # TODO: Move this checkup much earlier, in the init of installer
-  # Do we have the required files, if not interrupt the process?
-  if [[ ! -d "$base_path" || ! "$(ls -A $base_path)" ]]; then
-    showErrorMessage "${transl[init_lets_encrypt_oops_missing_required_files]} 🙏"
-
-    exitInstaller
-  fi
-
-  if [[ ! -e "$data_path/conf/options-ssl-nginx.conf" || ! -e "$data_path/conf/ssl-dhparams.pem" ]]; then
-    echo
-    echo "🤖 ${transl[init_lets_encrypt_download_recommended_tls]}..."
-    echo
-
-    sudo mkdir -p "$data_path/conf"
-
-    curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf | sudo tee "$data_path/conf/options-ssl-nginx.conf"
-    curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem | sudo tee "$data_path/conf/ssl-dhparams.pem"
+  if [[ ! -f "$defaultUrsaProxyConfigPath" ]]; then
+    # TODO: Create translation
+    echo "💩 Uh oh! This is embarrassing, but we tried to create $defaultUrsaProxyConfigPath but is missing for some reason..."
     echo
   fi
 
-  echo
-  echo "🤖 ${transl[init_lets_encrypt_create_dummy_certificates]/_domain_/$domain} 🙏"
-  echo
+  if ! dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" run \
+      -p 80:80 \
+      --rm --entrypoint "\
+      certbot certonly \
+        --standalone \
+        --preferred-challenges http \
+        --email $email \
+        --domain $domain \
+        --rsa-key-size 4096 \
+        --agree-tos -n" certbot; then
+    # TODO: Create translation
+    echo "👹 Oops! Failed to create the certificate"
+    echo
+    echo "💡 If you already had Certbot installed, make sure you update to latest before retrying please"
 
-  path="/etc/letsencrypt/live/$domain"
-  sudo mkdir -p "$data_path/conf/live/$domain"
-
-  if ! dockerComposeExec -f "$config_path" \
-    run --rm --entrypoint "\
-    openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1\
-      -keyout '$path/privkey.pem' \
-      -out '$path/fullchain.pem' \
-      -subj '/CN=localhost'" certbot; then    
-    showErrorMessage "${transl[init_lets_encrypt_oops_failed_create_dummy_certificate]}"
-
-    exitInstaller
+    exit 1
+  else
+    # TODO: Create translation
+    echo "✅ Certbot process completed"
   fi
-
-  echo
-  echo "🤖 ${transl[init_lets_encrypt_starting_nginx]} 🙏"
-  echo
-
-  if ! dockerComposeExec -f "$config_path" up --force-recreate -d nginx; then
-    showErrorMessage "${transl[init_lets_encrypt_failed_start_nginx]}..."
-
-    exitInstaller
-  fi
-  
-  echo
-  echo "🤖 ${transl[init_lets_encrypt_deleting_dummy_certificate]/_domain_/$domain}..."
-  echo
-
-  if ! dockerComposeExec -f "$config_path" \
-    run --rm --entrypoint "\
-    rm -Rf /etc/letsencrypt/live/$domain && \
-    rm -Rf /etc/letsencrypt/archive/$domain && \
-    rm -Rf /etc/letsencrypt/renewal/$domain.conf" certbot; then
-
-    showErrorMessage "${transl[init_lets_encrypt_oops_failed_delete_certificates]/_domain_/$domain}..."
-
-    exitInstaller
-  fi
-
-  echo
-  echo "🤖 ${transl[init_lets_encrypt_requesting_lets_encrypt_certificates]/_domain_/$domain}..."
-  echo
-
-  # Enable staging mode if needed
-  if [ $staging != "0" ]; then staging_arg="--staging"; fi
-
-  if ! dockerComposeExec -f "$config_path" run --rm --entrypoint "\
-    certbot certonly --webroot -w /var/www/certbot \
-      $staging_arg \
-      --email $email \
-      --domain $domain \
-      --rsa-key-size $rsa_key_size \
-      --agree-tos -n \
-      --force-renewal" certbot; then
-    showErrorMessage "${transl[init_lets_encrypt_oops_failed_create_tls_certificates]} https://docs.fleek.network/guides/Network%20nodes/fleek-network-securing-a-node-with-ssl-tls"
-
-    printf -v prompt "\n💡 %s\n\n🙋‍♀️ %s\n%s" \
-      "${transl[init_lets_encrypt_prompt_recommend_try_again]}" \
-      "${transl[init_lets_encrypt_prompt_recommend_try_again_ask]}" \
-      "$(printf "%s" "${transl[init_lets_encrypt_prompt_recommend_try_again_y_or_quit]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_quit_|${transl[common_prompt_quit_as_q]}|g")"
-    while read -r -p "$prompt"$'\n> ' answer; do
-      intlAnswer=$(mapLanguageYesNoQuitToSystem "$userSelectedLanguage" "$answer")
-    
-      if [[ "$intlAnswer" == "" || "$intlAnswer" == [yY] || "$intlAnswer" == [qQ] ]]; then
-        break
-      fi
-    done
-
-    if [[ "$intlAnswer" == [qQ] ]]; then
-      printf "🦖 %s" "${transl[init_lets_encrypt_prompt_recommend_you_have_quit]}" | sed "s|_defaultFleekNetworkDocsWebsite_|\"${defaultFleekNetworkDocsWebsite}\"|g"
-
-      exit 1
-    fi
-
-    if [[ "$intlAnswer" == "" || "$intlAnswer" == [yY] || "$intlAnswer" == [yY][eE][sS] ]]; then    
-      echo
-      echo "💡 ${transl[init_lets_encrypt_if_issue_persists]}"
-      echo "${transl[init_lets_encrypt_linux_os_dns_config_location_1_of_2]}"
-      echo "${transl[init_lets_encrypt_linux_os_dns_config_location_2_of_2]}"
-      echo
-      echo "🤖 ${transl[init_lets_encrypt_restart_docker_stack]}..."
-      echo
-      dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" down      
-      dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" start
-
-      initLetsEncrypt "$email" "$domain"
-    fi
-
-    dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" down
-
-    exitInstaller
-  fi
-
-  echo
-  echo "🤖 ${transl[init_lets_encrypt_reloading_nginx]}..."
-  echo
-
-  dockerComposeExec -f "$config_path" exec nginx nginx -s reload
 
   showOkMessage "${transl[init_lets_encrypt_success_secured_message]}"
 }
@@ -1313,26 +1268,28 @@ initLetsEncrypt() {
 installMandatory() {
   hasCommand "$1" && return 0
 
-  printf -v prompt "\n\n🤖 %s\n%s" \
-    "$(printf "%s" "${transl[common_install_we_need_to]}" | sed "s|_application_|\"${1}\"|g; s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
-    "$(printf "%s" "${transl[common_install_type_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
-  while read -rp "$prompt"$'\n> ' answer; do
-    data=$(confirm "$userSelectedLanguage" "$answer")
+  # TODO: Disabled the user request as a test
+  # as most users seem not to care and dont want prompts reduced
+  # printf -v prompt "\n\n🤖 %s\n%s" \
+  #   "$(printf "%s" "${transl[common_install_we_need_to]}" | sed "s|_application_|\"${1}\"|g; s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
+  #   "$(printf "%s" "${transl[common_install_type_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
+  # while read -rp "$prompt"$'\n> ' answer; do
+  #   data=$(confirm "$userSelectedLanguage" "$answer")
 
-    [[ ! $data ]] && continue
+  #   [[ ! $data ]] && continue
 
-    if [[ "$data" -eq 1 ]]; then
-      showErrorMessage "${transl[install_mandatory_app_install_required]/_application_/$1}"
-      exitInstaller
-    elif [[ "$data" -eq 0 ]]; then
-      break
-    fi
-  done
+  #   if [[ "$data" -eq 1 ]]; then
+  #     showErrorMessage "${transl[install_mandatory_app_install_required]/_application_/$1}"
+  #     exitInstaller
+  #   elif [[ "$data" -eq 0 ]]; then
+  #     break
+  #   fi
+  # done
 
   if [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
     if [[ "$distro" == "ubuntu" ]] || [[ "$distro" == "debian" ]]; then
-      if ! sudo apt update || ! sudo apt-get install "$1"; then
+      if ! sudo apt update || ! sudo DEBIAN_FRONTEND=noninteractive apt-get install "$1" -yq; then
         exitInstaller
       fi
     elif [[ "$distro" =~ "arch"  ]]; then
@@ -1362,21 +1319,23 @@ verifyDepsOrInstall() {
 
   hasCommand "$bin" && return 0
 
-  printf -v prompt "\n\n🤖 %s\n%s" \
-    "$(printf "%s" "${transl[common_install_we_need_to]}" | sed "s|_application_|\"${bin}\"|g; s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
-    "$(printf "%s" "${transl[common_install_type_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
-  while read -rp "$prompt"$'\n> ' answer; do
-    data=$(confirm "$userSelectedLanguage" "$answer")
+  # TODO: Disabled the user request as a test
+  # as most users seem not to care and dont want prompts reduced
+  # printf -v prompt "\n\n🤖 %s\n%s" \
+  #   "$(printf "%s" "${transl[common_install_we_need_to]}" | sed "s|_application_|\"${bin}\"|g; s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
+  #   "$(printf "%s" "${transl[common_install_type_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
+  # while read -rp "$prompt"$'\n> ' answer; do
+  #   data=$(confirm "$userSelectedLanguage" "$answer")
 
-    [[ ! $data ]] && continue
+  #   [[ ! $data ]] && continue
 
-    if [[ "$data" -eq 1 ]]; then
-      showErrorMessage "${transl[install_mandatory_app_install_required]/_application_/$1}"
-      exitInstaller
-    elif [[ "$data" -eq 0 ]]; then
-      break
-    fi
-  done
+  #   if [[ "$data" -eq 1 ]]; then
+  #     showErrorMessage "${transl[install_mandatory_app_install_required]/_application_/$1}"
+  #     exitInstaller
+  #   elif [[ "$data" -eq 0 ]]; then
+  #     break
+  #   fi
+  # done
 
   if [[ "$ans" == "" ]]; then
     echo "😅 ${transl[verify_deps_installed_need_yes_or_no_answer]}"
@@ -1407,7 +1366,7 @@ verifyDepsOrInstall() {
     if [[ "$distro" == "ubuntu" || "$distro" == "debian" ]]; then
       if [[ $pkgManagerName == "snap" ]]; then
         if ! hasCommand "snap"; then
-          sudo apt-get install snapd
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install snapd -yq
         fi
 
         if ! sudo snap install "$pkg"; then
@@ -1417,12 +1376,12 @@ verifyDepsOrInstall() {
         showOkMessage "${transl[verify_deps_installed_via_package_manager]/_name_/$name} snap"
 
         # ensure snap is in the PATH and pkgs
-        PATH="$PATH:/snap/bin"
+        export PATH="$PATH:/snap/bin"
 
         return 0
       fi
 
-      if ! sudo apt update || ! sudo apt-get install "$pkg"; then
+      if ! sudo apt update || ! sudo DEBIAN_FRONTEND=noninteractive apt-get install "$pkg" -yq; then
         exitInstaller
       fi
 
@@ -1569,90 +1528,6 @@ verifyUserHasDomain() {
   echo "$userDomainName;$emailAddress;$serverIpAddress"
 }
 
-replaceNginxConfFileForHttp() {
-  echo "
-    proxy_cache_path /cache keys_zone=nodecache:100m levels=1:2 inactive=31536000s max_size=10g use_temp_path=off;
-
-    server {
-        listen 80;
-        listen [::]:80;
-        server_name $1;
-
-        location /.well-known/acme-challenge/ {
-            root /var/www/certbot;
-        }
-
-        location /stub_status {
-          stub_status;
-        }
-
-        proxy_redirect          off;
-        client_max_body_size    10m;
-        client_body_buffer_size 128k;
-        proxy_connect_timeout   90;
-        proxy_send_timeout      90;
-        proxy_read_timeout      90;
-        proxy_buffers           32 128k;
-
-        location / {
-          add_header content-type  application/vnd.ipld.raw;
-          add_header content-type  application/vnd.ipld.car;
-          add_header content-type  application/octet-stream;
-          add_header cache-control public,max-age=31536000,immutable;
-
-          proxy_cache nodecache;
-          proxy_cache_valid 200 31536000s;
-          add_header X-Proxy-Cache \$upstream_cache_status;
-          proxy_cache_methods GET HEAD POST;
-          proxy_cache_key \"\$request_uri|\$request_body\";
-          client_max_body_size 1G;
-
-          proxy_pass http://ursa:4069;
-        }
-    }
-  " | sudo tee "$defaultDockerFullNodeRelativePath"/data/nginx/http.conf
-}
-
-replaceNginxConfFileForHttps() {
-  echo "
-    server {
-        listen 443 ssl http2;
-        listen [::]:443 ssl http2;
-        server_name $1;
-
-        server_tokens off;
-
-        # SSL code
-        ssl_certificate /etc/letsencrypt/live/$1/fullchain.pem;
-        ssl_certificate_key /etc/letsencrypt/live/$1/privkey.pem;
-
-        include /etc/letsencrypt/options-ssl-nginx.conf;
-        ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-
-        location /stub_status {
-          stub_status;
-        }
-
-        location / {
-          add_header content-type  application/vnd.ipld.raw;
-          add_header content-type  application/vnd.ipld.car;
-          add_header content-type  application/octet-stream;
-          add_header cache-control public,max-age=31536000,immutable;
-
-          proxy_cache nodecache;
-          proxy_cache_valid 200 31536000s;
-          add_header X-Proxy-Cache \$upstream_cache_status;
-          proxy_cache_methods GET HEAD POST;
-          proxy_cache_key \"\$request_uri|\$request_body\";
-          client_max_body_size 1G;
-
-
-          proxy_pass http://ursa:4069;
-        }
-    }
-  " | sudo tee "$defaultDockerFullNodeRelativePath"/data/nginx/https.conf
-}
-
 setupSSLTLS() {
   echo "⚠️ ${transl[setup_ssl_tls_you_are_required]}"
   echo
@@ -1677,50 +1552,31 @@ setupSSLTLS() {
   emailAddress=$(echo "$trimData" | cut -d ";" -f 2)
   serverIpAddress=$(echo "$trimData" | cut -d ";" -f 3)
 
-  if ! sudo rm "$defaultDockerFullNodeRelativePath"/data/nginx/app.conf; then
-    showErrorMessage "${transl[setup_ssl_tls_oops_failed_clear_nginx]} 🙏"
-
-    exitInstaller
-  fi
-
-  if ! replaceNginxConfFileForHttp "$userDomainName"; then
-    showErrorMessage "${transl[setup_ssl_tls_oops_failed_update_http_server_name]/_userDomainName_/$userDomainName} 🙏"
-
-    exitInstaller
-  fi
-
-  sudo chmod +x "$defaultDockerFullNodeRelativePath"/init-letsencrypt.sh
-
-  showOkMessage "${transl[setup_ssl_tls_updated_file_permissions_lets_encrypt_execution]} (set +x)!"
-
-  # Intentional, used to provide space after msg
-  echo
-
-  # start stack in bg, as lets encrypt will need the nginx to validate
-  COMPOSE_DOCKER_CLI_BUILD=1 dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" up -d
-
-  # TODO: add health check in the docker compose file
-
-  # Health check
-  statusCode=$(curl --write-out "%{http_code}" --silent --output /dev/null http://"$userDomainName"/ping)
-
-  if [[ "$statusCode" -ne 200 ]]; then
-    showPoopMessage "${transl[setup_ssl_tls_uh_oh_cant_communicate_with_reverse_proxy]}"
-
-    read -r -p "😅 ${transl[setup_ssl_tls_lets_encrypt_likely_fail_if_continue]}..."
-  fi
-
   if ! initLetsEncrypt "$emailAddress" "$userDomainName"; then
     exitInstaller
   fi
 
-  printf "\n"
+  # TODO: Create translation
+  echo "🤖 Set Ursa proxy configuration for SSL/TLS"
+  if ! dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" run \
+    --rm --entrypoint "\
+    if ! curl -X POST 0.0.0.0:8881/reload-tls-config; then
+      exit 1;
+    fi
+    " "$defaultDockerNetworkUrsaProxyHostname"; then
+    echo "💩 Uh oh! Failed to reload the ursa-proxy TLS configuration."
+    echo
 
-  if ! replaceNginxConfFileForHttps "$userDomainName"; then
-    showErrorMessage "${transl[setup_ssl_tls_oops_failed_update_https_server_name_directive]/_userDomainName_/$userDomainName} 🙏"
-
-    exitInstaller
+    sleep 3
   fi
+
+  if [[ ! -f "$defaultUrsaProxyConfigPath" ]]; then
+    # TODO: Create translation
+    echo "💩 Uh oh! We tried to modify $defaultUrsaProxyConfigPath but is missing."
+    echo
+  fi
+
+  restartDockerStack
 }
 
 changeDirectoryToPathOrFailure() {
@@ -1765,18 +1621,31 @@ onLatestPreference() {
 
       break
     elif [[ "$data" -eq 0 ]]; then
-      sudo yq -ie 'del(.services.ursa.build)' "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
-      sudo yq -i ".services.ursa.image = \"$defaultUrsaLatestImage\"" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1
+      for name in "ursa" "ursa-proxy"; do
+        if ! yqExec -ie "del(.services.$name.build)" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1; then
+          echo "👹 Oops! Failed to remove declare service build $name from $defaultDockerComposeYmlRelativePath"
+        else
+          echo "✅ Deleted docker-compose.yml .services.$name.build"
+        fi
 
-      if ! sudo yq '.services.ursa.image' "$defaultDockerComposeYmlRelativePath" | grep -q "$defaultUrsaLatestImage" || ! sudo yq '.services.ursa.build' "$defaultDockerComposeYmlRelativePath" | grep -qE "null|no matches found"; then
-        echo
-        echo "💩 ${transl[on_latest_preference_uh_oh_failed_modify_docker_compose_yaml]}"
+        currentImageName="${defaultGHCRImagePlaceholderUrl/_imageName_/$name}"
 
-        printf "%s 🙏" "${transl[on_latest_preference_uh_oh_failed_modify_docker_compose_yaml_apologies]}" | sed "s|_defaultDiscordUrl_|\"${defaultDiscordUrl}\"|g"
-        echo
+        if ! yqExec -i ".services.$name.image = \"$currentImageName\"" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1; then
+          echo "👹 Oops! Failed to set service $name image in $defaultDockerComposeYmlRelativePath"
+        else
+          echo "✅ Set service in docker-compose.yml .services.$name.image"
+        fi
 
-        exitInstaller
-      fi
+        if ! yqExec ".services.$name.image" "$defaultDockerComposeYmlRelativePath" | grep -q "$currentImageName" || ! yqExec ".services.$name.build" "$defaultDockerComposeYmlRelativePath" | grep -qE "null|no matches found"; then
+          echo
+          echo "💩 ${transl[on_latest_preference_uh_oh_failed_modify_docker_compose_yaml]}"
+
+          printf "%s 🙏" "${transl[on_latest_preference_uh_oh_failed_modify_docker_compose_yaml_apologies]}" | sed "s|_defaultDiscordUrl_|\"${defaultDiscordUrl}\"|g"
+          echo
+
+          exitInstaller
+        fi
+      done
 
       break
     fi
@@ -1834,6 +1703,25 @@ createUrsaInitialConfig() {
   # Check if system has recommended resources (disk space and memory)
   checkSystemHasRecommendedResources "$os"
 
+  echo
+  
+  # Warning for none root users
+  if [ "$(id -u)" -ne 0 ]; then
+    if test -z "$(sudo -n -v 2>&1)"; then
+      # TODO: Create translation
+      echo "👻 You're running the installer as a non-root user. The installer will use sudo througout the process, meaning that the Ursa configuration and sensitive data files will be stored under /root/.ursa, e.g. /root/.ursa/keystore/default.pem"
+      echo
+      echo "If you'd like to customise it, learn more to manage file permissions read our guide \"Securing the Ursa files\" https://docs.fleek.network/guides/Network%20nodes/securing-the-ursa-files"
+      echo
+      read -rp "Keep a note on that and when happy press ENTER to continue..."
+    else
+      # TODO: Create translation
+      echo "👹 Ooops! You're running the installer as a non-root user or non-sudoer. You need administrative rights to run the install process! Change to a root or sudoer user before retrying, please!"
+
+      exit 1
+    fi
+  fi
+
   # Check if has dependencies installed
   for dep in "${dependencies[@]}"; do
     installMandatory "$dep"
@@ -1873,7 +1761,8 @@ createUrsaInitialConfig() {
   # Pull the `ursa` project repository to the preferred target directory via HTTPS
   cloneUrsaRepositoryToPath "$selectedUrsaPath"
   changeDirectoryToPathOrFailure "Ursa" "$selectedUrsaPath"
-
+  
+  # TODO: Create translation
   echo "🤖 Restart docker for Docker daemon settings to take effect"
   sudo systemctl restart docker
 
