@@ -19,21 +19,6 @@
 # is best to follow the instructions in our guide, as otherwise risk changing
 # or overriding your custom setup.
 #
-# Ideally, the script will:
-# - Check if the system has enough disk space and memory, otherwise warn the user
-# - Verify if the user is in Docker, as Docker in Docker is not supported
-# - Verify if Git is installed, if not install it
-# - It'll do a quick health check to confirm Git is installed correctly 
-# - Verify if Docker is installed, if not install it
-# - It'll do a quick health check to confirm Docker is installed correctly
-# - Request a pathname where to store the Ursa repository, otherwise providing a default,
-#   e.g., `$HOME/fleek-network/ursa`
-# - Pull the `ursa` project repository to the preferred target directory via HTTPS
-#   instead of SSH for simplicity
-# - Optionally, assist in setting up and securing domain name via SSL/TLS
-# - Run the Docker stack
-# - Do a health check to confirm the Fleek Network Node is running
-#
 # Contributing?
 # - If you'd like to test changes locally use the env var `USE_BRANCH_NAME_FOR_GH_RAW` and `URSA_BRANCH`, for remote locales pulls
 #
@@ -1279,21 +1264,23 @@ initLetsEncrypt() {
 installMandatory() {
   hasCommand "$1" && return 0
 
-  printf -v prompt "\n\n🤖 %s\n%s" \
-    "$(printf "%s" "${transl[common_install_we_need_to]}" | sed "s|_application_|\"${1}\"|g; s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
-    "$(printf "%s" "${transl[common_install_type_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
-  while read -rp "$prompt"$'\n> ' answer; do
-    data=$(confirm "$userSelectedLanguage" "$answer")
+  # TODO: Disabled the user request as a test
+  # as most users seem not to care and dont want prompts reduced
+  # printf -v prompt "\n\n🤖 %s\n%s" \
+  #   "$(printf "%s" "${transl[common_install_we_need_to]}" | sed "s|_application_|\"${1}\"|g; s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
+  #   "$(printf "%s" "${transl[common_install_type_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
+  # while read -rp "$prompt"$'\n> ' answer; do
+  #   data=$(confirm "$userSelectedLanguage" "$answer")
 
-    [[ ! $data ]] && continue
+  #   [[ ! $data ]] && continue
 
-    if [[ "$data" -eq 1 ]]; then
-      showErrorMessage "${transl[install_mandatory_app_install_required]/_application_/$1}"
-      exitInstaller
-    elif [[ "$data" -eq 0 ]]; then
-      break
-    fi
-  done
+  #   if [[ "$data" -eq 1 ]]; then
+  #     showErrorMessage "${transl[install_mandatory_app_install_required]/_application_/$1}"
+  #     exitInstaller
+  #   elif [[ "$data" -eq 0 ]]; then
+  #     break
+  #   fi
+  # done
 
   if [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
@@ -1328,21 +1315,23 @@ verifyDepsOrInstall() {
 
   hasCommand "$bin" && return 0
 
-  printf -v prompt "\n\n🤖 %s\n%s" \
-    "$(printf "%s" "${transl[common_install_we_need_to]}" | sed "s|_application_|\"${bin}\"|g; s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
-    "$(printf "%s" "${transl[common_install_type_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
-  while read -rp "$prompt"$'\n> ' answer; do
-    data=$(confirm "$userSelectedLanguage" "$answer")
+  # TODO: Disabled the user request as a test
+  # as most users seem not to care and dont want prompts reduced
+  # printf -v prompt "\n\n🤖 %s\n%s" \
+  #   "$(printf "%s" "${transl[common_install_we_need_to]}" | sed "s|_application_|\"${bin}\"|g; s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
+  #   "$(printf "%s" "${transl[common_install_type_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
+  # while read -rp "$prompt"$'\n> ' answer; do
+  #   data=$(confirm "$userSelectedLanguage" "$answer")
 
-    [[ ! $data ]] && continue
+  #   [[ ! $data ]] && continue
 
-    if [[ "$data" -eq 1 ]]; then
-      showErrorMessage "${transl[install_mandatory_app_install_required]/_application_/$1}"
-      exitInstaller
-    elif [[ "$data" -eq 0 ]]; then
-      break
-    fi
-  done
+  #   if [[ "$data" -eq 1 ]]; then
+  #     showErrorMessage "${transl[install_mandatory_app_install_required]/_application_/$1}"
+  #     exitInstaller
+  #   elif [[ "$data" -eq 0 ]]; then
+  #     break
+  #   fi
+  # done
 
   if [[ "$ans" == "" ]]; then
     echo "😅 ${transl[verify_deps_installed_need_yes_or_no_answer]}"
