@@ -251,6 +251,27 @@ URSA_PROXY_SERVICE
 
   echo
 
+  printf "🤖 Create logs directory"
+  if ! sudo mkdir -p "$defaultUrsaProxyLogPath"; then
+    read -rp "💩 Uh oh! Failed to create the directory $defaultUrsaProxyLogPath for the logs, you might want to troubleshoot this issue. Press ENTER to continue..."
+  else
+    echo "✅ Created the logs directory $defaultUrsaProxyLogPath"
+  fi
+
+  for file in "$defaultUrsaProxyDiagnosticLogAbsPath" "$defaultUrsaProxyOutputLogAbsPath"; do
+    if ! sudo touch "$file"; then
+      echo "💩 Uh oh! Failed to create $file"
+    else
+      echo "✅ Created the log file $file"
+    fi
+  done
+
+  if ! sudo chmod -R 644 "$defaultUrsaProxyLogPath"; then
+    read -rp "💩 Uh oh! Failed to chmod the directory $defaultUrsaProxyLogPath for the logs, you might want to troubleshoot this issue. Press ENTER to continue..."
+  else
+    echo "✅ Set permissions for $defaultUrsaProxyLogPath"
+  fi
+ 
   printf "🤖 System control daemon reload\n"
   if ! sudo systemctl daemon-reload; then
     echo "💩 Uh oh! The systemctl daemon reload failed"
