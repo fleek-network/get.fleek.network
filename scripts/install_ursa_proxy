@@ -140,23 +140,22 @@ echo
 
   # Defaults
   defaultUrsaPath="$HOME/fleek-network/ursa"
-  defaultUrsaLogPath="/var/log/ursa-proxy"
-  defaultUrsaDiagnosticFilename="diagnostic.log"
-  defaultUrsaOutputFilename="output.log"
+  defaultUrsaProxyLogPath="/var/log/ursa-proxy"
+  defaultUrsaProxyDiagnosticFilename="diagnostic.log"
+  defaultUrsaProxyOutputFilename="output.log"
   defaultUrsaProxySystemdServiceName="ursa-proxy"
-  defaultUrsaSystemdServicePath="/etc/systemd/system/$defaultUrsaProxySystemdServiceName.service"
+  defaultUrsaProxySystemdServicePath="/etc/systemd/system/$defaultUrsaProxySystemdServiceName.service"
   defaultExecCargoProxyCmd="ursa-proxy daemon"
   # TODO: Disabled as ursa-proxy has no output at time of writing
-  defaultUrsaDiagnosticLogAbsPath="$defaultUrsaLogPath/$defaultUrsaDiagnosticFilename"
-  defaultUrsaOutputLogAbsPath="$defaultUrsaLogPath/$defaultUrsaOutputFilename"
-  defaultCargoBinUrsaProxyPath="$HOME/.cargo/bin/$defaultUrsaProxySystemdServiceName"
+  defaultUrsaProxyDiagnosticLogAbsPath="$defaultUrsaProxyLogPath/$defaultUrsaProxyDiagnosticFilename"
+  defaultUrsaProxyOutputLogAbsPath="$defaultUrsaProxyLogPath/$defaultUrsaProxyOutputFilename"
 
   # User data
   selectedUrsaPath=""
 
-  if [[ -f "$defaultUrsaSystemdServicePath" ]]; then
+  if [[ -f "$defaultUrsaProxySystemdServicePath" ]]; then
     # Obs: the extra white space between ⚠️ and warning is for alignment
-    while read -rp "⚠️  Warning! A service of name ursa-proxy has been found at $defaultUrsaSystemdServicePath, the ursa-proxy installer script may override any custom settings if you proceed. Would you like to ignore this warning and proceed? (yes/no)" answer; do
+    while read -rp "⚠️  Warning! A service of name ursa-proxy has been found at $defaultUrsaProxySystemdServicePath, the ursa-proxy installer script may override any custom settings if you proceed. Would you like to ignore this warning and proceed? (yes/no)" answer; do
       if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
         echo "🦖 The ursa-proxy install and setup script has terminated."
 
@@ -226,7 +225,7 @@ echo
 
   printf "🤖 Declare the service and store in the system path\n"
 # Here "no identation" is intentional, do not change
-cat << URSA_PROXY_SERVICE > "$defaultUrsaSystemdServicePath"
+cat << URSA_PROXY_SERVICE > "$defaultUrsaProxySystemdServicePath"
 [Unit]
 Description=Ursa-proxy, for the Decentralized Content Delivery Network (DCDN)
 
@@ -236,16 +235,16 @@ MemoryHigh=1G
 RestartSec=15s
 Restart=always
 ExecStart=$defaultExecCargoProxyCmd
-StandardOutput=null
-StandardError=null
+StandardOutput=append:$defaultUrsaProxyOutputLogAbsPath
+StandardError=append:$defaultUrsaProxyDiagnosticLogAbsPath
 
 [Install]
 WantedBy=multi-user.target
 URSA_PROXY_SERVICE
 
   printf "🤖 Set service file permissions\n"
-  if ! sudo chmod 644 "$defaultUrsaSystemdServicePath"; then
-    echo "💩 Uh oh! Failed to update the file permissions for $defaultUrsaSystemdServicePath"
+  if ! sudo chmod 644 "$defaultUrsaProxySystemdServicePath"; then
+    echo "💩 Uh oh! Failed to update the file permissions for $defaultUrsaProxySystemdServicePath"
   else
     echo "✅ Updated the ursa-proxy service file permissions"
   fi
