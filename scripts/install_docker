@@ -846,10 +846,12 @@ checkIfGitInstalled() {
     echo "😅 ${transl[check_if_git_installed_oops]}"
     echo
 
-    requestAuthorizationAndExec \
-      "${transl[common_check_installed_we_can_start_install]}" \
-      "${transl[check_if_git_installed_need_git_installed]}" \
-      installGit
+    # TODO: Disabled to reduce the number of promps, as most users seem to not be interested
+    # requestAuthorizationAndExec \
+    #   "${transl[common_check_installed_we_can_start_install]}" \
+    #   "${transl[check_if_git_installed_need_git_installed]}" \
+    #   installGit
+    installGit
 
     if [[ "$?" = 1 ]]; then
       showErrorMessage "${transl[check_if_git_installed_oops_failed_install]}"
@@ -987,10 +989,12 @@ checkIfDockerInstalled() {
   if ! hasCommand docker; then
     printf "😅 %s\n" "${transl[check_if_docker_installed]}"
 
-    requestAuthorizationAndExec \
-      "${transl[common_check_installed_we_can_start_install]}" \
-      "${transl[check_if_docker_need_docker_installed]}" \
-      installDocker
+    # TODO: Disabled to reduce the number of promps, as most users seem to not be interested
+    # requestAuthorizationAndExec \
+    #   "${transl[common_check_installed_we_can_start_install]}" \
+    #   "${transl[check_if_docker_need_docker_installed]}" \
+    #   installDocker
+    installDocker
 
     if [[ "$?" = 1 ]]; then
       showErrorMessage "${transl[check_if_docker_oops_failed_install_docker]}"
