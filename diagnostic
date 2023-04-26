@@ -20,6 +20,7 @@ nginxConfigPath="$HOME/fleek-network/ursa/docker/full-node/data/nginx"
 diagnosticFilename="diagnostic.log"
 defaultFleekNetworkInstallPath="$HOME/fleek-network/ursa"
 dotUrsaPath="$HOME/.ursa/config.toml"
+dotUrsaProxyPath="$HOME/.ursa/proxy/config.toml"
 defaultUrsaBinPath="/usr/bin/ursa"
 pasteCliUrl="https://0x0.st"
 separator="----------"
@@ -258,7 +259,7 @@ echo
     echo
 
     echo "Docker compose version"
-    docker compose -v
+    docker compose version
 
     echo "Docker-compose is installed?"
     which docker-compose
@@ -319,6 +320,17 @@ echo
     echo
   fi
 
+  if [[ -d $HOME/.ursa/proxy ]]; then
+    echo "✅ Found dot ursa, ursa-proxy at $HOME/.ursa/proxy"
+    echo
+
+    echo "🤖 The ursa proxy config content"
+    cat "$dotUrsaProxyPath"
+  else
+    echo "💩 Uh-oh! The dot Ursa, ursa-proxy was not found"
+    echo
+  fi
+
   if command -v "ursa" >/dev/null 2>&1; then
     echo "✅ Ursa binary globally accessible"
     echo
@@ -356,6 +368,25 @@ echo
     fi
   fi
 
+  if [[ -d $HOME/.ursa/proxy ]]; then
+    echo "✅ Found dot ursa, ursa-proxy at $HOME/.ursa/proxy"
+    echo
+
+    echo "🤖 The ursa proxy config content"
+    cat "$dotUrsaProxyPath"
+
+    if command -v "ursa-proxy" >/dev/null 2>&1; then
+      echo "✅ Ursa-proxy binary globally accessible"
+
+      echo "🤖 Systemd ursa-proxy service"
+      if ! systemctl status ursa-proxy; then
+        echo "💩 Uh oh! There's no systemd ursa-proxy service"
+      fi
+    fi
+  else
+    echo "💩 Uh-oh! The dot Ursa, ursa-proxy was not found"
+    echo
+  fi  
 ) > "$diagnosticFilename"
 
 pasteUrl=$(curl -sF "file=@$diagnosticFilename" $pasteCliUrl)
