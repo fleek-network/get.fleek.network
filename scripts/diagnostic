@@ -20,6 +20,7 @@ nginxConfigPath="$HOME/fleek-network/ursa/docker/full-node/data/nginx"
 diagnosticFilename="diagnostic.log"
 defaultFleekNetworkInstallPath="$HOME/fleek-network/ursa"
 dotUrsaPath="$HOME/.ursa/config.toml"
+dotUrsaProxyPath="$HOME/.ursa/proxy/config.toml"
 defaultUrsaBinPath="/usr/bin/ursa"
 pasteCliUrl="https://0x0.st"
 separator="----------"
@@ -258,7 +259,7 @@ echo
     echo
 
     echo "Docker compose version"
-    docker compose -v
+    docker compose version
 
     echo "Docker-compose is installed?"
     which docker-compose
@@ -316,6 +317,17 @@ echo
     echo
   else
     echo "💩 Uh-oh! The dot Ursa was not found"
+    echo
+  fi
+
+  if [[ -d $HOME/.ursa/proxy ]]; then
+    echo "✅ Found dot ursa, ursa-proxy at $HOME/.ursa/proxy"
+    echo
+
+    echo "🤖 The ursa proxy config content"
+    cat "$dotUrsaProxyPath"
+  else
+    echo "💩 Uh-oh! The dot Ursa, ursa-proxy was not found"
     echo
   fi
 
