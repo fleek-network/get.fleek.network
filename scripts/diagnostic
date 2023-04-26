@@ -368,6 +368,25 @@ echo
     fi
   fi
 
+  if [[ -d $HOME/.ursa/proxy ]]; then
+    echo "✅ Found dot ursa, ursa-proxy at $HOME/.ursa/proxy"
+    echo
+
+    echo "🤖 The ursa proxy config content"
+    cat "$dotUrsaProxyPath"
+
+    if command -v "ursa-proxy" >/dev/null 2>&1; then
+      echo "✅ Ursa-proxy binary globally accessible"
+
+      echo "🤖 Systemd ursa-proxy service"
+      if ! systemctl status ursa-proxy; then
+        echo "💩 Uh oh! There's no systemd ursa-proxy service"
+      fi
+    fi
+  else
+    echo "💩 Uh-oh! The dot Ursa, ursa-proxy was not found"
+    echo
+  fi  
 ) > "$diagnosticFilename"
 
 pasteUrl=$(curl -sF "file=@$diagnosticFilename" $pasteCliUrl)
