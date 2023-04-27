@@ -236,6 +236,11 @@ echo
   ls -la "$defaultFleekNetworkInstallPath"
   echo
 
+  if [[ -d $defaultFleekNetworkInstallPath ]]; then
+    echo "🤖 The docker-compose.yml content"
+    cat "$defaultFleekNetworkInstallPath/docker/full-node/docker-compose.yml"
+  fi
+
   echo "🤖 Check Docker"
   echo
 
