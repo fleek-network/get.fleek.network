@@ -171,11 +171,11 @@ echo
   else
     while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultUrsaPath? Type \"no\" to change the location (yes/no) " answer; do
       if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-        while read -rp "🙋‍♀️ What's the location where the Ursa repository is?" answer; do
+        while read -rp "🙋‍♀️ What's the location where the Ursa repository is? " answer; do
           if [[ -d "$answer" ]]; then
             selectedUrsaPath="$answer"
             
-            break
+            break 2
           fi
 
           echo "💩 Uh oh! The path ($answer) doesn't exist, let's try that again..."
