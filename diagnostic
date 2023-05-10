@@ -83,6 +83,17 @@ getIpAddress() {
   echo "ERROR_IP_ADDRESS_NOT_AVAILABLE"
 }
 
+checkDockerServiceRunning() {
+  echo "Is Docker container $1 running?"
+  if ! docker container inspect -f '{{.State.Running}}' "$1" >/dev/null 2>&1; then
+    echo "The Docker service $1 does not exist or is not running!"
+
+    return
+  fi
+
+  echo "The Docker service $1 is running!"
+}
+
 cat << "EOF"
 
                   .eeeeeeeee
@@ -136,9 +147,6 @@ echo
 echo "🙋‍♀️ We're going save the diagnostic details to https://0x0.st. When complete copy and share the diagnostics URL to us in our Discord channel!"
 echo
 
-echo "🙏 Be patient while we generate the URL for you, please!"
-echo
-
 (
   exec < /dev/tty;
 
@@ -159,6 +167,11 @@ echo
       break;
     fi
   done
+
+  echo
+  echo
+
+  read -rp "🙏 Be patient while we generate the URL for you, please! Press ENTER to continue..."
 
   echo "🤖 Display Linux distro version"
   echo
@@ -300,12 +313,16 @@ echo
     docker ps -a
     echo
 
-    echo "Is Docker container full-node_ursa_1 running?"
-    if ! docker container inspect -f '{{.State.Running}}' full-node-ursa-1; then
-      echo "🤖 Will check alternative name full-node_ursa_1"
-      echo
-      docker container inspect -f '{{.State.Running}}' full-node_ursa_1
-    fi
+    checkDockerServiceRunning "full-node_ursa_1"
+    echo
+
+    checkDockerServiceRunning "full-node-ursa-1"
+    echo
+
+    checkDockerServiceRunning "full-node_ursa-proxy_1"
+    echo
+
+    checkDockerServiceRunning "full-node-ursa-proxy-1"
     echo
 
     echo "🤖 NGINX Config files"
@@ -414,7 +431,10 @@ echo
   else
     echo "💩 Uh-oh! The dot Ursa, ursa-proxy was not found"
     echo
-  fi  
+  fi
+
+  echo "🤖 curl local /ping"
+  curl -sw "\n" localhost/ping
 ) > "$diagnosticFilename"
 
 pasteUrl=$(curl -sF "file=@$diagnosticFilename" $pasteCliUrl)
