@@ -136,6 +136,9 @@ echo
 echo "🙋‍♀️ We're going save the diagnostic details to https://0x0.st. When complete copy and share the diagnostics URL to us in our Discord channel!"
 echo
 
+echo "🙏 Be patient while we generate the URL for you, please!"
+echo
+
 (
   exec < /dev/tty;
 
@@ -156,9 +159,6 @@ echo
       break;
     fi
   done
-
-  echo "🙏 Be patient while we generate the URL for you, please!"
-  echo
 
   echo "🤖 Display Linux distro version"
   echo
