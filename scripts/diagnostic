@@ -39,8 +39,6 @@ tempWorkDir=$(mktemp -d)
 
 onInterruption() {
   rm -rf "$tempWorkDir"
-
-  exit 1
 }
 
 trap onInterruption INT
@@ -138,28 +136,30 @@ echo
 echo "🙋‍♀️ We're going save the diagnostic details to https://0x0.st. When complete copy and share the diagnostics URL to us in our Discord channel!"
 echo
 
-while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultFleekNetworkInstallPath? (yes/no) " answer; do
-  if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
-    while read -rp "🙋‍♀️ What's the location where the Ursa repository is? " answer; do
-      if [[ -d "$answer" ]]; then
-        selectedUrsaPath="$answer"
-        
-        break 2
-      fi
-
-      echo "💩 Uh oh! The path ($answer) doesn't exist, let's try that again..."
-    done
-  elif [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
-    selectedUrsaPath="$defaultFleekNetworkInstallPath"
-
-    break;
-  fi
-done
-
-echo "🙏 Be patient while we generate the URL for you, please!"
-echo
-
 (
+  exec < /dev/tty;
+
+  while read -rp "🙋‍♀️ Is the Ursa repository source-code in the default path $defaultFleekNetworkInstallPath? (yes/no) " answer; do
+    if [[ $answer == [nN] || $answer == [nN][oO] ]]; then
+      while read -rp "🙋‍♀️ What's the location where the Ursa repository is? " answer; do
+        if [[ -d "$answer" ]]; then
+          selectedUrsaPath="$answer"
+          
+          break 2
+        fi
+
+        echo "💩 Uh oh! The path ($answer) doesn't exist, let's try that again..."
+      done
+    elif [[ $answer == [yY] || $answer == [yY][eE][sS] ]]; then
+      selectedUrsaPath="$defaultFleekNetworkInstallPath"
+
+      break;
+    fi
+  done
+
+  echo "🙏 Be patient while we generate the URL for you, please!"
+  echo
+
   echo "🤖 Display Linux distro version"
   echo
 
@@ -426,4 +426,5 @@ if [[ ! $pasteUrl = $pasteCliUrl*  ]]; then
 fi
 
 echo "✅ Diagnostic is available at ${bold}$pasteUrl${normal}"
+echo "Copy and share the diagnostic URL $pasteUrl to our Discord channel 🙏"
 echo
