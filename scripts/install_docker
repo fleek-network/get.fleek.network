@@ -1198,8 +1198,8 @@ proxy_pass = \"$defaultDockerNetworkUrsaHostname:4069\"
 listen_addr = \"0.0.0.0:443\"
 
 [server.tls]
-cert_path = \"$defaultLetsEncryptCertificatesLivePath/$userDomainName/fullchain.pem\"
-key_path = \"$defaultLetsEncryptCertificatesLivePath/$userDomainName/privkey.pem\"
+cert_path = \"$defaultLetsEncryptCertificatesLivePath/$1/fullchain.pem\"
+key_path = \"$defaultLetsEncryptCertificatesLivePath/$1/privkey.pem\"
 
 # Admin service.
 # You can omit this section as this is the default.
@@ -1223,7 +1223,7 @@ initLetsEncrypt() {
   fi
 
   # Ursa server configuration handler to ensure the settings exist and correct
-  ursaServerConfigurationHandler
+  ursaServerConfigurationHandler "$domain"
 
   if [[ ! -f "$defaultUrsaProxyConfigPath" ]]; then
     # TODO: Create translation
@@ -1291,13 +1291,14 @@ verifyDepsOrInstall() {
 
   hasCommand "$bin" && return 0
 
-  if [[ "$ans" == "" ]]; then
-    echo "😅 ${transl[verify_deps_installed_need_yes_or_no_answer]}"
+  # TODO: Seems to be a typo?
+  # if [[ "$ans" == "" ]]; then
+  #   echo "😅 ${transl[verify_deps_installed_need_yes_or_no_answer]}"
     
-    read -r -p "${transl[common_press_enter_retry]}..."
+  #   read -r -p "${transl[common_press_enter_retry]}..."
 
-    verifyDepsOrInstall "$os" "$name" "$bin" "$pkgManager"
-  fi
+  #   verifyDepsOrInstall "$os" "$name" "$bin" "$pkgManager"
+  # fi
 
   if [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
@@ -1662,6 +1663,10 @@ createUrsaInitialConfig() {
   # Set default locale
   if [[ -z ${NONINTERACTIVE+x} ]]; then
     multiLanguageChoice
+  elif [[ -z ${LANGUAGE+x} ]]; then
+    setLang "en"
+  else
+    setLang "$LANGUAGE"
   fi
 
   # Identity the OS
@@ -1725,10 +1730,7 @@ createUrsaInitialConfig() {
   if [[ -z ${NONINTERACTIVE+x} ]]; then
     selectedUrsaPath=$(requestPathnameForUrsaRepository)
   elif [[ -z ${URSA_REPOSITORY_PATH+x} ]]; then
-    # TODO: Create translation
-    showErrorMessage "The URSA_REPOSITORY_PATH is not set!"
-
-    exit 1
+    selectedUrsaPath="$defaultUrsaPath"
   else
     selectedUrsaPath="$URSA_REPOSITORY_PATH"
   fi
