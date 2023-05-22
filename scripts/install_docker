@@ -1629,16 +1629,16 @@ onLatestPreferenceInteractive() {
 
 updateUrsaConfigIpAddress() {
   if [[ -f "$defaultUrsaConfigPath" ]]; then
-    if ! sudo sed -i "s|addresses =.*|addresses = [\"/ip4/$serverIpAddress/tcp/80\"]|" "$defaultUrsaConfigPath"; then
-      showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
+    if ! sudo sed -i "s|addresses =.*|addresses = [\"/ip4/$1/tcp/80\"]|" "$defaultUrsaConfigPath"; then
+      showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$1}"
     fi
   else
     if ! sudo mkdir -p "$defaultUrsaBasePath"; then
-      showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
+      showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$1}"
     fi
 
-    if ! createUrsaInitialConfig; then
-      showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
+    if ! createUrsaInitialConfig $1""; then
+      showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$1}"
     fi
   fi
 }
@@ -1649,7 +1649,7 @@ createUrsaInitialConfig() {
   fi
 
   echo "[server_config]" | sudo tee "$defaultUrsaConfigPath"
-  echo "addresses = [\"/ip4/$serverIpAddress/tcp/80\"]" | sudo tee -a "$defaultUrsaConfigPath"
+  echo "addresses = [\"/ip4/$1/tcp/80\"]" | sudo tee -a "$defaultUrsaConfigPath"
   echo
 }
 
@@ -1783,7 +1783,17 @@ createUrsaInitialConfig() {
 
   # The Ursa config has an ip address property
   # which value is shared to the indexer
-  updateUrsaConfigIpAddress
+  if [[ -n "$NONINTERACTIVE" ]]; then
+    if [[ -z ${IP_ADDR+x} ]]; then
+      showErrorMessage "Missing IP_ADDR"
+
+      exit 1
+    fi
+
+    serverIpAddress="$IP_ADDR"
+  fi
+
+  updateUrsaConfigIpAddress "$serverIpAddress"
 
   # Restart docker
   restartDockerStack
