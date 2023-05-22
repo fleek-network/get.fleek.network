@@ -58,6 +58,12 @@ Copy the script locally and prefix the execution of the script with the followin
 NONINTERACTIVE=1 EMAIL_ADDR="user@example.com" DOMAIN_NAME_ADDR="my.exame.com" IP_ADDR="1.2.3.4" ./install
 ```
 
+Optional, set the repository pathname by 
+
+```sh
+URSA_REPOSITORY_PATH="/some/valid/pathname"
+```
+
 ## ✏️ Documentation
 
 Our documentation is available at https://docs.fleek.network/ where you can find guides, and references to help you! We do our best to provide you with the best onboarding experience, but as we keep developing there are a lot of changes and some troubleshooting might be required, and thus important to use our documentation and guides.
