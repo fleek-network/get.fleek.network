@@ -38,21 +38,25 @@ curl https://get.fleek.network | bash
 
 Learn more about the assisted installer [here](https://docs.fleek.network/guides/Network%20nodes/how-to-install-a-node-easily-with-the-assisted-installer)
 
-### 🏠 Local Development
+### 🏠 Development
 
-You may find that by starting a server, serving the static files in the root
+Copy the script locally, and push any changes to the remote repository.
 
-```sh
-npx http-server .
+Prefix the execution of the script in development with `USE_BRANCH_NAME_FOR_GH_RAW` and `URSA_BRANCH`.
+
+For example:
+
+```
+USE_BRANCH_NAME_FOR_GH_RAW="feat/my-example URSA_BRANCH="feat/ursa-repo-branch-name" ./install"
 ```
 
-Can serve to test in a container, e.g. such as Ubuntu.
+### 🤖 Non-interactive mode
+
+Copy the script locally and prefix the execution of the script with the following environment variables as presented in the example
 
 ```sh
-docker run -it ubuntu /bin/bash
+NONINTERACTIVE=1 EMAIL_ADDR="user@example.com" DOMAIN_NAME_ADDR="my.exame.com" IP_ADDR="1.2.3.4" ./install
 ```
-
-It's partial support, as docker in docker is not available if you're willing to run the whole process. Thus, a VM or VPS might be a better choice during development.
 
 ## ✏️ Documentation
 

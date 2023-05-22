@@ -19,6 +19,9 @@
 # is best to follow the instructions in our guide, as otherwise risk changing
 # or overriding your custom setup.
 #
+# Non-interactive is available by prefixing the script with the required env variables
+# NONINTERACTIVE=1 EMAIL_ADDR="xxxx@xxxx.xxxx" DOMAIN_NAME_ADDR="xxxx.xxxx.xxxx" IP_ADDR="xxx.xxx.xxx.xxx"
+#
 # Contributing?
 # - If you'd like to test changes locally use the env var `USE_BRANCH_NAME_FOR_GH_RAW` and `URSA_BRANCH`, for remote locales pulls
 #
