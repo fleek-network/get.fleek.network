@@ -846,11 +846,6 @@ checkIfGitInstalled() {
     echo "😅 ${transl[check_if_git_installed_oops]}"
     echo
 
-    # TODO: Disabled to reduce the number of promps, as most users seem to not be interested
-    # requestAuthorizationAndExec \
-    #   "${transl[common_check_installed_we_can_start_install]}" \
-    #   "${transl[check_if_git_installed_need_git_installed]}" \
-    #   installGit
     installGit
 
     if [[ "$?" = 1 ]]; then
@@ -989,11 +984,6 @@ checkIfDockerInstalled() {
   if ! hasCommand docker; then
     printf "😅 %s\n" "${transl[check_if_docker_installed]}"
 
-    # TODO: Disabled to reduce the number of promps, as most users seem to not be interested
-    # requestAuthorizationAndExec \
-    #   "${transl[common_check_installed_we_can_start_install]}" \
-    #   "${transl[check_if_docker_need_docker_installed]}" \
-    #   installDocker
     installDocker
 
     if [[ "$?" = 1 ]]; then
@@ -1268,24 +1258,6 @@ initLetsEncrypt() {
 installMandatory() {
   hasCommand "$1" && return 0
 
-  # TODO: Disabled the user request as a test
-  # as most users seem not to care and dont want prompts reduced
-  # printf -v prompt "\n\n🤖 %s\n%s" \
-  #   "$(printf "%s" "${transl[common_install_we_need_to]}" | sed "s|_application_|\"${1}\"|g; s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
-  #   "$(printf "%s" "${transl[common_install_type_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
-  # while read -rp "$prompt"$'\n> ' answer; do
-  #   data=$(confirm "$userSelectedLanguage" "$answer")
-
-  #   [[ ! $data ]] && continue
-
-  #   if [[ "$data" -eq 1 ]]; then
-  #     showErrorMessage "${transl[install_mandatory_app_install_required]/_application_/$1}"
-  #     exitInstaller
-  #   elif [[ "$data" -eq 0 ]]; then
-  #     break
-  #   fi
-  # done
-
   if [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
     if [[ "$distro" == "ubuntu" ]] || [[ "$distro" == "debian" ]]; then
@@ -1318,24 +1290,6 @@ verifyDepsOrInstall() {
   pkgManager="$4"
 
   hasCommand "$bin" && return 0
-
-  # TODO: Disabled the user request as a test
-  # as most users seem not to care and dont want prompts reduced
-  # printf -v prompt "\n\n🤖 %s\n%s" \
-  #   "$(printf "%s" "${transl[common_install_we_need_to]}" | sed "s|_application_|\"${bin}\"|g; s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
-  #   "$(printf "%s" "${transl[common_install_type_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
-  # while read -rp "$prompt"$'\n> ' answer; do
-  #   data=$(confirm "$userSelectedLanguage" "$answer")
-
-  #   [[ ! $data ]] && continue
-
-  #   if [[ "$data" -eq 1 ]]; then
-  #     showErrorMessage "${transl[install_mandatory_app_install_required]/_application_/$1}"
-  #     exitInstaller
-  #   elif [[ "$data" -eq 0 ]]; then
-  #     break
-  #   fi
-  # done
 
   if [[ "$ans" == "" ]]; then
     echo "😅 ${transl[verify_deps_installed_need_yes_or_no_answer]}"
