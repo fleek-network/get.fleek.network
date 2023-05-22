@@ -19,6 +19,9 @@
 # is best to follow the instructions in our guide, as otherwise risk changing
 # or overriding your custom setup.
 #
+# Non-interactive is available by prefixing the script with the required env variables
+# NONINTERACTIVE=1 EMAIL_ADDR="xxxx@xxxx.xxxx" DOMAIN_NAME_ADDR="xxxx.xxxx.xxxx" IP_ADDR="xxx.xxx.xxx.xxx"
+#
 # Contributing?
 # - If you'd like to test changes locally use the env var `USE_BRANCH_NAME_FOR_GH_RAW` and `URSA_BRANCH`, for remote locales pulls
 #
@@ -846,11 +849,6 @@ checkIfGitInstalled() {
     echo "😅 ${transl[check_if_git_installed_oops]}"
     echo
 
-    # TODO: Disabled to reduce the number of promps, as most users seem to not be interested
-    # requestAuthorizationAndExec \
-    #   "${transl[common_check_installed_we_can_start_install]}" \
-    #   "${transl[check_if_git_installed_need_git_installed]}" \
-    #   installGit
     installGit
 
     if [[ "$?" = 1 ]]; then
@@ -989,11 +987,6 @@ checkIfDockerInstalled() {
   if ! hasCommand docker; then
     printf "😅 %s\n" "${transl[check_if_docker_installed]}"
 
-    # TODO: Disabled to reduce the number of promps, as most users seem to not be interested
-    # requestAuthorizationAndExec \
-    #   "${transl[common_check_installed_we_can_start_install]}" \
-    #   "${transl[check_if_docker_need_docker_installed]}" \
-    #   installDocker
     installDocker
 
     if [[ "$?" = 1 ]]; then
@@ -1208,8 +1201,8 @@ proxy_pass = \"$defaultDockerNetworkUrsaHostname:4069\"
 listen_addr = \"0.0.0.0:443\"
 
 [server.tls]
-cert_path = \"$defaultLetsEncryptCertificatesLivePath/$userDomainName/fullchain.pem\"
-key_path = \"$defaultLetsEncryptCertificatesLivePath/$userDomainName/privkey.pem\"
+cert_path = \"$defaultLetsEncryptCertificatesLivePath/$1/fullchain.pem\"
+key_path = \"$defaultLetsEncryptCertificatesLivePath/$1/privkey.pem\"
 
 # Admin service.
 # You can omit this section as this is the default.
@@ -1233,7 +1226,7 @@ initLetsEncrypt() {
   fi
 
   # Ursa server configuration handler to ensure the settings exist and correct
-  ursaServerConfigurationHandler
+  ursaServerConfigurationHandler "$domain"
 
   if [[ ! -f "$defaultUrsaProxyConfigPath" ]]; then
     # TODO: Create translation
@@ -1268,24 +1261,6 @@ initLetsEncrypt() {
 installMandatory() {
   hasCommand "$1" && return 0
 
-  # TODO: Disabled the user request as a test
-  # as most users seem not to care and dont want prompts reduced
-  # printf -v prompt "\n\n🤖 %s\n%s" \
-  #   "$(printf "%s" "${transl[common_install_we_need_to]}" | sed "s|_application_|\"${1}\"|g; s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
-  #   "$(printf "%s" "${transl[common_install_type_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
-  # while read -rp "$prompt"$'\n> ' answer; do
-  #   data=$(confirm "$userSelectedLanguage" "$answer")
-
-  #   [[ ! $data ]] && continue
-
-  #   if [[ "$data" -eq 1 ]]; then
-  #     showErrorMessage "${transl[install_mandatory_app_install_required]/_application_/$1}"
-  #     exitInstaller
-  #   elif [[ "$data" -eq 0 ]]; then
-  #     break
-  #   fi
-  # done
-
   if [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
     if [[ "$distro" == "ubuntu" ]] || [[ "$distro" == "debian" ]]; then
@@ -1318,32 +1293,6 @@ verifyDepsOrInstall() {
   pkgManager="$4"
 
   hasCommand "$bin" && return 0
-
-  # TODO: Disabled the user request as a test
-  # as most users seem not to care and dont want prompts reduced
-  # printf -v prompt "\n\n🤖 %s\n%s" \
-  #   "$(printf "%s" "${transl[common_install_we_need_to]}" | sed "s|_application_|\"${bin}\"|g; s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")" \
-  #   "$(printf "%s" "${transl[common_install_type_y_or_n]}" | sed "s|_yes_|\"${transl[common_prompt_yes_as_y]}\"|g; s|_no_|\"${transl[common_prompt_no_as_n]}\"|g")"
-  # while read -rp "$prompt"$'\n> ' answer; do
-  #   data=$(confirm "$userSelectedLanguage" "$answer")
-
-  #   [[ ! $data ]] && continue
-
-  #   if [[ "$data" -eq 1 ]]; then
-  #     showErrorMessage "${transl[install_mandatory_app_install_required]/_application_/$1}"
-  #     exitInstaller
-  #   elif [[ "$data" -eq 0 ]]; then
-  #     break
-  #   fi
-  # done
-
-  if [[ "$ans" == "" ]]; then
-    echo "😅 ${transl[verify_deps_installed_need_yes_or_no_answer]}"
-    
-    read -r -p "${transl[common_press_enter_retry]}..."
-
-    verifyDepsOrInstall "$os" "$name" "$bin" "$pkgManager"
-  fi
 
   if [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
@@ -1528,6 +1477,30 @@ verifyUserHasDomain() {
   echo "$userDomainName;$emailAddress;$serverIpAddress"
 }
 
+postSSLTLSsetup() {
+  # TODO: Create translation
+  echo "🤖 Set Ursa proxy configuration for SSL/TLS"
+  if ! dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" run \
+    --rm --entrypoint "\
+    if ! curl -X POST 0.0.0.0:8881/reload-tls-config; then
+      exit 1;
+    fi
+    " "$defaultDockerNetworkUrsaProxyHostname"; then
+    echo "💩 Uh oh! Failed to reload the ursa-proxy TLS configuration."
+    echo
+
+    sleep 3
+  fi
+
+  if [[ ! -f "$defaultUrsaProxyConfigPath" ]]; then
+    # TODO: Create translation
+    echo "💩 Uh oh! We tried to modify $defaultUrsaProxyConfigPath but is missing."
+    echo
+  fi
+
+  restartDockerStack
+}
+
 setupSSLTLS() {
   echo "⚠️ ${transl[setup_ssl_tls_you_are_required]}"
   echo
@@ -1555,28 +1528,6 @@ setupSSLTLS() {
   if ! initLetsEncrypt "$emailAddress" "$userDomainName"; then
     exitInstaller
   fi
-
-  # TODO: Create translation
-  echo "🤖 Set Ursa proxy configuration for SSL/TLS"
-  if ! dockerComposeExec -f "$defaultDockerComposeYmlRelativePath" run \
-    --rm --entrypoint "\
-    if ! curl -X POST 0.0.0.0:8881/reload-tls-config; then
-      exit 1;
-    fi
-    " "$defaultDockerNetworkUrsaProxyHostname"; then
-    echo "💩 Uh oh! Failed to reload the ursa-proxy TLS configuration."
-    echo
-
-    sleep 3
-  fi
-
-  if [[ ! -f "$defaultUrsaProxyConfigPath" ]]; then
-    # TODO: Create translation
-    echo "💩 Uh oh! We tried to modify $defaultUrsaProxyConfigPath but is missing."
-    echo
-  fi
-
-  restartDockerStack
 }
 
 changeDirectoryToPathOrFailure() {
@@ -1598,7 +1549,49 @@ changeDirectoryToPathOrFailure() {
   fi
 }
 
+setLatestImageDockerCompose() {
+  for name in "ursa" "ursa-proxy"; do
+    if ! yqExec -ie "del(.services.$name.build)" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1; then
+      echo "👹 Oops! Failed to remove declare service build $name from $defaultDockerComposeYmlRelativePath"
+    else
+      echo "✅ Deleted docker-compose.yml .services.$name.build"
+    fi
+
+    currentImageName="${defaultGHCRImagePlaceholderUrl/_imageName_/$name}"
+
+    if ! yqExec -i ".services.$name.image = \"$currentImageName\"" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1; then
+      echo "👹 Oops! Failed to set service $name image in $defaultDockerComposeYmlRelativePath"
+    else
+      echo "✅ Set service in docker-compose.yml .services.$name.image"
+    fi
+
+    if ! yqExec ".services.$name.image" "$defaultDockerComposeYmlRelativePath" | grep -q "$currentImageName" || ! yqExec ".services.$name.build" "$defaultDockerComposeYmlRelativePath" | grep -qE "null|no matches found"; then
+      echo
+      echo "💩 ${transl[on_latest_preference_uh_oh_failed_modify_docker_compose_yaml]}"
+
+      printf "%s 🙏" "${transl[on_latest_preference_uh_oh_failed_modify_docker_compose_yaml_apologies]}" | sed "s|_defaultDiscordUrl_|\"${defaultDiscordUrl}\"|g"
+      echo
+
+      exitInstaller
+    fi
+  done
+}
+
 onLatestPreference() {
+  if [[ -z ${NONINTERACTIVE+x} ]]; then
+    onLatestPreferenceInteractive
+  else
+    onLatestPreferenceNoninteractive
+  fi
+}
+
+onLatestPreferenceNoninteractive() {
+  if [[ -z ${BUILD_DOCKER_IMAGE+x} ]]; then
+    setLatestImageDockerCompose
+  fi
+}
+
+onLatestPreferenceInteractive() {
   echo
   echo "✋ ${transl[on_latest_preference_when_running_stack_docker_build]}"
   echo "💡 ${transl[on_latest_preference_our_recommendation]} 😴!"
@@ -1621,31 +1614,7 @@ onLatestPreference() {
 
       break
     elif [[ "$data" -eq 0 ]]; then
-      for name in "ursa" "ursa-proxy"; do
-        if ! yqExec -ie "del(.services.$name.build)" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1; then
-          echo "👹 Oops! Failed to remove declare service build $name from $defaultDockerComposeYmlRelativePath"
-        else
-          echo "✅ Deleted docker-compose.yml .services.$name.build"
-        fi
-
-        currentImageName="${defaultGHCRImagePlaceholderUrl/_imageName_/$name}"
-
-        if ! yqExec -i ".services.$name.image = \"$currentImageName\"" "$defaultDockerComposeYmlRelativePath" >/dev/null 2>&1; then
-          echo "👹 Oops! Failed to set service $name image in $defaultDockerComposeYmlRelativePath"
-        else
-          echo "✅ Set service in docker-compose.yml .services.$name.image"
-        fi
-
-        if ! yqExec ".services.$name.image" "$defaultDockerComposeYmlRelativePath" | grep -q "$currentImageName" || ! yqExec ".services.$name.build" "$defaultDockerComposeYmlRelativePath" | grep -qE "null|no matches found"; then
-          echo
-          echo "💩 ${transl[on_latest_preference_uh_oh_failed_modify_docker_compose_yaml]}"
-
-          printf "%s 🙏" "${transl[on_latest_preference_uh_oh_failed_modify_docker_compose_yaml_apologies]}" | sed "s|_defaultDiscordUrl_|\"${defaultDiscordUrl}\"|g"
-          echo
-
-          exitInstaller
-        fi
-      done
+      setLatestImageDockerCompose
 
       break
     fi
@@ -1654,16 +1623,16 @@ onLatestPreference() {
 
 updateUrsaConfigIpAddress() {
   if [[ -f "$defaultUrsaConfigPath" ]]; then
-    if ! sudo sed -i "s|addresses =.*|addresses = [\"/ip4/$serverIpAddress/tcp/80\"]|" "$defaultUrsaConfigPath"; then
-      showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
+    if ! sudo sed -i "s|addresses =.*|addresses = [\"/ip4/$1/tcp/80\"]|" "$defaultUrsaConfigPath"; then
+      showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$1}"
     fi
   else
     if ! sudo mkdir -p "$defaultUrsaBasePath"; then
-      showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
+      showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$1}"
     fi
 
-    if ! createUrsaInitialConfig; then
-      showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$serverIpAddress}"
+    if ! createUrsaInitialConfig $1""; then
+      showPoopMessage "${transl[on_update_ursa_config_ip_address_update_error]/_serverIpAddress_/$1}"
     fi
   fi
 }
@@ -1674,7 +1643,7 @@ createUrsaInitialConfig() {
   fi
 
   echo "[server_config]" | sudo tee "$defaultUrsaConfigPath"
-  echo "addresses = [\"/ip4/$serverIpAddress/tcp/80\"]" | sudo tee -a "$defaultUrsaConfigPath"
+  echo "addresses = [\"/ip4/$1/tcp/80\"]" | sudo tee -a "$defaultUrsaConfigPath"
   echo
 }
 
@@ -1686,7 +1655,13 @@ createUrsaInitialConfig() {
   trap onInterruption INT
 
   # Set default locale
-  multiLanguageChoice
+  if [[ -z ${NONINTERACTIVE+x} ]]; then
+    multiLanguageChoice
+  elif [[ -z ${LANGUAGE+x} ]]; then
+    setLang "en"
+  else
+    setLang "$LANGUAGE"
+  fi
 
   # Identity the OS
   os=$(identifyOS)
@@ -1695,7 +1670,9 @@ createUrsaInitialConfig() {
   isOSSupported "$os"
 
   # Show disclaimer
-  showDisclaimer
+  if [[ -z ${NONINTERACTIVE+x} ]]; then
+    showDisclaimer
+  fi
 
   # Had space after disclaimer
   printf "\r\n"
@@ -1744,7 +1721,13 @@ createUrsaInitialConfig() {
   checkIfDockerInstalled "$os"
 
   # Request a pathname where to store the Ursa repository, otherwise provide a default
-  selectedUrsaPath=$(requestPathnameForUrsaRepository)
+  if [[ -z ${NONINTERACTIVE+x} ]]; then
+    selectedUrsaPath=$(requestPathnameForUrsaRepository)
+  elif [[ -z ${URSA_REPOSITORY_PATH+x} ]]; then
+    selectedUrsaPath="$defaultUrsaPath"
+  else
+    selectedUrsaPath="$URSA_REPOSITORY_PATH"
+  fi
 
   # Check if directory does not exit or empty
   if [[ "$(ls -A "$selectedUrsaPath" >/dev/null 2>&1)" ]]; then
@@ -1776,7 +1759,13 @@ createUrsaInitialConfig() {
   printf "\r\n"
 
   # Optional, check if user would like to setup SSL/TLS
-  setupSSLTLS
+  if [[ -z ${NONINTERACTIVE+x} ]]; then
+    setupSSLTLS
+  else
+    initLetsEncrypt "$EMAIL_ADDR" "$DOMAIN_NAME_ADDR"
+  fi
+
+  postSSLTLSsetup
 
   showOkMessage "${transl[on_latest_preference_success_install_completed]}"
 
@@ -1788,7 +1777,17 @@ createUrsaInitialConfig() {
 
   # The Ursa config has an ip address property
   # which value is shared to the indexer
-  updateUrsaConfigIpAddress
+  if [[ -n "$NONINTERACTIVE" ]]; then
+    if [[ -z ${IP_ADDR+x} ]]; then
+      showErrorMessage "Missing IP_ADDR"
+
+      exit 1
+    fi
+
+    serverIpAddress="$IP_ADDR"
+  fi
+
+  updateUrsaConfigIpAddress "$serverIpAddress"
 
   # Restart docker
   restartDockerStack
