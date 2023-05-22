@@ -1294,15 +1294,6 @@ verifyDepsOrInstall() {
 
   hasCommand "$bin" && return 0
 
-  # TODO: Seems to be a typo?
-  # if [[ "$ans" == "" ]]; then
-  #   echo "😅 ${transl[verify_deps_installed_need_yes_or_no_answer]}"
-    
-  #   read -r -p "${transl[common_press_enter_retry]}..."
-
-  #   verifyDepsOrInstall "$os" "$name" "$bin" "$pkgManager"
-  # fi
-
   if [[ "$os" == "linux" ]]; then
     distro=$(identifyDistro)
     pkgManager=$(echo "$pkgManager" | jq ".$distro")
