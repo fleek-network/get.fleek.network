@@ -150,5 +150,9 @@ echo
   defaultLightningConfigBackupPath="$defaultLightningConfigPath.backup.$dateRuntime"
   defaultLightningHttpsRepository="https://github.com/fleek-network/$defaultName.git"
 
+  # App state
+  selectedLightningPath="$defaultLightningPath"
+  vCPUsMinusOne=$(($vCPUs - 1))
+
   # TODO: Native install process
 )
