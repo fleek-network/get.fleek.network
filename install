@@ -85,6 +85,24 @@ echo
   [ "$BASH" ] || { printf >&2 '🙏 Run the script with Bash, please!\n'; exit 1; }
   (( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
 
+  # 🚑 Check total Processing Units
+  defaultMinCPUUnitsCount=2
+  vCPUs=$(nproc --all)
+  if [[ "$vCPUs" -lt "$defaultMinCPUUnitsCount" ]]; then
+    while read -rp "😅 The installer needs at least $defaultMinCPUUnitsCount total processing units, your system has $vCPUs. The installer is likely to fail, would you like to continue? (yes/no)" answer; do
+      if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+        printf "🦖 Exited the installation process\n\n"
+
+        exit 1
+      elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+        printf "😅 Good luck!\n\n"
+
+        break;
+      fi
+
+      printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+    done
+  fi
   
   # TODO: Native install process
 )
