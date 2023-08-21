@@ -119,7 +119,7 @@ isOSSupported() {
 # The white space before and after is intentional
 cat << "ART"
 
-  ⭐️ Fleek Network Lightning CLI ⭐️
+  ⭐️ Fleek Network Lightning CLI installer ⭐️
 
               zeeeeee-
               z$$$$$$"
