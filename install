@@ -8,9 +8,8 @@
 #
 # Quick install: `curl https://get.fleek.network | bash`
 #
-# This script automates the process illustrated in our guide "Running a Node in a Docker container"
-# and "how to install rust and the dependencies for ursa cli"
-# advanced users might find it better to follow the instructions in the guide
+# This script automates the process illustrated in our "Getting started" guides
+# advanced users might find it better to follow the instructions in the doc version
 # If that's your preference, go ahead and check our guides https://docs.fleek.network
 #
 # Contributing?
