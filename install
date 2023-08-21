@@ -27,6 +27,84 @@ if ! cd "$(mktemp -d)"; then
   exit 1
 fi
 
+# Date
+dateRuntime=$(date '+%Y%m%d%H%M%S')
+
+# Defaults
+defaultName="lightning"
+defaultLightningPath="$HOME/fleek-network/$defaultName"
+defaultLightningLogPath="/var/log/$defaultName"
+defaultLightningDiagnosticFilename="diagnostic.log"
+defaultLightningOutputFilename="output.log"
+defaultLightningDiagnosticLogAbsPath="$defaultLightningLogPath/$defaultLightningDiagnosticFilename"
+defaultLightningOutputLogAbsPath="$defaultLightningLogPath/$defaultLightningOutputFilename"
+defaultLightningSystemdServiceName="$defaultName"
+defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
+defaultLightningConfigFilename="config.toml"
+defaultLightningBasePath="$HOME/.$defaultName"
+defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
+defaultLightningConfigBackupPath="$defaultLightningConfigPath.backup.$dateRuntime"
+defaultLightningHttpsRepository="https://github.com/fleek-network/$defaultName.git"
+
+# App state
+selectedLightningPath="$defaultLightningPath"
+vCPUsMinusOne=$(($vCPUs - 1))
+
+# Utils
+identifyOS() {
+  unameOut="$(uname -s)"
+
+  case "${unameOut}" in
+      Linux*)     os=Linux;;
+      Darwin*)    os=Mac;;
+      CYGWIN*)    os=Cygwin;;
+      MINGW*)     os=MinGw;;
+      *)          os="UNKNOWN:${unameOut}"
+  esac
+
+  echo "$os" | tr '[:upper:]' '[:lower:]'
+}
+
+isOSSupported() {
+  os=$(identifyOS)
+
+  if [[ "$os" == "linux" ]]; then
+    distro=$(identifyDistro)
+
+    if [[ "$distro" == "ubuntu" ]]; then
+      currVersion=$(lsb_release -r -s | tr -d '.')
+
+      if [[ "$currVersion" -lt "2204" ]]; then
+        echo
+        echo "👹 Oops! You'll need Ubuntu 22.04 at least"
+        echo
+
+        exit 1
+      fi
+    elif [[ "$distro" == "debian" ]]; then
+      currVersion=$(lsb_release -r -s | tr -d '.')
+
+      if [[ "$currVersion" -lt "11" ]]; then
+        echo
+        echo "👹 Oops! You'll need Debian 11 at least"
+        echo
+
+        exit 1
+      fi
+    else
+      printf "👹 Oops! Your operating system (%) distro (%s) is not supported by the installer at this time. Check our guides to learn how to install on your own https://docs.fleek.network\n" "$os" "$distro"
+
+      exit 1    
+    fi
+
+    echo "✅ Operating system ($os), distro ($distro) is supported!"
+  else
+    printf "👹 Oops! Your operating system (%) is not supported by the installer at this time. Check our guides to learn how to install on your own https://docs.fleek.network\n" "$os"
+
+    exit 1
+  fi
+}
+
 # The white space before and after is intentional
 cat << "ART"
 
@@ -77,6 +155,9 @@ echo "★★★★★★★★★ 🤖 Discord https://discord.gg/fleekxyz"
 echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
 echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
 echo
+
+printf "🤖 Check if operating system is supported\n"
+isOSSupported
 
 (
   exec < /dev/tty;
@@ -130,29 +211,6 @@ echo
 
     exit 1;
   fi
-
-  # Date
-  dateRuntime=$(date '+%Y%m%d%H%M%S')
-
-  # Defaults
-  defaultName="lightning"
-  defaultLightningPath="$HOME/fleek-network/$defaultName"
-  defaultLightningLogPath="/var/log/$defaultName"
-  defaultLightningDiagnosticFilename="diagnostic.log"
-  defaultLightningOutputFilename="output.log"
-  defaultLightningDiagnosticLogAbsPath="$defaultLightningLogPath/$defaultLightningDiagnosticFilename"
-  defaultLightningOutputLogAbsPath="$defaultLightningLogPath/$defaultLightningOutputFilename"
-  defaultLightningSystemdServiceName="$defaultName"
-  defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
-  defaultLightningConfigFilename="config.toml"
-  defaultLightningBasePath="$HOME/.$defaultName"
-  defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
-  defaultLightningConfigBackupPath="$defaultLightningConfigPath.backup.$dateRuntime"
-  defaultLightningHttpsRepository="https://github.com/fleek-network/$defaultName.git"
-
-  # App state
-  selectedLightningPath="$defaultLightningPath"
-  vCPUsMinusOne=$(($vCPUs - 1))
 
   # TODO: Native install process
 )
