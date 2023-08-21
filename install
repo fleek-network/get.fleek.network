@@ -29,6 +29,8 @@ dateRuntime=$(date '+%Y%m%d%H%M%S')
 
 # Defaults
 defaultName="lightning"
+defaultCLIBuildName="$defaultName-node"
+defaultCLIAlias="lgtnn"
 defaultLightningPath="$HOME/fleek-network/$defaultName"
 defaultLightningLogPath="/var/log/$defaultName"
 defaultLightningDiagnosticFilename="diagnostic.log"
@@ -306,7 +308,7 @@ isOSSupported
   fi
 
   printf "🤖 Install the build-essentials, libraries and packages, necessary for compiling general software and for our use-case %s CLI\n" "$defaultName"
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential cmake clang pkg-config libssl-dev protobuf-compiler -yq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential cmake clang pkg-config libssl-dev protobuf-compiler gcc-multilib -yq
 
   if ! hasCommand make; then
     printf "🤖 Install make\n"
@@ -315,7 +317,7 @@ isOSSupported
 
   printf "🤖 Build and install the %s CLI\n" "$defaultName"
 
-  if ! cargo +stable build; then
+  if ! cargo +stable build --release; then
     printf "👹 Oops! Failed to build and install the %s CLI. If you are experiencing issues, help us improve by letting us know in our Discord %s\n" "$defaultName" "$defaultDiscordUrl"
 
     exit 1
@@ -323,19 +325,19 @@ isOSSupported
 
   printf "🤖 Symlink the %s CLI binary to /usr/local/bin. By default rustup should've set the .cargo/bin into your system PATH, in any case we'll attempt to symlink to ensure %s is available globally\n" "$defaultName" "$defaultDiscordUrl"
   if [[ -f "$HOME/.cargo/bin/$defaultName" ]]; then
-    if ! ln -s "$HOME/.cargo/bin/$defaultName" /usr/local/bin/$defaultName; then
+    if ! ln -s "$HOME/.cargo/bin/$defaultName" /usr/local/bin/$defaultCLIAlias; then
       printf "👹 Oops! Failed to symlink %s to /usr/local/bin/%s\n" "$HOME/.cargo/bin/$defaultName" "$defaultName"
       echo
       read -rp "😅 After the installation, if $defaultName CLI command is not available globally, then you need to add $HOME/.cargo/bin/ursa to your system PATH or symlink the binary to /usr/local/bin/$defaultName, as we've failed to do it. Press ENTER to continue..."
     fi
   else
-    if ! ln -s "$selectedLightningPath/target/release/$defaultName" /usr/local/bin/$defaultName; then
-      printf "👹 Oops! Failed to symlink %s to /usr/local/bin/$defaultName\n" "$selectedLightningPath/target/release/$defaultName"
+    if ! ln -s "$selectedLightningPath/target/release/$defaultCLIBuildName" /usr/local/bin/$defaultCLIAlias; then
+      printf "👹 Oops! Failed to symlink %s to /usr/local/bin/$defaultCLIAlias\n" "$selectedLightningPath/target/release/$defaultCLIBuildName"
       echo
-      read -rp "😅 After the installation, if $defaultName CLI command is unavailable globally, then you need to add $selectedLightningPath/target/release/$defaultName to your system PATH or symlink the binary to /usr/local/bin/$defaultName, as we've failed to do it. Press ENTER to continue..."
+      read -rp "😅 After the installation, if $defaultName $defaultCLIBuildName CLI command is unavailable globally, then you need to add $selectedLightningPath/target/release/$defaultCLIBuildName to your system PATH or symlink the binary to /usr/local/bin/$defaultCLIAlias, as we've failed to do it. Press ENTER to continue..."
     fi
   fi
 
   printf "👌 Great! You have successfully installed required packages, libraries, have compiled and installed %s\n\n" "$defaultName"
-  printf "The %s CLI should be available globally, there's a symlink to the /usr/local/bin/%s. Which means that from now on you can start a Network Node by typing %s\n" "$defaultName" "$defaultName" "$defaultName"
+  printf "The %s CLI should be available globally, there's a symlink to the /usr/local/bin/%s. Which means that from now on you can start a Network Node by typing %s\n" "$defaultName" "$defaultCLIAlias" "$defaultCLIAlias"
 )
