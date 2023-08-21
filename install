@@ -13,12 +13,9 @@
 # If that's your preference, go ahead and check our guides https://docs.fleek.network
 #
 # Contributing?
-# - If you'd like to test changes locally use the env var `USE_BRANCH_NAME_FOR_GH_RAW`, for remote locales pulls
+# - If you'd like to test changes locally use the env var `USE_BRANCH_NAME_FOR_GH_RAW`, `LIGHTNING_BRANCH`, for remote locales pulls
 #
 # Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
-
-# Default to branch "main"
-useBranch=${USE_BRANCH_NAME_FOR_GH_RAW="main"}
 
 # Workdir
 if ! cd "$(mktemp -d)"; then
@@ -45,8 +42,10 @@ defaultLightningBasePath="$HOME/.$defaultName"
 defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
 defaultLightningConfigBackupPath="$defaultLightningConfigPath.backup.$dateRuntime"
 defaultLightningHttpsRepository="https://github.com/fleek-network/$defaultName.git"
+defaultDiscordUrl="https://discord.gg/fleekxyz"
 
 # App state
+vCPUs=$(nproc --all)
 selectedLightningPath="$defaultLightningPath"
 vCPUsMinusOne=$(($vCPUs - 1))
 
@@ -114,6 +113,10 @@ isOSSupported() {
 
     exit 1
   fi
+}
+
+hasCommand() {
+  command -v "$1" >/dev/null 2>&1
 }
 
 # The white space before and after is intentional
@@ -214,5 +217,125 @@ isOSSupported
     exit 1;
   fi
 
-  # TODO: Native install process
+  # Install location
+  printf "🤖 The $defaultName source-code is going to be stored in the recommended path %s (otherwise, type \"n\" to modify path)\n" "$defaultLightningPath"
+  printf -v prompt "Should we proceed and install to path %s? (yes/no)" "$defaultLightningPath"
+
+  while read -r -p "$prompt"$'\n> ' answer; do
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+      printf -v prompt "\n🙋‍♀️ What path should we clone the %s source-code to?\n" "$defaultName"
+      read -r -p "$prompt"$'\n> ' answer
+
+      if [[ -d "$answer" ]]; then
+        printf "👹 Oops! The path %s already exists! This might be annoying but we don't want to mess with your system. So, clear the path and try again...\n" "$answer"
+
+        exit 1
+      fi
+
+      if ! mkdir -p "$selectedLightningPath"; then
+        printf "👹 Oops! Failed to create the path %s\n" "$selectedLightningPath"
+
+        exit 1
+      fi
+
+      selectedLightningPath="$answer"
+
+      break
+    fi
+
+    if [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+      selectedLightningPath="$defaultLightningPath"
+      
+      break
+    fi
+  done
+
+  # OS update
+  # TODO: should compute per Linux distro
+  printf "🤖 Update and upgrade apt-get\n"
+  sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
+
+  # Dependencies verification process
+  if ! hasCommand git; then
+    printf "🤖 Install Git\n"
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install git -yq
+  fi
+
+  printf "🤖 Clone the %s source-code (git repository) to %s\n" "$defaultName" "$selectedLightningPath"
+  if [[ -n ${LIGHTNING_BRANCH+x} ]]; then
+    echo "🥷 Switch to branch $LIGHTNING_BRANCH"
+    if ! sudo git clone -b "$LIGHTNING_BRANCH" "$defaultLightningHttpsRepository" "$selectedLightningPath"; then
+      echo "👹 Oops! Failed to clone the $defaultName repository"
+
+      exit 1
+    fi
+  else
+    if ! sudo git clone $defaultLightningHttpsRepository "$selectedLightningPath"; then
+      echo "👹 Oops! Failed to clone the $defaultName repository"
+
+      exit 1
+    fi
+  fi
+
+  printf "🤖 Change directory to %s (git repository)\n" "$selectedLightningPath"
+  if ! cd "$selectedLightningPath"; then
+    printf "👹 Oops! Failed to change directory to %s\n" "$selectedLightningPath"
+
+    exit 1
+  fi
+
+  # Check if rust toolchain is available
+  if ! command -vp "cargo" &> /dev/null && ! command -vp "rustc" &> /dev/null; then
+    printf "🤖 Install the Rustup tool\n"
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+    echo
+
+    printf "🤖 Reload PATH environments to include Cargo\n"
+    source "$HOME/.cargo/env"
+    
+    echo
+
+    printf "✅ Rust is installed!\n"
+
+    printf "Cargo version is %s\n" "$(cargo --version)"
+  else
+    printf "🤖 Update Rustup\n"
+    rustup update
+  fi
+
+  printf "🤖 Install the build-essentials, libraries and packages, necessary for compiling general software and for our use-case %s CLI\n" "$defaultName"
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential cmake clang pkg-config -yq
+
+  if ! hasCommand make; then
+    printf "🤖 Install make\n"
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install make -yq
+  fi
+
+  printf "🤖 Build and install the %s CLI\n" "$defaultName"
+
+  if ! cargo +stable --jobs "$vCPUsMinusOne" build; then
+    printf "👹 Oops! Failed to build and install the %s CLI. If you are experiencing issues, help us improve by letting us know in our Discord %s\n" "$defaultName" "$defaultDiscordUrl"
+
+    exit 1
+  fi
+
+  printf "🤖 Symlink the %s CLI binary to /usr/local/bin. By default rustup should've set the .cargo/bin into your system PATH, in any case we'll attempt to symlink to ensure %s is available globally\n" "$defaultName" "$defaultDiscordUrl"
+  if [[ -f "$HOME/.cargo/bin/$defaultName" ]]; then
+    if ! ln -s "$HOME/.cargo/bin/$defaultName" /usr/local/bin/$defaultName; then
+      printf "👹 Oops! Failed to symlink %s to /usr/local/bin/%s\n" "$HOME/.cargo/bin/$defaultName" "$defaultName"
+      echo
+      read -rp "😅 After the installation, if $defaultName CLI command is not available globally, then you need to add $HOME/.cargo/bin/ursa to your system PATH or symlink the binary to /usr/local/bin/$defaultName, as we've failed to do it. Press ENTER to continue..."
+    fi
+  else
+    if ! ln -s "$selectedLightningPath/target/release/$defaultName" /usr/local/bin/$defaultName; then
+      printf "👹 Oops! Failed to symlink %s to /usr/local/bin/$defaultName\n" "$selectedLightningPath/target/release/$defaultName"
+      echo
+      read -rp "😅 After the installation, if $defaultName CLI command is unavailable globally, then you need to add $selectedLightningPath/target/release/$defaultName to your system PATH or symlink the binary to /usr/local/bin/$defaultName, as we've failed to do it. Press ENTER to continue..."
+    fi
+  fi
+
+  printf "👌 Great! You have successfully installed required packages, libraries, have compiled and installed %s\n\n" "$defaultName"
+  printf "The %s CLI should be available globally, there's a symlink to the /usr/local/bin/%s. Which means that from now on you can start a Network Node by typing %s\n" "$defaultName" "$defaultName" "$defaultName"
 )
