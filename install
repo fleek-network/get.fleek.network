@@ -103,6 +103,25 @@ echo
       printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
     done
   fi
+
+  # 🚑 Check if ports available
+  # Obs: In the future there'll be ports for Worker (80*1) and Mempool (80*2)
+  declare -a requiredPorts=(4069 8000 8001 8002)
+
+  hasPortsAvailable=0
+  for port in "${requiredPorts[@]}"; do
+    if lsof -i :"$port" >/dev/null; then
+      printf "💩 Uh-oh! The port %s is required but is in use...\n" "$port"
+
+      hasPortsAvailable=1
+    fi
+  done
+
+  if [[ "$hasPortsAvailable" -eq 1 ]]; then
+    printf "👹 Oops! Required port(s) are in use, make sure the ports are open before retrying, please!\n"
+
+    exit 1
+  fi
   
   # TODO: Native install process
 )
