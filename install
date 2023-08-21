@@ -30,69 +30,56 @@ fi
 # The white space before and after is intentional
 cat << "ART"
 
-  ⭐️ Ursa, a Decentralized Content Delivery Network (DCDN) ⭐️
+  ⭐️ Fleek Network Lightning CLI ⭐️
 
-       ,-.
-      / \  `.   __..-,O
-     :   \  --''_..-'.'
-     |    . .-' `. '.
-     :     .     .`.'
-      \     `.  /  ..
-       \      `.   ' .
-        `,       `.   \
-        ,|,`.        `-.\
-       '.||  ``-...__..-`
-        |  |
-        |__|
-        /||\
-       //||\\
-      // || \\
-   __//__||__\\__
-  '--------------' URSA
+                  .eeeeeeeee
+                  .$$$$$$$$P"
+                .$$$$$$$$P
+                z$$$$$$$$P
+              z$$$$$$$$"
+              z$$$$$$$$"
+            d$$$$$$$$"
+            d$$$$$$$$"
+          .d$$$$$$$P
+        .$$$$$$$$P
+        .$$$$$$$$$.........
+      .$$$$$$$$$$$$$$$$$$"
+      z$$$$$$$$$$$$$$$$$P"
+    -**********$$$$$$$P
+              d$$$$$$"
+            .d$$$$$$"
+            .$$$$$$P"
+          z$$$$$$P
+          d$$$$$$"
+        .d$$$$$$"
+      .$$$$$$$"
+      z$$$$$$$beeeeee
+    d$$$$$$$$$$$$$*
+    ^""""""""$$$$$"
+            d$$$*
+          d$$$"
+          d$$*
+        d$P"
+      .$$"
+      .$P"
+    .$"
+    .P"
+  ."
+  /"
 
 ART
 
 echo
-echo "👽 Welcome ultra-terrestrial being 👽"
-echo
-echo "We are ready to launch the communication channel with the Fleek Network 📡, but you need to make a choice!"
-echo "There are two options, where option number 1 is to run a Network Node un a Docker Container, or option number 2, installed natively in your operating system."
-echo "Most Node Operators are using the Docker Stack (if you stick with the recommendations, this is the quickest way to setup 🚀), while other's have a preference for running Natively (might take longer to set up, as it requires building the Ursa CLI binary from the Rust 🦀 source-code)."
-echo
-echo "Select how to run the Fleek Network:"
-echo
-echo "1) 🔫 Docker Stack (recommended)"
-echo "2) 👾 Natively"
+echo "★★★★★★★★★ 🌍 Website https://fleek.network"
+echo "★★★★★★★★★ 📚 Documentation https://docs.fleek.network"
+echo "★★★★★★★★★ 💾 Git repository https://github.com/fleek-network/lightning"
+echo "★★★★★★★★★ 🤖 Discord https://discord.gg/fleekxyz"
+echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
+echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
 echo
 
 (
   exec < /dev/tty;
   
-  while read -rp "Type your selection number> " answer; do
-    if [[ $answer -eq 1 ]]; then
-      echo
-      read -rp "🧑‍🚀 Nice choice terrestrial! We'll launch the process, press ENTER to continue..."
-
-      curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$useBranch/scripts/install_docker" > install_docker
-      chmod +x install_docker
-
-      ./install_docker
-
-      break
-    elif [[ $answer -eq 2 ]]; then
-      echo
-      echo "🔭 Nice one astrophysicist! Before we launch the process, just to let you know that the Ursa CLI (used to start the Node Network) will be compiled from the Rust 🦀 source code. Depending on your spaceship specifications this can be quite slow, be patient!"
-      echo
-      read -rp "Let's launch the process, press ENTER to continue..."
-
-      curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$useBranch/scripts/install_native" > install_native
-      chmod +x install_native
-
-      ./install_native
-
-      break;
-    fi
-
-    echo "💩 Uh oh! We're expecting a yes (Y) or a no (N) answer. Try again..."
-  done
+  # TODO: Native install process
 )
