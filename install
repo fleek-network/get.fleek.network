@@ -306,7 +306,7 @@ isOSSupported
   fi
 
   printf "🤖 Install the build-essentials, libraries and packages, necessary for compiling general software and for our use-case %s CLI\n" "$defaultName"
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential cmake clang pkg-config -yq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential cmake clang pkg-config libssl-dev protobuf-compiler -yq
 
   if ! hasCommand make; then
     printf "🤖 Install make\n"
@@ -315,7 +315,7 @@ isOSSupported
 
   printf "🤖 Build and install the %s CLI\n" "$defaultName"
 
-  if ! cargo +stable --jobs "$vCPUsMinusOne" build; then
+  if ! cargo +stable build; then
     printf "👹 Oops! Failed to build and install the %s CLI. If you are experiencing issues, help us improve by letting us know in our Discord %s\n" "$defaultName" "$defaultDiscordUrl"
 
     exit 1
