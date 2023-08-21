@@ -122,6 +122,33 @@ echo
 
     exit 1
   fi
-  
+
+  # TODO: Provide support for sudoers
+  # initial version stick with root user
+  if [ "$(id -u)" -ne 0 ]; then
+    printf "😅 Our apologies! You need to run as root. We should provide support for sudoers shortly 🙏\n" >&2;
+
+    exit 1;
+  fi
+
+  # Date
+  dateRuntime=$(date '+%Y%m%d%H%M%S')
+
+  # Defaults
+  defaultName="lightning"
+  defaultLightningPath="$HOME/fleek-network/$defaultName"
+  defaultLightningLogPath="/var/log/$defaultName"
+  defaultLightningDiagnosticFilename="diagnostic.log"
+  defaultLightningOutputFilename="output.log"
+  defaultLightningDiagnosticLogAbsPath="$defaultLightningLogPath/$defaultLightningDiagnosticFilename"
+  defaultLightningOutputLogAbsPath="$defaultLightningLogPath/$defaultLightningOutputFilename"
+  defaultLightningSystemdServiceName="$defaultName"
+  defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
+  defaultLightningConfigFilename="config.toml"
+  defaultLightningBasePath="$HOME/.$defaultName"
+  defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
+  defaultLightningConfigBackupPath="$defaultLightningConfigPath.backup.$dateRuntime"
+  defaultLightningHttpsRepository="https://github.com/fleek-network/$defaultName.git"
+
   # TODO: Native install process
 )
