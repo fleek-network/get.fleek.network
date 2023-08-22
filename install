@@ -340,4 +340,12 @@ isOSSupported
 
   printf "👌 Great! You have successfully installed required packages, libraries, have compiled and installed %s\n\n" "$defaultName"
   printf "The %s CLI should be available globally, there's a symlink to the /usr/local/bin/%s. Which means that from now on you can start a Network Node by typing %s\n" "$defaultName" "$defaultCLIAlias" "$defaultCLIAlias"
+
+  if hasCommand ufw && ufw status | grep -q 'Status: active'; then
+    printf "💡 Detected that ufw is active\n"
+
+    printf -v prompt "🚓 Warning! Make sure you don't have the ports %s blocked by a firewall. The installer will fail if you don't have the required ports open! Press ENTER to continue..." "${requiredPorts[*]}"
+    read -rp "$prompt"
+  fi
+
 )
