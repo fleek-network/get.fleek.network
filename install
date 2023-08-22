@@ -33,7 +33,7 @@ gbInKb=1000000
 # Defaults
 defaultName="lightning"
 defaultCLIBuildName="$defaultName-node"
-defaultCLIAlias="lgtnn"
+defaultCLIAlias="lgtn"
 defaultLightningPath="$HOME/fleek-network/$defaultName"
 defaultLightningLogPath="/var/log/$defaultName"
 defaultLightningDiagnosticFilename="diagnostic.log"
@@ -360,7 +360,7 @@ isOSSupported
   printf "🤖 Symlink the %s CLI binary to /usr/local/bin. By default rustup should've set the .cargo/bin into your system PATH, in any case we'll attempt to symlink to ensure %s is available globally\n" "$defaultName" "$defaultDiscordUrl"
   if [[ -f "$HOME/.cargo/bin/$defaultName" ]]; then
     if [[ -L "/usr/local/bin/$defaultCLIAlias" ]]; then
-      if ! rm "/usr/local/bin/$defaultCLIAlias"; then
+      if ! rm -f "/usr/local/bin/$defaultCLIAlias"; then
         printf "👹 Oops! Failed to remove simbolic link %s \n" "/usr/local/bin/$defaultCLIAlias"
       fi
     fi
