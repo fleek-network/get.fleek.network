@@ -27,6 +27,9 @@ fi
 # Date
 dateRuntime=$(date '+%Y%m%d%H%M%S')
 
+# Constants
+gbInKb=1000000
+
 # Defaults
 defaultName="lightning"
 defaultCLIBuildName="$defaultName-node"
@@ -45,6 +48,8 @@ defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFil
 defaultLightningConfigBackupPath="$defaultLightningConfigPath.backup.$dateRuntime"
 defaultLightningHttpsRepository="https://github.com/fleek-network/$defaultName.git"
 defaultDiscordUrl="https://discord.gg/fleekxyz"
+defaultMinMemoryKBytesRequired=8000000
+defaultMinDiskSpaceKBytesRequired=1000000
 
 # App state
 vCPUs=$(nproc --all)
@@ -52,6 +57,32 @@ selectedLightningPath="$defaultLightningPath"
 vCPUsMinusOne=$(($vCPUs - 1))
 
 # Utils
+checkSystemHasRecommendedResources() {
+  mem=$(awk '/^MemTotal:/{print $2}' /proc/meminfo);
+  partDiskSpace=$(df --output=avail -B 1 "$PWD" |tail -n 1)
+
+  if [[ ("$mem" -lt "$defaultMinMemoryKBytesRequired") ]] || [[ ( "$partDiskSpace" -lt "$defaultMinDiskSpaceKBytesRequired" ) ]]; then
+    echo "😬 Oh no! We're afraid you need at least $((defaultMinMemoryKBytesRequired / gbInKb))GB of RAM and $((defaultMinDiskSpaceKBytesRequired / gbInKb))GB of available disk space."
+    echo
+    printf -v prompt "\n\n🤖 Are you sure you want to continue (yes/no)?"
+    read -r -p "$prompt"$'\n> ' answer
+
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+      printf "🦖 Exited the installation process\n\n"
+
+      exit 1
+    fi
+
+    echo "😅 Alright, let's try that, but your system is below our recommendations, so don't expect it to work correctly..."
+
+    sleep 5
+
+    return 0
+  fi
+  
+  echo "👍 Great! Your system has enough resources (disk space and memory)"
+}
+
 identifyOS() {
   unameOut="$(uname -s)"
 
@@ -191,6 +222,9 @@ isOSSupported
       printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
     done
   fi
+
+  # Check if system has recommended resources (disk space and memory)
+  checkSystemHasRecommendedResources "$os"
 
   # 🚑 Check if ports available
   # Obs: In the future there'll be ports for Worker (80*1) and Mempool (80*2)
