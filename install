@@ -348,4 +348,76 @@ isOSSupported
     read -rp "$prompt"
   fi
 
+  printf "🤖 Create a Systemd %s service\n" "$defaultName"
+  printf "🤖 Create the %s log directory %s\n" "$defaultName" "$defaultLightningLogPath"
+  if ! mkdir -p "$defaultLightningLogPath"; then
+    printf "💩 Uh-oh! Failed to create the %s system log dir %s for some reason...\n" "$defaultName" "$defaultLightningLogPath"
+  fi
+
+  printf "🤖 Declare the service and store in the system path\n"
+
+# Important: the LIGHTNING_SERVICE it does not have identation on purpose, do not change
+cat << LIGHTNING_SERVICE > "$defaultLightningSystemdServicePath"
+[Unit]
+Description=Fleek Network Lightning CLI installer
+
+[Service]
+Type=simple
+MemoryHigh=32G
+RestartSec=15s
+Restart=always
+ExecStart=$defaultName
+StandardOutput=append:$defaultLightningOutputLogAbsPath
+StandardError=append:$defaultLightningDiagnosticLogAbsPath
+
+[Install]
+WantedBy=multi-user.target
+LIGHTNING_SERVICE
+
+  printf "🤖 Set service file permissions\n"
+  sudo chmod 644 "$defaultLightningSystemdServicePath"
+
+  printf "🤖 System control daemon reload\n"
+  sudo systemctl daemon-reload
+
+  printf "🤖 Start the %s service\n" "$defaultName"
+  sudo systemctl start "$defaultLightningSystemdServiceName"
+
+  printf "🤖 Enable %s service on startup when the system boots\n" "$defaultName"
+  sudo systemctl enable "$defaultLightningSystemdServiceName"
+
+  printf "🤖 %s service availability check\n" "$defaultName"
+  pingAttempts=0
+  while ! curl -s localhost:4069/ping | grep -q pong; do
+    if [[ "$pingAttempts" -gt 10 ]]; then
+      printf "👹 Oh no! Failed to health-check the localhost on port 4069\n"
+
+      break;
+    fi
+
+    printf "🤖 Awaiting %s on port 4069...\n" "$defaultName"
+    sleep 1
+
+    ((pingAttempts++))
+  done
+
+  echo
+  echo "🌈 The Fleek Network Node is running!"
+  echo
+  echo "You can watch the Node output by running the command:"
+  echo "tail -f $defaultLightningOutputLogAbsPath"
+  echo
+  echo "For diagnostics run the command:"
+  echo "tail -f $defaultLightningDiagnosticLogAbsPath"
+  echo
+  echo "Launch or stop the Network Node by running:"
+  echo "sudo systemctl stop $defaultName"
+  echo "sudo systemctl restart $defaultName"
+  echo
+  echo "Check the status of the service:"
+  echo "sudo systemctl status $defaultName"
+  echo
+  echo "Learn more by checking our guides at https://docs.fleek.network"
+  echo "✨ That's all!"
+  echo
 )
