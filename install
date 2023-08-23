@@ -48,6 +48,7 @@ defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFil
 defaultLightningConfigBackupPath="$defaultLightningConfigPath.backup.$dateRuntime"
 defaultLightningHttpsRepository="https://github.com/fleek-network/$defaultName.git"
 defaultDiscordUrl="https://discord.gg/fleekxyz"
+defaultDocsSite="https://docs.fleek.network"
 defaultMinMemoryKBytesRequired=8000000
 defaultMinDiskSpaceKBytesRequired=1000000
 
@@ -351,7 +352,11 @@ isOSSupported
 
   printf "🤖 Build and install the %s CLI\n" "$defaultName"
 
-  if ! cargo +stable build --release; then
+  # TODO: put back stable release as "install" (should set PATH automatically, so can remove the handling for PATH setup)
+  # TODO: once changed switch from `debug` to `release`
+  # if ! cargo +stable build --release; then
+  targetName="debug"
+  if ! cargo build; then
     printf "👹 Oops! Failed to build and install the %s CLI. If you are experiencing issues, help us improve by letting us know in our Discord %s\n" "$defaultName" "$defaultDiscordUrl"
 
     exit 1
@@ -371,12 +376,26 @@ isOSSupported
       read -rp "😅 After the installation, if $defaultName CLI command is not available globally, then you need to add $HOME/.cargo/bin/ursa to your system PATH or symlink the binary to /usr/local/bin/$defaultName, as we've failed to do it. Press ENTER to continue..."
     fi
   else
-    if ! ln -s "$selectedLightningPath/target/release/$defaultCLIBuildName" /usr/local/bin/$defaultCLIAlias; then
-      printf "👹 Oops! Failed to symlink %s to /usr/local/bin/$defaultCLIAlias\n" "$selectedLightningPath/target/release/$defaultCLIBuildName"
+    if ! ln -s "$selectedLightningPath/target/$targetName/$defaultCLIBuildName" /usr/local/bin/$defaultCLIAlias; then
+      printf "👹 Oops! Failed to symlink %s to /usr/local/bin/$defaultCLIAlias\n" "$selectedLightningPath/target/$targetName/$defaultCLIBuildName"
       echo
-      read -rp "😅 After the installation, if $defaultName $defaultCLIBuildName CLI command is unavailable globally, then you need to add $selectedLightningPath/target/release/$defaultCLIBuildName to your system PATH or symlink the binary to /usr/local/bin/$defaultCLIAlias, as we've failed to do it. Press ENTER to continue..."
+      read -rp "😅 After the installation, if $defaultName $defaultCLIBuildName CLI command is unavailable globally, then you need to add $selectedLightningPath/$targetName/release/$defaultCLIBuildName to your system PATH or symlink the binary to /usr/local/bin/$defaultCLIAlias, as we've failed to do it. Press ENTER to continue..."
     fi
   fi
+
+  printf "🔑 Generate keys"
+  if ! lgtn keys generate; then
+    printf "⚠️ Keys already exist, will NOT generate new keys!\n"
+  fi
+
+  printf "🔑 The public keys are\n"
+  lgtn keys show | grep 'Node Public\|Consensus Public'
+
+  printf "Find the private keys in the location %s\n\n" "$HOME/.$defaultName/keystore"
+  printf "⚠️ The public key is open to anybody to see and it represents a unique node in the Fleek Network, a bit like a bank account number.\n"
+  printf "On the other hand, the private key is secret and the operator is responsible to store it privately.\n\n"
+  printf "⚠️ Fleek Network has no way to help access, retrieve or recover lost keys. The keys are the node operator responsability!\n"
+  printf "Learn more about the keystore by checking the documentation site at %s\n\n" "$defaultDocsSite"
 
   printf "👌 Great! You have successfully installed required packages, libraries, have compiled and installed %s\n\n" "$defaultName"
   printf "The %s CLI should be available globally, there's a symlink to the /usr/local/bin/%s. Which means that from now on you can start a Network Node by typing %s\n" "$defaultName" "$defaultCLIAlias" "$defaultCLIAlias"
