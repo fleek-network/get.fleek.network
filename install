@@ -494,7 +494,7 @@ LIGHTNING_SERVICE
   if curl -sS -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; then
     echo "🌈 The Fleek Network Node is running!"
   else
-    echo "🌈 The Fleek Network Node was installed but the service is not running yet!"
+    echo "🌈 The Fleek Network Node was installed but the service is not running yet! Keep reading to find how to check the status, start and stop the service."
   fi
 
   echo
