@@ -224,6 +224,8 @@ isOSSupported
     done
   fi
 
+  echo
+
   # Check if system has recommended resources (disk space and memory)
   checkSystemHasRecommendedResources "$os"
 
@@ -245,7 +247,7 @@ isOSSupported
 
     exit 1
   fi
-
+  
   # TODO: Provide support for sudoers
   # initial version stick with root user
   if [ "$(id -u)" -ne 0 ]; then
@@ -253,6 +255,8 @@ isOSSupported
 
     exit 1;
   fi
+
+  echo
 
   # Install location
   printf "🤖 The $defaultName source-code is going to be stored in the recommended path %s (otherwise, type \"n\" to modify path)\n" "$defaultLightningPath"
@@ -287,6 +291,8 @@ isOSSupported
     fi
   done
 
+  echo
+
   # OS update
   # TODO: should compute per Linux distro
   printf "🤖 Update and upgrade apt-get\n"
@@ -298,6 +304,8 @@ isOSSupported
     printf "🤖 Install Git\n"
     sudo DEBIAN_FRONTEND=noninteractive apt-get install git -yq
   fi
+
+  echo
 
   printf "🤖 Clone the %s source-code (git repository) to %s\n" "$defaultName" "$selectedLightningPath"
   if [[ -n ${LIGHTNING_BRANCH+x} ]]; then
@@ -314,6 +322,8 @@ isOSSupported
       exit 1
     fi
   fi
+
+  echo
 
   printf "🤖 Change directory to %s (git repository)\n" "$selectedLightningPath"
   if ! cd "$selectedLightningPath"; then
@@ -342,6 +352,8 @@ isOSSupported
     rustup update
   fi
 
+  echo
+
   printf "🤖 Install the build-essentials, libraries and packages, necessary for compiling general software and for our use-case %s CLI\n" "$defaultName"
   sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential cmake clang pkg-config libssl-dev protobuf-compiler gcc-multilib -yq
 
@@ -349,6 +361,8 @@ isOSSupported
     printf "🤖 Install make\n"
     sudo DEBIAN_FRONTEND=noninteractive apt-get install make -yq
   fi
+
+  echo
 
   printf "🤖 Build and install the %s CLI\n" "$defaultName"
 
@@ -362,14 +376,18 @@ isOSSupported
     exit 1
   fi
 
-  printf "🤖 Symlink the %s CLI binary to /usr/local/bin. By default rustup should've set the .cargo/bin into your system PATH, in any case we'll attempt to symlink to ensure %s is available globally\n" "$defaultName" "$defaultDiscordUrl"
-  if [[ -f "$HOME/.cargo/bin/$defaultName" ]]; then
-    if [[ -L "/usr/local/bin/$defaultCLIAlias" ]]; then
-      if ! rm -f "/usr/local/bin/$defaultCLIAlias"; then
-        printf "👹 Oops! Failed to remove simbolic link %s \n" "/usr/local/bin/$defaultCLIAlias"
-      fi
-    fi
+  echo
 
+  printf "🤖 Symlink the %s CLI binary to /usr/local/bin. By default rustup should've set the .cargo/bin into your system PATH, in any case we'll attempt to symlink to ensure %s is available globally\n" "$defaultName" "$defaultDiscordUrl"
+  # Remove previous symlink if one exists
+  if [[ -L "/usr/local/bin/$defaultCLIAlias" ]]; then
+    # TODO: Symlink not getting removed for some reason
+    if ! rm -f "/usr/local/bin/$defaultCLIAlias"; then
+      printf "👹 Oops! Failed to remove simbolic link %s \n" "/usr/local/bin/$defaultCLIAlias"
+    fi
+  fi
+
+  if [[ -f "$HOME/.cargo/bin/$defaultName" ]]; then
     if ! ln -s "$HOME/.cargo/bin/$defaultName" /usr/local/bin/$defaultCLIAlias; then
       printf "👹 Oops! Failed to symlink %s to /usr/local/bin/%s\n" "$HOME/.cargo/bin/$defaultName" "$defaultName"
       echo
@@ -383,21 +401,25 @@ isOSSupported
     fi
   fi
 
+  echo
+
   printf "🔑 Generate keys"
   if ! lgtn keys generate; then
     printf "⚠️ Keys already exist, will NOT generate new keys!\n"
   fi
 
   printf "🔑 The public keys are\n"
-  lgtn keys show | grep 'Node Public\|Consensus Public'
+  if ! lgtn keys show | grep 'Node Public\|Consensus Public'; then
+    printf "👹 Oops! Failed to show the public keys for Node and Consensus for some reason\n"
+  fi
+
+  echo
 
   printf "Find the private keys in the location %s\n\n" "$HOME/.$defaultName/keystore"
-  printf "⚠️ The public key is open to anybody to see and it represents a unique node in the Fleek Network, a bit like a bank account number.\n"
-  printf "On the other hand, the private key is secret and the operator is responsible to store it privately.\n\n"
-  printf "⚠️ Fleek Network has no way to help access, retrieve or recover lost keys. The keys are the node operator responsability!\n"
-  printf "Learn more about the keystore by checking the documentation site at %s\n\n" "$defaultDocsSite"
+  printf "⚠️ The public key is open to anybody to see and it represents a unique node in the Fleek Network, a bit like a bank account number. On the other hand, the private key is secret and the operator is responsible to store it privately.\n\n"
+  printf "⚠️ Fleek Network has no way to help access, retrieve or recover lost keys. The keys are the node operator responsability! Learn more about the keystore by checking the documentation site at %s\n\n" "$defaultDocsSite"
 
-  printf "👌 Great! You have successfully installed required packages, libraries, have compiled and installed %s\n\n" "$defaultName"
+  printf "👌 Great! You have successfully installed required packages, libraries, have compiled and installed %s\n" "$defaultName"
   printf "The %s CLI should be available globally, there's a symlink to the /usr/local/bin/%s. Which means that from now on you can start a Network Node by typing %s\n" "$defaultName" "$defaultCLIAlias" "$defaultCLIAlias"
 
   if hasCommand ufw && ufw status | grep -q 'Status: active'; then
@@ -407,25 +429,29 @@ isOSSupported
     read -rp "$prompt"
   fi
 
+  echo
+
   printf "🤖 Create a Systemd %s service\n" "$defaultName"
   printf "🤖 Create the %s log directory %s\n" "$defaultName" "$defaultLightningLogPath"
   if ! mkdir -p "$defaultLightningLogPath"; then
     printf "💩 Uh-oh! Failed to create the %s system log dir %s for some reason...\n" "$defaultName" "$defaultLightningLogPath"
   fi
 
+  echo
+
   printf "🤖 Declare the service and store in the system path\n"
 
 # Important: the LIGHTNING_SERVICE it does not have identation on purpose, do not change
 cat << LIGHTNING_SERVICE > "$defaultLightningSystemdServicePath"
 [Unit]
-Description=Fleek Network Lightning CLI installer
+Description=Fleek Network Node lightning service
 
 [Service]
 Type=simple
 MemoryHigh=32G
 RestartSec=15s
 Restart=always
-ExecStart=$defaultName
+ExecStart=$defaultCLIAlias run
 StandardOutput=append:$defaultLightningOutputLogAbsPath
 StandardError=append:$defaultLightningDiagnosticLogAbsPath
 
@@ -447,7 +473,10 @@ LIGHTNING_SERVICE
 
   printf "🤖 %s service availability check\n" "$defaultName"
   pingAttempts=0
-  while ! curl -s localhost:4069/ping | grep -q pong; do
+
+  printf "🦖 Please be patient with us! The Fleek Network Node is launching and may take awhile 🙏\n"
+
+  while ! curl -sS -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; do
     if [[ "$pingAttempts" -gt 10 ]]; then
       printf "👹 Oh no! Failed to health-check the localhost on port 4069\n"
 
@@ -455,13 +484,19 @@ LIGHTNING_SERVICE
     fi
 
     printf "🤖 Awaiting %s on port 4069...\n" "$defaultName"
-    sleep 1
+    sleep 30
 
     ((pingAttempts++))
   done
 
   echo
-  echo "🌈 The Fleek Network Node is running!"
+
+  if curl -sS -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; then
+    echo "🌈 The Fleek Network Node is running!"
+  else
+    echo "🌈 The Fleek Network Node was installed but the service is not running yet!"
+  fi
+
   echo
   echo "You can watch the Node output by running the command:"
   echo "tail -f $defaultLightningOutputLogAbsPath"
