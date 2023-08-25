@@ -57,6 +57,9 @@ vCPUs=$(nproc --all)
 selectedLightningPath="$defaultLightningPath"
 vCPUsMinusOne=$(($vCPUs - 1))
 
+# Error codes
+err_non_root=87
+
 # Utils
 checkSystemHasRecommendedResources() {
   mem=$(awk '/^MemTotal:/{print $2}' /proc/meminfo);
@@ -247,16 +250,14 @@ isOSSupported
 
     exit 1
   fi
-  
-  # TODO: Provide support for sudoers
-  # initial version stick with root user
-  if [ "$(id -u)" -ne 0 ]; then
-    printf "😅 Our apologies! You need to run as root. We should provide support for sudoers shortly 🙏\n" >&2;
 
-    exit 1;
+
+  # Check if user is sudoer, as the command uses `sudo` warn the user
+  if ! groups | grep -q 'root\|sudo'; then
+    printf "⛔️ Attention! You need to have admin privileges (sudo), switch user and try again please! 🙏\n" >&2;
+
+    exit "$err_non_root";
   fi
-
-  echo
 
   # Install location
   printf "🤖 The $defaultName source-code is going to be stored in the recommended path %s (otherwise, type \"n\" to modify path)\n" "$defaultLightningPath"
@@ -296,13 +297,15 @@ isOSSupported
   # OS update
   # TODO: should compute per Linux distro
   printf "🤖 Update and upgrade apt-get\n"
-  sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
-  sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
+  read -rp "⚠️ Attention! You'll need to have admin privileges. Press ENTER to continue..."
+  echo
+  DEBIAN_FRONTEND=noninteractive sudo apt-get update -yq
+  DEBIAN_FRONTEND=noninteractive sudo apt-get upgrade -yq
 
   # Dependencies verification process
   if ! hasCommand git; then
     printf "🤖 Install Git\n"
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install git -yq
+    DEBIAN_FRONTEND=noninteractive apt-get install git -yq
   fi
 
   echo
@@ -310,13 +313,13 @@ isOSSupported
   printf "🤖 Clone the %s source-code (git repository) to %s\n" "$defaultName" "$selectedLightningPath"
   if [[ -n ${LIGHTNING_BRANCH+x} ]]; then
     echo "🥷 Switch to branch $LIGHTNING_BRANCH"
-    if ! sudo git clone -b "$LIGHTNING_BRANCH" "$defaultLightningHttpsRepository" "$selectedLightningPath"; then
+    if ! git clone -b "$LIGHTNING_BRANCH" "$defaultLightningHttpsRepository" "$selectedLightningPath"; then
       echo "👹 Oops! Failed to clone the $defaultName repository"
 
       exit 1
     fi
   else
-    if ! sudo git clone $defaultLightningHttpsRepository "$selectedLightningPath"; then
+    if ! git clone $defaultLightningHttpsRepository "$selectedLightningPath"; then
       echo "👹 Oops! Failed to clone the $defaultName repository"
 
       exit 1
@@ -339,6 +342,8 @@ isOSSupported
 
     echo
 
+    # TODO: `cargo not found` under sudoer for some reason
+    # although the `cargo --version` below works but not the follow up cargo build
     printf "🤖 Reload PATH environments to include Cargo\n"
     source "$HOME/.cargo/env"
     
@@ -355,12 +360,7 @@ isOSSupported
   echo
 
   printf "🤖 Install the build-essentials, libraries and packages, necessary for compiling general software and for our use-case %s CLI\n" "$defaultName"
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential cmake clang pkg-config libssl-dev protobuf-compiler gcc-multilib -yq
-
-  if ! hasCommand make; then
-    printf "🤖 Install make\n"
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install make -yq
-  fi
+  DEBIAN_FRONTEND=noninteractive sudo apt-get install build-essential cmake clang pkg-config libssl-dev protobuf-compiler gcc-multilib -yq
 
   echo
 
@@ -382,19 +382,19 @@ isOSSupported
   # Remove previous symlink if one exists
   if [[ -L "/usr/local/bin/$defaultCLIAlias" ]]; then
     # TODO: Symlink not getting removed for some reason
-    if ! rm -f "/usr/local/bin/$defaultCLIAlias"; then
+    if ! sudo rm -f "/usr/local/bin/$defaultCLIAlias"; then
       printf "👹 Oops! Failed to remove simbolic link %s \n" "/usr/local/bin/$defaultCLIAlias"
     fi
   fi
 
   if [[ -f "$HOME/.cargo/bin/$defaultName" ]]; then
-    if ! ln -s "$HOME/.cargo/bin/$defaultName" /usr/local/bin/$defaultCLIAlias; then
+    if ! sudo ln -s "$HOME/.cargo/bin/$defaultName" /usr/local/bin/$defaultCLIAlias; then
       printf "👹 Oops! Failed to symlink %s to /usr/local/bin/%s\n" "$HOME/.cargo/bin/$defaultName" "$defaultName"
       echo
       read -rp "😅 After the installation, if $defaultName CLI command is not available globally, then you need to add $HOME/.cargo/bin/ursa to your system PATH or symlink the binary to /usr/local/bin/$defaultName, as we've failed to do it. Press ENTER to continue..."
     fi
   else
-    if ! ln -s "$selectedLightningPath/target/$targetName/$defaultCLIBuildName" /usr/local/bin/$defaultCLIAlias; then
+    if ! sudo ln -s "$selectedLightningPath/target/$targetName/$defaultCLIBuildName" /usr/local/bin/$defaultCLIAlias; then
       printf "👹 Oops! Failed to symlink %s to /usr/local/bin/$defaultCLIAlias\n" "$selectedLightningPath/target/$targetName/$defaultCLIBuildName"
       echo
       read -rp "😅 After the installation, if $defaultName $defaultCLIBuildName CLI command is unavailable globally, then you need to add $selectedLightningPath/$targetName/release/$defaultCLIBuildName to your system PATH or symlink the binary to /usr/local/bin/$defaultCLIAlias, as we've failed to do it. Press ENTER to continue..."
@@ -422,7 +422,7 @@ isOSSupported
   printf "👌 Great! You have successfully installed required packages, libraries, have compiled and installed %s\n" "$defaultName"
   printf "The %s CLI should be available globally, there's a symlink to the /usr/local/bin/%s. Which means that from now on you can start a Network Node by typing %s\n" "$defaultName" "$defaultCLIAlias" "$defaultCLIAlias"
 
-  if hasCommand ufw && ufw status | grep -q 'Status: active'; then
+  if hasCommand ufw && sudo ufw status | grep -q 'Status: active'; then
     printf "💡 Detected that ufw is active\n"
 
     printf -v prompt "🚓 Warning! Make sure you don't have the ports %s blocked by a firewall. The installer will fail if you don't have the required ports open! Press ENTER to continue..." "${requiredPorts[*]}"
@@ -433,7 +433,7 @@ isOSSupported
 
   printf "🤖 Create a Systemd %s service\n" "$defaultName"
   printf "🤖 Create the %s log directory %s\n" "$defaultName" "$defaultLightningLogPath"
-  if ! mkdir -p "$defaultLightningLogPath"; then
+  if ! sudo mkdir -p "$defaultLightningLogPath"; then
     printf "💩 Uh-oh! Failed to create the %s system log dir %s for some reason...\n" "$defaultName" "$defaultLightningLogPath"
   fi
 
@@ -442,7 +442,7 @@ isOSSupported
   printf "🤖 Declare the service and store in the system path\n"
 
 # Important: the LIGHTNING_SERVICE it does not have identation on purpose, do not change
-cat << LIGHTNING_SERVICE > "$defaultLightningSystemdServicePath"
+echo "
 [Unit]
 Description=Fleek Network Node lightning service
 
@@ -457,7 +457,7 @@ StandardError=append:$defaultLightningDiagnosticLogAbsPath
 
 [Install]
 WantedBy=multi-user.target
-LIGHTNING_SERVICE
+" | sudo tee "$defaultLightningSystemdServicePath" > /dev/null
 
   printf "🤖 Set service file permissions\n"
   sudo chmod 644 "$defaultLightningSystemdServicePath"
@@ -474,9 +474,9 @@ LIGHTNING_SERVICE
   printf "🤖 %s service availability check\n" "$defaultName"
   pingAttempts=0
 
-  printf "🦖 Please be patient with us! The Fleek Network Node is launching and may take awhile 🙏\n"
+  printf "🦖 Please be patient as the Fleek Network Node is launching and may take awhile 🙏\n"
 
-  while ! curl -sS -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; do
+  while ! curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; do
     if [[ "$pingAttempts" -gt 10 ]]; then
       printf "👹 Oh no! Failed to health-check the localhost on port 4069\n"
 
@@ -491,7 +491,7 @@ LIGHTNING_SERVICE
 
   echo
 
-  if curl -sS -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; then
+  if curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; then
     echo "🌈 The Fleek Network Node is running!"
   else
     echo "🌈 The Fleek Network Node was installed but the service is not running yet! Keep reading to find how to check the status, start and stop the service."
