@@ -447,6 +447,7 @@ echo "
 Description=Fleek Network Node lightning service
 
 [Service]
+User=$(whoami)
 Type=simple
 MemoryHigh=32G
 RestartSec=15s
@@ -463,13 +464,13 @@ WantedBy=multi-user.target
   sudo chmod 644 "$defaultLightningSystemdServicePath"
 
   printf "🤖 System control daemon reload\n"
-  sudo systemctl daemon-reload
+  systemctl daemon-reload
 
   printf "🤖 Start the %s service\n" "$defaultName"
-  sudo systemctl start "$defaultLightningSystemdServiceName"
+  systemctl start "$defaultLightningSystemdServiceName"
 
   printf "🤖 Enable %s service on startup when the system boots\n" "$defaultName"
-  sudo systemctl enable "$defaultLightningSystemdServiceName"
+  systemctl enable "$defaultLightningSystemdServiceName"
 
   printf "🤖 %s service availability check\n" "$defaultName"
   pingAttempts=0
@@ -505,11 +506,12 @@ WantedBy=multi-user.target
   echo "tail -f $defaultLightningDiagnosticLogAbsPath"
   echo
   echo "Launch or stop the Network Node by running:"
-  echo "sudo systemctl stop $defaultName"
-  echo "sudo systemctl restart $defaultName"
+  echo "systemctl start $defaultName"
+  echo "systemctl stop $defaultName"
+  echo "systemctl restart $defaultName"
   echo
   echo "Check the status of the service:"
-  echo "sudo systemctl status $defaultName"
+  echo "systemctl status $defaultName"
   echo
   echo "Learn more by checking our guides at https://docs.fleek.network"
   echo "✨ That's all!"
