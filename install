@@ -466,11 +466,11 @@ WantedBy=multi-user.target
   printf "🤖 System control daemon reload\n"
   systemctl daemon-reload
 
+  printf "🤖 Enable %s service on startup when the system boots\n" "$defaultName"
+  sudo systemctl enable "$defaultLightningSystemdServiceName"
+
   printf "🤖 Start the %s service\n" "$defaultName"
   systemctl start "$defaultLightningSystemdServiceName"
-
-  printf "🤖 Enable %s service on startup when the system boots\n" "$defaultName"
-  systemctl enable "$defaultLightningSystemdServiceName"
 
   printf "🤖 %s service availability check\n" "$defaultName"
   pingAttempts=0
