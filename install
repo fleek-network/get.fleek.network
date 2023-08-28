@@ -42,10 +42,11 @@ defaultLightningDiagnosticLogAbsPath="$defaultLightningLogPath/$defaultLightning
 defaultLightningOutputLogAbsPath="$defaultLightningLogPath/$defaultLightningOutputFilename"
 defaultLightningSystemdServiceName="$defaultName"
 defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
-defaultLightningConfigFilename="config.toml"
+# TODO: this should be `config.toml` but there's a typo in the binary awaiting for fix
+defaultLightningConfigFilename="$defaultName.toml"
 defaultLightningBasePath="$HOME/.$defaultName"
-defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
-defaultLightningConfigBackupPath="$defaultLightningConfigPath.backup.$dateRuntime"
+# TODO: this path  should be under $defaultLightningBasePath, reported the bug awaiting for fix 
+defaultLightningConfigPath="$HOME/$defaultLightningConfigFilename"
 defaultLightningHttpsRepository="https://github.com/fleek-network/$defaultName.git"
 defaultDiscordUrl="https://discord.gg/fleekxyz"
 defaultDocsSite="https://docs.fleek.network"
@@ -300,12 +301,17 @@ isOSSupported
   read -rp "⚠️ Attention! You'll need to have admin privileges. Press ENTER to continue..."
   echo
   DEBIAN_FRONTEND=noninteractive sudo apt-get update -yq
-  DEBIAN_FRONTEND=noninteractive sudo apt-get upgrade -yq
-
+  # DEBIAN_FRONTEND=noninteractive sudo apt-get upgrade -yq
+  DEBIAN_FRONTEND=noninteractive \
+    apt-get \
+    -o Dpkg::Options::=--force-confold \
+    -o Dpkg::Options::=--force-confdef \
+    -y --allow-downgrades --allow-remove-essential --allow-change-held-packages
+    
   # Dependencies verification process
   if ! hasCommand git; then
     printf "🤖 Install Git\n"
-    DEBIAN_FRONTEND=noninteractive apt-get install git -yq
+    DEBIAN_FRONTEND=noninteractive sudo apt-get install git -yq
   fi
 
   echo
@@ -435,6 +441,10 @@ isOSSupported
   printf "🤖 Create the %s log directory %s\n" "$defaultName" "$defaultLightningLogPath"
   if ! sudo mkdir -p "$defaultLightningLogPath"; then
     printf "💩 Uh-oh! Failed to create the %s system log dir %s for some reason...\n" "$defaultName" "$defaultLightningLogPath"
+  else
+    if ! sudo chown "$(whoami):$(whoami)" "$defaultLightningLogPath"; then
+      printf "💩 Uh-oh! Failed to chown %s\n" "$defaultLightningLogPath"
+    fi
   fi
 
   echo
@@ -452,7 +462,7 @@ Type=simple
 MemoryHigh=32G
 RestartSec=15s
 Restart=always
-ExecStart=$defaultCLIAlias run
+ExecStart=$defaultCLIAlias -c $defaultLightningConfigPath $ run
 StandardOutput=append:$defaultLightningOutputLogAbsPath
 StandardError=append:$defaultLightningDiagnosticLogAbsPath
 
@@ -464,47 +474,47 @@ WantedBy=multi-user.target
   sudo chmod 644 "$defaultLightningSystemdServicePath"
 
   printf "🤖 System control daemon reload\n"
-  systemctl daemon-reload
+  sudo systemctl daemon-reload
 
   printf "🤖 Enable %s service on startup when the system boots\n" "$defaultName"
   sudo systemctl enable "$defaultLightningSystemdServiceName"
 
-  printf "🤖 Start the %s service\n" "$defaultName"
-  systemctl start "$defaultLightningSystemdServiceName"
+  # The service can be initiated for "root" user
+  # "non-root" users are required to type a password
+  # thus, the installer skips it
+  if [ "$(id -u)" -ne 0 ]; then
+    printf "🤖 Start the %s service\n" "$defaultName"
+    systemctl start "$defaultLightningSystemdServiceName"
 
-  printf "🤖 %s service availability check\n" "$defaultName"
-  pingAttempts=0
+    printf "🤖 %s service availability check\n" "$defaultName"
+    pingAttempts=0
 
-  printf "🦖 Please be patient as the Fleek Network Node is launching and may take awhile 🙏\n"
+    printf "🦖 Please be patient as the Fleek Network Node is launching and may take awhile 🙏\n"
 
-  while ! curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; do
-    if [[ "$pingAttempts" -gt 10 ]]; then
-      printf "👹 Oh no! Failed to health-check the localhost on port 4069\n"
+    while ! curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; do
+      if [[ "$pingAttempts" -gt 10 ]]; then
+        printf "👹 Oh no! Failed to health-check the localhost on port 4069\n"
 
-      break;
-    fi
+        break;
+      fi
 
-    printf "🤖 Awaiting %s on port 4069...\n" "$defaultName"
-    sleep 30
+      printf "🤖 Awaiting %s on port 4069...\n" "$defaultName"
+      sleep 30
 
-    ((pingAttempts++))
-  done
+      ((pingAttempts++))
+    done
+  fi
 
   echo
 
   if curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; then
     echo "🌈 The Fleek Network Node is running!"
   else
-    echo "🌈 The Fleek Network Node was installed but the service is not running yet! Keep reading to find how to check the status, start and stop the service."
+    echo "🌈 The Fleek Network Node lightning CLI was installed and a Systemd Service was setup, to learn how to launch the service read below!"
   fi
 
   echo
-  echo "You can watch the Node output by running the command:"
-  echo "tail -f $defaultLightningOutputLogAbsPath"
-  echo
-  echo "For diagnostics run the command:"
-  echo "tail -f $defaultLightningDiagnosticLogAbsPath"
-  echo
+
   echo "Launch or stop the Network Node by running:"
   echo "systemctl start $defaultName"
   echo "systemctl stop $defaultName"
@@ -512,6 +522,12 @@ WantedBy=multi-user.target
   echo
   echo "Check the status of the service:"
   echo "systemctl status $defaultName"
+  echo
+  echo "You can watch the Node output by running the command:"
+  echo "tail -f $defaultLightningOutputLogAbsPath"
+  echo
+  echo "For diagnostics run the command:"
+  echo "tail -f $defaultLightningDiagnosticLogAbsPath"
   echo
   echo "Learn more by checking our guides at https://docs.fleek.network"
   echo "✨ That's all!"
