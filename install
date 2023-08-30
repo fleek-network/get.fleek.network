@@ -484,33 +484,38 @@ WantedBy=multi-user.target
   printf "🤖 Enable %s service on startup when the system boots\n" "$defaultName"
   sudo systemctl enable "$defaultLightningSystemdServiceName"
 
-  # The service can be initiated for "root" user
-  # "non-root" users are required to type a password
-  # thus, the installer skips it
-  if [ "$(id -u)" -eq 0 ]; then
-    printf "🤖 Start the %s service\n" "$defaultName"
-    systemctl start "$defaultLightningSystemdServiceName"
-
-    printf "🤖 %s service availability check\n" "$defaultName"
-    pingAttempts=0
-
-    printf "🦖 Please be patient as the Fleek Network Node is launching and may take awhile 🙏\n"
-
-    while ! curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; do
-      if [[ "$pingAttempts" -gt 10 ]]; then
-        printf "👹 Oh no! Failed to health-check the localhost on port 4069\n"
-
-        break;
-      fi
-
-      printf "🤖 Awaiting %s on port 4069...\n" "$defaultName"
-      sleep 30
-
-      ((pingAttempts++))
-    done
-  fi
-
   echo
+
+  while read -rp "🤖 The installer can launch the service now. Would you like to start the service? (yes/no)" answer; do
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+      break;
+    elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+      printf "🤖 Start the %s service\n" "$defaultName"
+      systemctl start "$defaultLightningSystemdServiceName"
+
+      printf "🤖 %s service availability check\n" "$defaultName"
+      pingAttempts=0
+
+      printf "🦖 Please be patient as the Fleek Network Node is launching and may take awhile 🙏\n"
+
+      while ! curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; do
+        if [[ "$pingAttempts" -gt 10 ]]; then
+          printf "👹 Oh no! Failed to health-check the localhost on port 4069\n"
+
+          break;
+        fi
+
+        printf "🤖 Awaiting %s on port 4069...\n" "$defaultName"
+        sleep 30
+
+        ((pingAttempts++))
+      done
+
+      break;
+    fi
+
+    printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+  done
 
   if curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; then
     echo "🌈 The Fleek Network Node is running!"
@@ -518,9 +523,7 @@ WantedBy=multi-user.target
     echo "🌈 The Fleek Network Node lightning CLI was installed and a Systemd Service was setup, to learn how to launch the service read below!"
   fi
 
-  echo
-
-  echo "Launch or stop the Network Node by running:"
+  echo "🤖 Launch or stop the Network Node by running:"
   echo "systemctl start $defaultName"
   echo "systemctl stop $defaultName"
   echo "systemctl restart $defaultName"
