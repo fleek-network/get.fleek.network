@@ -42,11 +42,9 @@ defaultLightningDiagnosticLogAbsPath="$defaultLightningLogPath/$defaultLightning
 defaultLightningOutputLogAbsPath="$defaultLightningLogPath/$defaultLightningOutputFilename"
 defaultLightningSystemdServiceName="$defaultName"
 defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
-# TODO: this should be `config.toml` but there's a typo in the binary awaiting for fix
-defaultLightningConfigFilename="$defaultName.toml"
+defaultLightningConfigFilename="config.toml"
 defaultLightningBasePath="$HOME/.$defaultName"
-# TODO: this path  should be under $defaultLightningBasePath, reported the bug awaiting for fix 
-defaultLightningConfigPath="$HOME/$defaultLightningConfigFilename"
+defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
 defaultLightningHttpsRepository="https://github.com/fleek-network/$defaultName.git"
 defaultDiscordUrl="https://discord.gg/fleekxyz"
 defaultDocsSite="https://docs.fleek.network"
@@ -393,6 +391,8 @@ isOSSupported
     fi
   fi
 
+  # TODO: As we're using non `+stable` and not `install`, this location should
+  # be replaced by the /target version
   if [[ -f "$HOME/.cargo/bin/$defaultName" ]]; then
     if ! sudo ln -s "$HOME/.cargo/bin/$defaultName" /usr/local/bin/$defaultCLIAlias; then
       printf "👹 Oops! Failed to symlink %s to /usr/local/bin/%s\n" "$HOME/.cargo/bin/$defaultName" "$defaultName"
