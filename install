@@ -487,7 +487,7 @@ WantedBy=multi-user.target
   # The service can be initiated for "root" user
   # "non-root" users are required to type a password
   # thus, the installer skips it
-  if [ "$(id -u)" -ne 0 ]; then
+  if [ "$(id -u)" -eq 0 ]; then
     printf "🤖 Start the %s service\n" "$defaultName"
     systemctl start "$defaultLightningSystemdServiceName"
 
