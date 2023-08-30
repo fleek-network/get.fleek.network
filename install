@@ -409,6 +409,11 @@ isOSSupported
 
   echo
 
+  printf "🤖 Create the ~/.lightning directory\n"
+  if ! mkdir "$defaultLightningBasePath"; then
+    printf "👹 Oops! Failed to create the ~/.lightning directory\n"
+  fi
+
   printf "🔑 Generate keys"
   if ! lgtn keys generate; then
     printf "⚠️ Keys already exist, will NOT generate new keys!\n"
