@@ -13,7 +13,7 @@
 # If that's your preference, go ahead and check our guides https://docs.fleek.network
 #
 # Contributing?
-# - If you'd like to test changes locally use the env var `USE_BRANCH_NAME_FOR_GH_RAW`, `LIGHTNING_BRANCH`, for remote locales pulls
+# - If you'd like to run the install script against a Lightning branch, use the env var `LIGHTNING_BRANCH``
 #
 # Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
 
@@ -28,7 +28,7 @@ fi
 dateRuntime=$(date '+%Y%m%d%H%M%S')
 
 # Constants
-gbInKb=1000000
+kbPerGb=1000000
 
 # Defaults
 defaultName="lightning"
@@ -48,8 +48,8 @@ defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFil
 defaultLightningHttpsRepository="https://github.com/fleek-network/$defaultName.git"
 defaultDiscordUrl="https://discord.gg/fleekxyz"
 defaultDocsSite="https://docs.fleek.network"
-defaultMinMemoryKBytesRequired=8000000
-defaultMinDiskSpaceKBytesRequired=1000000
+defaultMinMemoryKBytesRequired=32000000
+defaultMinDiskSpaceKBytesRequired=20000000
 
 # App state
 vCPUs=$(nproc --all)
@@ -65,7 +65,7 @@ checkSystemHasRecommendedResources() {
   partDiskSpace=$(df --output=avail -B 1 "$PWD" |tail -n 1)
 
   if [[ ("$mem" -lt "$defaultMinMemoryKBytesRequired") ]] || [[ ( "$partDiskSpace" -lt "$defaultMinDiskSpaceKBytesRequired" ) ]]; then
-    echo "😬 Oh no! We're afraid you need at least $((defaultMinMemoryKBytesRequired / gbInKb))GB of RAM and $((defaultMinDiskSpaceKBytesRequired / gbInKb))GB of available disk space."
+    echo "😬 Oh no! We're afraid you need at least $((defaultMinMemoryKBytesRequired / kbPerGb))GB of RAM and $((defaultMinDiskSpaceKBytesRequired / kbPerGb))GB of available disk space."
     echo
     printf -v prompt "\n\n🤖 Are you sure you want to continue (yes/no)?"
     read -r -p "$prompt"$'\n> ' answer
@@ -293,19 +293,6 @@ isOSSupported
 
   echo
 
-  # OS update
-  # TODO: should compute per Linux distro
-  printf "🤖 Update and upgrade apt-get\n"
-  read -rp "⚠️ Attention! You'll need to have admin privileges. Press ENTER to continue..."
-  echo
-  DEBIAN_FRONTEND=noninteractive sudo apt-get update -yq
-  # DEBIAN_FRONTEND=noninteractive sudo apt-get upgrade -yq
-  DEBIAN_FRONTEND=noninteractive \
-    apt-get \
-    -o Dpkg::Options::=--force-confold \
-    -o Dpkg::Options::=--force-confdef \
-    -y --allow-downgrades --allow-remove-essential --allow-change-held-packages
-    
   # Dependencies verification process
   if ! hasCommand git; then
     printf "🤖 Install Git\n"
