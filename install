@@ -528,13 +528,13 @@ WantedBy=multi-user.target
   echo "systemctl stop $defaultName"
   echo "systemctl restart $defaultName"
   echo
-  echo "Check the status of the service:"
+  echo "🎛️ Check the status of the service:"
   echo "systemctl status $defaultName"
   echo
-  echo "You can watch the Node output by running the command:"
+  echo "👀 You can watch the Node output by running the command:"
   echo "tail -f $defaultLightningOutputLogAbsPath"
   echo
-  echo "For diagnostics run the command:"
+  echo "🥼 For diagnostics run the command:"
   echo "tail -f $defaultLightningDiagnosticLogAbsPath"
   echo
   echo "Learn more by checking our guides at https://docs.fleek.network"
