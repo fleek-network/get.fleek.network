@@ -65,7 +65,7 @@ checkSystemHasRecommendedResources() {
   partDiskSpace=$(df --output=avail -B 1 "$PWD" |tail -n 1)
 
   if [[ ("$mem" -lt "$defaultMinMemoryKBytesRequired") ]] || [[ ( "$partDiskSpace" -lt "$defaultMinDiskSpaceKBytesRequired" ) ]]; then
-    echo "😬 Oh no! We're afraid you need at least $((defaultMinMemoryKBytesRequired / kbPerGb))GB of RAM and $((defaultMinDiskSpaceKBytesRequired / kbPerGb))GB of available disk space."
+    echo "😬 Oh no! You need to have at least $((defaultMinMemoryKBytesRequired / kbPerGb))GB of RAM and $((defaultMinDiskSpaceKBytesRequired / kbPerGb))GB of available disk space."
     echo
     printf -v prompt "\n\n🤖 Are you sure you want to continue (yes/no)?"
     read -r -p "$prompt"$'\n> ' answer
@@ -401,10 +401,14 @@ isOSSupported
     printf "👹 Oops! Failed to create the ~/.lightning directory\n"
   fi
 
+  echo
+
   printf "🔑 Generate keys"
   if ! lgtn keys generate; then
     printf "⚠️ Keys already exist, will NOT generate new keys!\n"
   fi
+
+  echo
 
   printf "🔑 The public keys are\n"
   if ! lgtn keys show | grep 'Node Public\|Consensus Public'; then
@@ -473,7 +477,7 @@ WantedBy=multi-user.target
 
   echo
 
-  while read -rp "🤖 The installer can launch the service now. Would you like to start the service? (yes/no)" answer; do
+  while read -rp "🤖 The installer can launch the service for you. Would you like to start the service? (yes/no)" answer; do
     if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
       break;
     elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
@@ -483,7 +487,7 @@ WantedBy=multi-user.target
       printf "🤖 %s service availability check\n" "$defaultName"
       pingAttempts=0
 
-      printf "🦖 Please be patient as the Fleek Network Node is launching and may take awhile 🙏\n"
+      printf "🦖 Please be patient as the Fleek Network Node is launching and may take awhile 🙏\n\n"
 
       while ! curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; do
         if [[ "$pingAttempts" -gt 10 ]]; then
@@ -493,7 +497,7 @@ WantedBy=multi-user.target
         fi
 
         printf "🤖 Awaiting %s on port 4069...\n" "$defaultName"
-        sleep 30
+        sleep 10
 
         ((pingAttempts++))
       done
@@ -504,6 +508,7 @@ WantedBy=multi-user.target
     printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
   done
 
+  # TODO: Switch to /health
   if curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; then
     echo "🌈 The Fleek Network Node is running!"
   else
