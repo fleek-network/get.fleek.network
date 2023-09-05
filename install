@@ -33,6 +33,7 @@ kbPerGb=1000000
 # Defaults
 defaultName="lightning"
 defaultCLIBuildName="$defaultName-node"
+defaultAlphaTestnetBranch="testnet-alpha-0"
 defaultCLIAlias="lgtn"
 defaultLightningPath="$HOME/fleek-network/$defaultName"
 defaultLightningLogPath="/var/log/$defaultName"
@@ -232,6 +233,11 @@ isOSSupported
   checkSystemHasRecommendedResources "$os"
 
   # 🚑 Check if ports available
+  if ! hasCommand lsof; then
+    printf "🤖 Install lsof for installer port verification\n"
+    DEBIAN_FRONTEND=noninteractive sudo apt-get install lsof -yq
+  fi
+
   # Obs: In the future there'll be ports for Worker (80*1) and Mempool (80*2)
   declare -a requiredPorts=(4069 8000 8001 8002)
 
@@ -310,7 +316,7 @@ isOSSupported
       exit 1
     fi
   else
-    if ! git clone $defaultLightningHttpsRepository "$selectedLightningPath"; then
+    if ! git clone -b "$defaultAlphaTestnetBranch" "$defaultLightningHttpsRepository" "$selectedLightningPath"; then
       echo "👹 Oops! Failed to clone the $defaultName repository"
 
       exit 1
@@ -353,6 +359,11 @@ isOSSupported
   printf "🤖 Install the build-essentials, libraries and packages, necessary for compiling general software and for our use-case %s CLI\n" "$defaultName"
   DEBIAN_FRONTEND=noninteractive sudo apt-get install build-essential cmake clang pkg-config libssl-dev protobuf-compiler gcc-multilib -yq
 
+  if [[ "$(identifyDistro)" == "debian" ]]; then
+    sudo apt-get install gcc
+    sudo apt-get update
+  fi
+  
   echo
 
   printf "🤖 Build and install the %s CLI\n" "$defaultName"
@@ -475,38 +486,44 @@ WantedBy=multi-user.target
   printf "🤖 Enable %s service on startup when the system boots\n" "$defaultName"
   sudo systemctl enable "$defaultLightningSystemdServiceName"
 
-  echo
+  # TODO: Disabled during early testnet due to whitelisting
+  # echo
+  # while read -rp "🤖 The installer can launch the service for you. Would you like to start the service? (yes/no)" answer; do
+  #   if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+  #     break;
+  #   elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+  #     printf "🤖 Start the %s service\n" "$defaultName"
+  #     systemctl start "$defaultLightningSystemdServiceName"
 
-  while read -rp "🤖 The installer can launch the service for you. Would you like to start the service? (yes/no)" answer; do
-    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
-      break;
-    elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
-      printf "🤖 Start the %s service\n" "$defaultName"
-      systemctl start "$defaultLightningSystemdServiceName"
+  #     printf "🤖 %s service availability check\n" "$defaultName"
+  #     pingAttempts=0
 
-      printf "🤖 %s service availability check\n" "$defaultName"
-      pingAttempts=0
+  #     printf "🦖 Please be patient as the Fleek Network Node is launching and may take awhile 🙏\n\n"
 
-      printf "🦖 Please be patient as the Fleek Network Node is launching and may take awhile 🙏\n\n"
+  #     while ! curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; do
+  #       if [[ "$pingAttempts" -gt 10 ]]; then
+  #         printf "👹 Oh no! Failed to health-check the localhost on port 4069\n"
 
-      while ! curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; do
-        if [[ "$pingAttempts" -gt 10 ]]; then
-          printf "👹 Oh no! Failed to health-check the localhost on port 4069\n"
+  #         break;
+  #       fi
 
-          break;
-        fi
+  #       if grep -sqin 'node is not whitelisted' "$defaultLightningDiagnosticLogAbsPath"; then
+  #         printf "⚠️ Warning: The node is not whitelisted! Learn how to request access to testnet in https://docs.fleek.network/docs/node/testnet-onboarding\n\n"
 
-        printf "🤖 Awaiting %s on port 4069...\n" "$defaultName"
-        sleep 10
+  #         exit 1
+  #       fi
 
-        ((pingAttempts++))
-      done
+  #       printf "🤖 Awaiting %s on port 4069...\n" "$defaultName"
+  #       sleep 10
 
-      break;
-    fi
+  #       ((pingAttempts++))
+  #     done
 
-    printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
-  done
+  #     break;
+  #   fi
+
+  #   printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+  # done
 
   # TODO: Switch to /health
   if curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; then
@@ -514,6 +531,11 @@ WantedBy=multi-user.target
   else
     echo "🌈 The Fleek Network Node lightning CLI was installed and a Systemd Service was setup, to learn how to launch the service read below!"
   fi
+
+  echo
+  echo "⚠️ WARNING: You'll have to request access to participate on Testnet. Only whitelisted notes will be able to participate, if you fail to request the node will not run."
+  read -rp "Request access by reading the onboarding instructions provided in our documentation https://docs.fleek.network/docs/node/testnet-onboarding to enable the network node to run successfully. Once happy with the information provided, press ENTER to continue..."
+  echo
 
   echo "🤖 Launch or stop the Network Node by running:"
   echo "systemctl start $defaultName"
