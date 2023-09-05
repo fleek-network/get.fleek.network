@@ -239,7 +239,7 @@ isOSSupported
   fi
 
   # Obs: In the future there'll be ports for Worker (80*1) and Mempool (80*2)
-  declare -a requiredPorts=(4069 8000 8001 8002)
+  declare -a requiredPorts=(4069 4200 6969 18000 18101 18102)
 
   hasPortsAvailable=0
   for port in "${requiredPorts[@]}"; do
