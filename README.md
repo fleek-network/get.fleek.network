@@ -1,5 +1,5 @@
 <div align="center" style="padding-bottom: 20px;">
-  <img src="./static/img/logo+named.svg?202301091309" width="360px" height="auto"/>
+  <img src="./static/img/repo-banner.png?202309051148" width="360px" height="auto"/>
 </div>
 
 # Get Fleek Network
