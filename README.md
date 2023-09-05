@@ -1,5 +1,5 @@
 <div align="center" style="padding-bottom: 20px;">
-  <img src="./static/img/repo-banner.png?202309051148" width="360px" height="auto"/>
+  <img src="./static/img/repo-banner.png?202309051803" width="auto" height="auto"/>
 </div>
 
 # Get Fleek Network
@@ -30,39 +30,13 @@ If you have any questions or feedback, find us on [Discord](https://discord.gg/f
 
 ### 👋 Running the assisted installer
 
-Open a new terminal window, and connect to a [supported](https://docs.fleek.network/guides/Network%20nodes/how-to-install-a-node-easily-with-the-assisted-installer#which-operating-systems-are-supported) Linux server.
+Open a new terminal window, and connect to a [supported](https://docs.fleek.network/docs/node/requirements/) Linux server.
 
 ```
 curl https://get.fleek.network | bash
 ```
 
-Learn more about the assisted installer [here](https://docs.fleek.network/guides/Network%20nodes/how-to-install-a-node-easily-with-the-assisted-installer)
-
-### 🏠 Development
-
-Copy the script locally, and push any changes to the remote repository.
-
-Prefix the execution of the script in development with `USE_BRANCH_NAME_FOR_GH_RAW` and `URSA_BRANCH`.
-
-For example:
-
-```
-USE_BRANCH_NAME_FOR_GH_RAW="feat/my-example URSA_BRANCH="feat/ursa-repo-branch-name" ./install"
-```
-
-### 🤖 Non-interactive mode
-
-Copy the script locally and prefix the execution of the script with the following environment variables as presented in the example
-
-```sh
-NONINTERACTIVE=1 EMAIL_ADDR="user@example.com" DOMAIN_NAME_ADDR="my.exame.com" IP_ADDR="1.2.3.4" ./install
-```
-
-Optional, set the repository pathname by 
-
-```sh
-URSA_REPOSITORY_PATH="/some/valid/pathname"
-```
+Learn more about the assisted installer [here](https://docs.fleek.network/docs/node/overview/)
 
 ## ✏️ Documentation
 
