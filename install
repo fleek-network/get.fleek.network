@@ -368,11 +368,8 @@ isOSSupported
 
   printf "🤖 Build and install the %s CLI\n" "$defaultName"
 
-  # TODO: put back stable release as "install" (should set PATH automatically, so can remove the handling for PATH setup)
-  # TODO: once changed switch from `debug` to `release`
-  # if ! cargo +stable build --release; then
-  targetName="debug"
-  if ! cargo build; then
+  targetName="release"
+  if ! cargo +stable build --release; then
     printf "👹 Oops! Failed to build and install the %s CLI. If you are experiencing issues, help us improve by letting us know in our Discord %s\n" "$defaultName" "$defaultDiscordUrl"
 
     exit 1
