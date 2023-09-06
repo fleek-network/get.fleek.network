@@ -2,6 +2,8 @@
 
 # Defaults
 defaultName="lightning"
+defaultCLIBuildName="$defaultName-node"
+defaultCLIAlias="lgtn"
 defaultAlphaTestnetBranch="testnet-alpha-0"
 defaultLightningPath="$HOME/fleek-network/$defaultName"
 defaultDiscordUrl="https://discord.gg/fleekxyz"
@@ -10,6 +12,7 @@ defaultLightningOutputFilename="output.log"
 defaultLightningDiagnosticLogAbsPath="$defaultLightningLogPath/$defaultLightningDiagnosticFilename"
 defaultLightningOutputLogAbsPath="$defaultLightningLogPath/$defaultLightningOutputFilename"
 defaultLightningLogPath="/var/log/$defaultName"
+defaultTargetName="release"
 
 while read -rp "🤖 Are you logged with the user account used to install the Fleek Network Lightning CLI? (yes/no) " answer; do
   if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
@@ -71,6 +74,18 @@ if ! cargo +stable build --release; then
   printf "👹 Oops! Failed to build and install the %s CLI. If you are experiencing issues, help us improve by letting us know in our Discord %s\n" "$defaultName" "$defaultDiscordUrl"
 
   exit 1
+fi
+
+if [[ -L "/usr/local/bin/$defaultCLIAlias" ]]; then
+  if ! sudo rm -f "/usr/local/bin/$defaultCLIAlias"; then
+    printf "👹 Oops! Failed to remove simbolic link %s \n" "/usr/local/bin/$defaultCLIAlias"
+  fi
+fi
+
+if ! sudo ln -s "$defaultLightningPath/target/$defaultTargetName/$defaultCLIBuildName" /usr/local/bin/$defaultCLIAlias; then
+  printf "👹 Oops! Failed to symlink %s to /usr/local/bin/$defaultCLIAlias\n" "$defaultLightningPath/target/$defaultTargetName/$defaultCLIBuildName"
+  echo
+  read -rp "😅 After the installation, if $defaultName $defaultCLIBuildName CLI command is unavailable globally, then you need to add $defaultLightningPath/target/$defaultTargetName/$defaultCLIBuildName to your system PATH or symlink the binary to /usr/local/bin/$defaultCLIAlias, as we've failed to do it. Press ENTER to continue..."
 fi
 
 echo "🌈 The update has now completed."
