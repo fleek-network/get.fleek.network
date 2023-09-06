@@ -23,6 +23,7 @@ jobs:
           cp ./static/CNAME ./build
           chmod 755 ./build/index.html
           cp ./scripts/diagnostic ./build
+          cp ./scripts/whitelisted ./build
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
