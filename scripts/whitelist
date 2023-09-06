@@ -42,6 +42,7 @@ defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemd
       exit 1
     elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
       sudo rm "$defaultLightningOutputLogAbsPath"
+      sudo rm "$defaultLightningDiagnosticLogAbsPath"
 
       systemctl restart "$defaultName"
 
