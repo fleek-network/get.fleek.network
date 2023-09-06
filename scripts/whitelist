@@ -4,7 +4,9 @@
 defaultName="lightning"
 defaultLightningLogPath="/var/log/$defaultName"
 defaultLightningDiagnosticFilename="diagnostic.log"
+defaultLightningOutputFilename="output.log"
 defaultLightningDiagnosticLogAbsPath="$defaultLightningLogPath/$defaultLightningDiagnosticFilename"
+defaultLightningOutputLogAbsPath="$defaultLightningLogPath/$defaultLightningOutputFilename"
 defaultLightningSystemdServiceName="$defaultName"
 defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
 
@@ -39,12 +41,12 @@ defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemd
       
       exit 1
     elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
-      sudo rm "$defaultLightningDiagnosticLogAbsPath"
+      sudo rm "$defaultLightningOutputLogAbsPath"
 
       systemctl restart "$defaultName"
 
       serverOutputWaitAttempts=0
-      while [[ -f "$defaultLightningDiagnosticLogAbsPath" && ! -s "$defaultLightningDiagnosticLogAbsPath" ]]; do
+      while [[ -f "$defaultLightningOutputLogAbsPath" && ! -s "$defaultLightningOutputLogAbsPath" ]]; do
         echo "🤖 Please wait for the service output logs..."
         sleep 5
 
@@ -62,8 +64,8 @@ defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemd
 
         exit 0
       else
-        if tail -n 5 "$defaultLightningDiagnosticLogAbsPath" | grep -iq "node is not whitelisted"; then
-          echo "👹 Oops! According to your diagnostic log, the server and node doesn't seem to be whitelisted. Have you read the instructions to get onboarded? Find it here https://docs.fleek.network/docs/node/testnet-onboarding"
+        if tail -n 5 "$defaultLightningOutputLogAbsPath" | grep -iq "node is not whitelisted"; then
+          echo "👹 Oops! According to your output log, the server and node doesn't seem to be whitelisted. Have you read the instructions to get onboarded? Find it here https://docs.fleek.network/docs/node/testnet-onboarding"
           echo
         fi
 
