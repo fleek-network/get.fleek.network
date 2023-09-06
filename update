@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# Defaults
+defaultName="lightning"
+defaultAlphaTestnetBranch="testnet-alpha-0"
+defaultLightningPath="$HOME/fleek-network/$defaultName"
+defaultDiscordUrl="https://discord.gg/fleekxyz"
+defaultLightningDiagnosticFilename="diagnostic.log"
+defaultLightningOutputFilename="output.log"
+defaultLightningDiagnosticLogAbsPath="$defaultLightningLogPath/$defaultLightningDiagnosticFilename"
+defaultLightningOutputLogAbsPath="$defaultLightningLogPath/$defaultLightningOutputFilename"
+defaultLightningLogPath="/var/log/$defaultName"
+
+while read -rp "🤖 Are you logged with the user account used to install the Fleek Network Lightning CLI? (yes/no) " answer; do
+  if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+    printf "👹 Oops! You should be logged in with the user account used to install the fleek Network Lightning CLI, switch the account and try again!\n"
+
+    exit 1
+  elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+    break;
+  fi
+
+  printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+done
+
+if ! source "$HOME/.cargo/env"; then
+  printf "💩 Uh-oh! Are you sure you're logged in with the user account used to install the Lightning CLI?\n"
+
+  exit 1
+fi
+
+if ! command -v "cargo" &> /dev/null; then
+  echo "👹 Oops! The rust toolchain was not found, check the reference documentation to update the Lightning CLI manually https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+  echo
+
+  exit 1
+fi
+
+if [[ ! -d "$defaultLightningPath" ]]; then
+  defaultLightningPath="$(find . -type f -wholename "*core/node/Cargo.toml" -exec dirname "{}" \; |sort -zu |sed -z 's/$/\n/')"
+
+  if [[ ! -d "$defaultLightningPath" ]]; then
+    while read -rp "⚠️  Oh-no! Failed to locate the Fleek Network Lightning repository source code. What is the local repository source code path? " answer; do
+      if [[ -f "$answer/core/application/Cargo.toml" ]]; then
+        break;
+      else
+        printf "💩 Uh-oh! That doesn't seem to be correct. Try again...\n"
+      fi
+    done
+  fi
+
+  echo "🤖 The Fleek Network Lightning source code was found at $defaultLightningPath"
+  echo
+fi
+
+if ! cd "$defaultLightningPath"; then
+  printf "👹 Oops! Failed to change directory to %s\n" "$defaultLightningPath"
+
+  exit 1
+fi
+
+printf "🤖 Git pulling from the %s source code repository located at %s\n" "$defaultName" "$defaultLightningPath"
+if ! git pull origin "$defaultAlphaTestnetBranch"; then
+  echo "👹 Oops! Failed to git pull, if you made changes in the repository, e.g. edit files or added files in $defaultLightningPath, make sure you stage or reset them to let the automated process to work for you. Otherwise, check the document to do learn how to update manually https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+
+  exit 1
+fi
+
+printf "🤖 Build and install the %s CLI\n" "$defaultName"
+if ! cargo +stable build --release; then
+  printf "👹 Oops! Failed to build and install the %s CLI. If you are experiencing issues, help us improve by letting us know in our Discord %s\n" "$defaultName" "$defaultDiscordUrl"
+
+  exit 1
+fi
+
+echo "🌈 The update has now completed."
+echo
+echo "🤖 Restart the Network Node by running the restart command:"
+echo "systemctl restart $defaultName"
+echo
+echo "👀 You can watch the Node output by running the command:"
+echo "tail -f $defaultLightningOutputLogAbsPath"
+echo
+echo "🥼 For diagnostics run the command:"
+echo "tail -f $defaultLightningDiagnosticLogAbsPath"
+echo
+echo "Learn more by checking our guides at https://docs.fleek.network"
+echo "✨ That's all!"
