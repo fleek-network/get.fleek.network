@@ -11,6 +11,22 @@ defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemd
 (
   exec < /dev/tty;
 
+  while read -rp "🤖 Have you followed the onboarding process instructed in our documentation site? (yes/no) " answer; do
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+      echo "💡 To run a Fleek Network node you'll have to request access to our testnet. Read the instructions provided in https://docs.fleek.network/docs/node/testnet-onboarding before proceeding. If you fail to request access and get the confirmation, the node will not run successfully."
+
+      exit 1
+    elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+      break;
+    fi
+
+    printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+  done
+
+  read -rp "💡 Remember that if you have requested access to testnet, you'll need to receive the confirmation by the Fleek Network team, if you haven't received a confirmation yet please be patient. We try to onboard node operators as soon as possible. Press ENTER to continue..."
+
+  echo
+
   if [[ ! -f "$defaultLightningSystemdServicePath" ]]; then
       echo "👹 Oops! The systemd unit service file for Fleek Network $defaultName was not found, meaning that you have not followed or accepted the recommendations in our installation document. Make sure you setup a systemd service https://docs.fleek.network/docs/node/Install/#systemd-service-setup"
 
