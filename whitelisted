@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Defaults
+defaultName="lightning"
+defaultLightningLogPath="/var/log/$defaultName"
+defaultLightningDiagnosticFilename="diagnostic.log"
+defaultLightningDiagnosticLogAbsPath="$defaultLightningLogPath/$defaultLightningDiagnosticFilename"
+
+if ! grep -iq "node is not whitelisted" "$defaultLightningDiagnosticLogAbsPath"; then
+  echo "👹 Oops! You're server and node doesn't seem to be whitelisted. Have you read the instructions to get onboarded? Find it here https://docs.fleek.network/docs/node/testnet-onboarding"
+  echo
+fi
