@@ -306,7 +306,7 @@ echo
     which docker-compose
 
     echo "Docker systemd status"
-    systemctl status --no-pager docker
+    sudo systemctl status --no-pager docker
     echo
 
     echo "Docker process status"
@@ -408,7 +408,7 @@ echo
       echo "🤖 NGINX Service status"
       echo
       
-      systemctl status --no-pager nginx
+      sudo systemctl status --no-pager nginx
       echo
     fi
   fi
@@ -424,7 +424,7 @@ echo
       echo "✅ Ursa-proxy binary globally accessible"
 
       echo "🤖 Systemd ursa-proxy service"
-      if ! systemctl status ursa-proxy; then
+      if ! sudo systemctl status ursa-proxy; then
         echo "💩 Uh oh! There's no systemd ursa-proxy service"
       fi
     fi

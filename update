@@ -139,7 +139,7 @@ defaultLightningBasePath="$HOME/.$defaultName"
   echo "🌈 The update has now completed."
   echo
   echo "🤖 Restart the Network Node by running the restart command:"
-  echo "systemctl restart $defaultName"
+  echo "sudo systemctl restart $defaultName"
   echo
   echo "👀 You can watch the Node output by running the command:"
   echo "tail -f $defaultLightningOutputLogAbsPath"

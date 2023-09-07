@@ -44,7 +44,7 @@ defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemd
       sudo rm "$defaultLightningOutputLogAbsPath"
       sudo rm "$defaultLightningDiagnosticLogAbsPath"
 
-      systemctl restart "$defaultName"
+      sudo systemctl restart "$defaultName"
 
       serverOutputWaitAttempts=0
       while [[ -f "$defaultLightningOutputLogAbsPath" && ! -s "$defaultLightningOutputLogAbsPath" ]]; do

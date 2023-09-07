@@ -542,12 +542,12 @@ WantedBy=multi-user.target
   echo
 
   echo "🤖 Launch or stop the Network Node by running:"
-  echo "systemctl start $defaultName"
-  echo "systemctl stop $defaultName"
-  echo "systemctl restart $defaultName"
+  echo "sudo systemctl start $defaultName"
+  echo "sudo systemctl stop $defaultName"
+  echo "sudo systemctl restart $defaultName"
   echo
   echo "🎛️ Check the status of the service:"
-  echo "systemctl status $defaultName"
+  echo "sudo systemctl status $defaultName"
   echo
   echo "👀 You can watch the Node output by running the command:"
   echo "tail -f $defaultLightningOutputLogAbsPath"
