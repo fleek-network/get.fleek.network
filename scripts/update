@@ -93,11 +93,18 @@ defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemd
     read -rp "😅 After the installation, if $defaultName $defaultCLIBuildName CLI command is unavailable globally, then you need to add $defaultLightningPath/target/$defaultTargetName/$defaultCLIBuildName to your system PATH or symlink the binary to /usr/local/bin/$defaultCLIAlias, as we've failed to do it. Press ENTER to continue..."
   fi
 
-  echo "🤖 Update the systemd service $defaultName.service"
+  echo "🤖 Update the systemd $defaultName.service"
   if ! sudo sed -i "s/^ExecStart=.*/ExecStart=$defaultCLIAlias run/g" "$defaultLightningSystemdServicePath"; then
     echo "👹 Oops! Failed to find and replace the property name ExecStart in $defaultLightningSystemdServicePath. You're advised to check our reference document to help troubleshoot https://docs.fleek.network/references/Lightning%20CLI/error-linking-with-cc-failed-exist-status-1/"
 
     exit 1
+  else
+    echo "✅ Updated the systemd $defaultName.service unit file"
+    echo "🤖 Should reload the systemctl daemon..."
+
+    if ! sudo systemctl daemon-reload; then
+      printf "👹 Oops! Failed to reload the systemctl daemon for some reason\n"
+    fi
   fi
 
   echo "🌈 The update has now completed."
