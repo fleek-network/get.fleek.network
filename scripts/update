@@ -67,6 +67,30 @@ defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemd
     exit 1
   fi
 
+  if ! git rev-parse --abbrev-ref HEAD | grep -q "$defaultAlphaTestnetBranch"; then
+    if ! git checkout "$defaultAlphaTestnetBranch"; then
+      echo "Failed to checkout to branch $defaultAlphaTestnetBranch"
+    fi
+  fi
+
+  echo
+
+  while read -rp "🤖 The script will clear any changes made in the local source code repository by resetting it to be in sync with the remote origin, you'll lose any changes made in the repository. It's only related to the binary source code, not the ~/.lightning system config that holds your private keys and identity. Should the installer proceed and reset? (yes/no) " answer; do
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+      echo "🦖 The update script terminated. It has to reset the local repository to be in synch with remote. Read the documentation reference if you'd like to learn how to do it manually if thats your preference."
+
+      exit 1
+    elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+      git fetch origin "$defaultAlphaTestnetBranch"
+      git reset --hard "origin/$defaultAlphaTestnetBranch"
+      git clean -f
+
+      break;
+    fi
+
+    printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+  done
+
   printf "🤖 Git pulling from the %s source code repository located at %s\n" "$defaultName" "$defaultLightningPath"
   if ! git pull origin "$defaultAlphaTestnetBranch"; then
     echo "👹 Oops! Failed to git pull, if you made changes in the repository, e.g. edit files or added files in $defaultLightningPath, make sure you stage or reset them to let the automated process to work for you. Otherwise, check the document to do learn how to update manually https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
