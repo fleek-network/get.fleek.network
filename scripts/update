@@ -15,6 +15,7 @@ defaultLightningLogPath="/var/log/$defaultName"
 defaultTargetName="release"
 defaultLightningSystemdServiceName="$defaultName"
 defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
+defaultLightningBasePath="$HOME/.$defaultName"
 
 (
   exec < /dev/tty;
@@ -129,6 +130,10 @@ defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemd
     if ! sudo systemctl daemon-reload; then
       printf "👹 Oops! Failed to reload the systemctl daemon for some reason\n"
     fi
+  fi
+
+  if ! rm -rf "$defaultLightningBasePath/data"; then
+    echo "👹 Oops! Failed to clear the path $defaultLightningBasePath/data for some reason. Check the documentation in https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
   fi
 
   echo "🌈 The update has now completed."
