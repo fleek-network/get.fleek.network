@@ -77,6 +77,6 @@ defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemd
     printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
   done
 
-  echo "The whitelist verification has now completed. To learn more about Fleek Network check our documentation at https://docs.fleek.network"
+  echo "This script has now finished. To learn more about Fleek Network check our documentation at https://docs.fleek.network"
   echo "🙏 Thank you!"
 )
