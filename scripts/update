@@ -122,10 +122,10 @@ defaultTempLogFilePath="/var/tmp"
 
   echo "🤖 Update the systemd $defaultName.service"
 
-  if ! grep -q "Environment=\"$defaultTempLogFilePath\"" "$defaultLightningSystemdServicePath"; then
+  if ! grep -q "Environment=$defaultTempLogFilePath" "$defaultLightningSystemdServicePath"; then
     echo "🤖 The TMPDIR environment variable doesn't seem correct"
 
-    if ! sudo sed -i -e '/StandardError=/a\' -e "Environment=\"$defaultTempLogFilePath\"" "$defaultLightningSystemdServicePath"; then
+    if ! sudo sed -i -e '/StandardError=/a\' -e "Environment=$defaultTempLogFilePath" "$defaultLightningSystemdServicePath"; then
       echo "👹 Oops! Failed setup the environment variable for TMPDIR where the syslog for Lightning CLI should be stored. Check the documentation to do it manually  https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
     fi
   else

@@ -476,7 +476,7 @@ Restart=always
 ExecStart=$defaultCLIAlias run
 StandardOutput=append:$defaultLightningOutputLogAbsPath
 StandardError=append:$defaultLightningDiagnosticLogAbsPath
-Environment="TMPDIR=$defaultTempLogFilePath"
+Environment=TMPDIR=$defaultTempLogFilePath
 
 [Install]
 WantedBy=multi-user.target
