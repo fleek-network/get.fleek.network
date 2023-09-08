@@ -16,6 +16,8 @@ defaultTargetName="release"
 defaultLightningSystemdServiceName="$defaultName"
 defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
 defaultLightningBasePath="$HOME/.$defaultName"
+defaultTempLogFilePath="/tmp/$defaultName.log"
+defaultTempLogFilePermisson=1777
 
 (
   exec < /dev/tty;
@@ -134,6 +136,27 @@ defaultLightningBasePath="$HOME/.$defaultName"
 
   if ! rm -rf "$defaultLightningBasePath/data"; then
     echo "👹 Oops! Failed to clear the path $defaultLightningBasePath/data for some reason. Check the documentation in https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+  fi
+
+  echo "🤖 The /tmp directory should have default permissions"
+  if ! sudo chmod "$defaultTempLogFilePermisson" /tmp; then
+    echo "💩 Uh-oh! Failed to update permissions of /tmp"
+  else
+    echo "✅ Updated /tmp permissions to $defaultTempLogFilePermisson"
+
+    echo "🤖 The $defaultTempLogFilePath should exist"
+    if ! sudo touch "$defaultTempLogFilePath"; then
+      echo "💩 Uh-oh! Failed to create of $defaultTempLogFilePath"
+    else
+      echo "✅ Created $defaultTempLogFilePath file"
+
+      echo "🤖 The $defaultTempLogFilePath should have the permissions set to $defaultTempLogFilePermisson"
+      if ! sudo chmod "$defaultTempLogFilePermisson" "$defaultTempLogFilePath"; then
+        echo "💩 Uh-oh! Failed to change permissions of $defaultTempLogFilePath"
+      else
+        echo "✅ Update permissions of $defaultTempLogFilePath file"
+      fi
+    fi
   fi
 
   echo "🌈 The update has now completed."
