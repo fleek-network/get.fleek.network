@@ -369,8 +369,8 @@ isOSSupported
   DEBIAN_FRONTEND=noninteractive sudo apt-get install build-essential cmake clang pkg-config libssl-dev protobuf-compiler gcc-multilib -yq
 
   if [[ "$(identifyDistro)" == "debian" ]]; then
-    sudo apt-get install gcc
     sudo apt-get update
+    sudo apt-get install gcc
   fi
   
   echo
