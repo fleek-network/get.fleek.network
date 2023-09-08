@@ -37,7 +37,7 @@ defaultAlphaTestnetBranch="testnet-alpha-0"
 defaultCLIAlias="lgtn"
 defaultLightningPath="$HOME/fleek-network/$defaultName"
 defaultLightningLogPath="/var/log/$defaultName"
-defaultTempLogFilePath="/tmp/$defaultName.log"
+defaultTempLogFilePath="/var/tmp"
 defaultTempLogFilePermisson=1777
 defaultLightningDiagnosticFilename="diagnostic.log"
 defaultLightningOutputFilename="output.log"
@@ -462,27 +462,6 @@ isOSSupported
 
   echo
 
-  echo "🤖 The /tmp directory should have default permissions"
-  if ! sudo chmod "$defaultTempLogFilePermisson" /tmp; then
-    echo "💩 Uh-oh! Failed to update permissions of /tmp"
-  else
-    echo "✅ Updated /tmp permissions to $defaultTempLogFilePermisson"
-
-    echo "🤖 The $defaultTempLogFilePath should exist"
-    if ! sudo touch "$defaultTempLogFilePath"; then
-      echo "💩 Uh-oh! Failed to create of $defaultTempLogFilePath"
-    else
-      echo "✅ Created $defaultTempLogFilePath file"
-
-      echo "🤖 The $defaultTempLogFilePath should have the permissions set to $defaultTempLogFilePermisson"
-      if ! sudo chmod "$defaultTempLogFilePermisson" "$defaultTempLogFilePath"; then
-        echo "💩 Uh-oh! Failed to change permissions of $defaultTempLogFilePath"
-      else
-        echo "✅ Update permissions of $defaultTempLogFilePath file"
-      fi
-    fi
-  fi
-
   printf "🤖 Declare the service and store in the system path\n"
 
 # Important: the LIGHTNING_SERVICE it does not have identation on purpose, do not change
@@ -498,6 +477,7 @@ Restart=always
 ExecStart=$defaultCLIAlias run
 StandardOutput=append:$defaultLightningOutputLogAbsPath
 StandardError=append:$defaultLightningDiagnosticLogAbsPath
+Environment="TMPDIR=$defaultTempLogFilePath"
 
 [Install]
 WantedBy=multi-user.target
