@@ -16,8 +16,9 @@ defaultTargetName="release"
 defaultLightningSystemdServiceName="$defaultName"
 defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
 defaultLightningBasePath="$HOME/.$defaultName"
-defaultTempLogFilePath="/tmp/$defaultName.log"
-defaultTempLogFilePermisson=1777
+defaultLightningConfigFilename="config.toml"
+defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
+defaultTempLogFilePath="/var/tmp"
 
 (
   exec < /dev/tty;
@@ -120,8 +121,26 @@ defaultTempLogFilePermisson=1777
     read -rp "😅 After the installation, if $defaultName $defaultCLIBuildName CLI command is unavailable globally, then you need to add $defaultLightningPath/target/$defaultTargetName/$defaultCLIBuildName to your system PATH or symlink the binary to /usr/local/bin/$defaultCLIAlias, as we've failed to do it. Press ENTER to continue..."
   fi
 
+  echo "🤖 Update the config.toml with user home path..."
+  if ! sed -i "s|~/.$defaultName|/home/$(whoami)/.$defaultName|g" "$defaultLightningConfigPath"; then
+    printf "👹 Oops! Failed to replace the user home paths in the configuration file %s. Check the documentation to do it manually %s\n" "$defaultLightningConfigPath" "https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+  else
+    printf "✅ Replaced the user home paths in the configuration file\n"
+  fi
+
   echo "🤖 Update the systemd $defaultName.service"
-  if ! sudo sed -i "s/^ExecStart=.*/ExecStart=$defaultCLIAlias run/g" "$defaultLightningSystemdServicePath"; then
+
+  if ! grep -q "Environment=$defaultTempLogFilePath" "$defaultLightningSystemdServicePath"; then
+    echo "🤖 The TMPDIR environment variable doesn't seem correct"
+
+    if ! sudo sed -i -e '/StandardError=/a\' -e "Environment=$defaultTempLogFilePath" "$defaultLightningSystemdServicePath"; then
+      echo "👹 Oops! Failed setup the environment variable for TMPDIR where the syslog for Lightning CLI should be stored. Check the documentation to do it manually  https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+    fi
+  else
+    echo "✅ The TMPDIR environment variable seems correct"
+  fi
+
+  if ! sudo sed -i "s|^ExecStart=.*|ExecStart=$defaultCLIAlias -c $defaultLightningConfigPath run|g" "$defaultLightningSystemdServicePath"; then
     echo "👹 Oops! Failed to find and replace the property name ExecStart in $defaultLightningSystemdServicePath. You're advised to check our reference document to help troubleshoot https://docs.fleek.network/references/Lightning%20CLI/error-linking-with-cc-failed-exist-status-1/"
 
     exit 1
@@ -136,27 +155,6 @@ defaultTempLogFilePermisson=1777
 
   if ! rm -rf "$defaultLightningBasePath/data"; then
     echo "👹 Oops! Failed to clear the path $defaultLightningBasePath/data for some reason. Check the documentation in https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
-  fi
-
-  echo "🤖 The /tmp directory should have default permissions"
-  if ! sudo chmod "$defaultTempLogFilePermisson" /tmp; then
-    echo "💩 Uh-oh! Failed to update permissions of /tmp"
-  else
-    echo "✅ Updated /tmp permissions to $defaultTempLogFilePermisson"
-
-    echo "🤖 The $defaultTempLogFilePath should exist"
-    if ! sudo touch "$defaultTempLogFilePath"; then
-      echo "💩 Uh-oh! Failed to create of $defaultTempLogFilePath"
-    else
-      echo "✅ Created $defaultTempLogFilePath file"
-
-      echo "🤖 The $defaultTempLogFilePath should have the permissions set to $defaultTempLogFilePermisson"
-      if ! sudo chmod "$defaultTempLogFilePermisson" "$defaultTempLogFilePath"; then
-        echo "💩 Uh-oh! Failed to change permissions of $defaultTempLogFilePath"
-      else
-        echo "✅ Update permissions of $defaultTempLogFilePath file"
-      fi
-    fi
   fi
 
   echo "🌈 The update has now completed."

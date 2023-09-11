@@ -38,7 +38,6 @@ defaultCLIAlias="lgtn"
 defaultLightningPath="$HOME/fleek-network/$defaultName"
 defaultLightningLogPath="/var/log/$defaultName"
 defaultTempLogFilePath="/var/tmp"
-defaultTempLogFilePermisson=1777
 defaultLightningDiagnosticFilename="diagnostic.log"
 defaultLightningOutputFilename="output.log"
 defaultLightningDiagnosticLogAbsPath="$defaultLightningLogPath/$defaultLightningDiagnosticFilename"
@@ -370,7 +369,7 @@ isOSSupported
 
   if [[ "$(identifyDistro)" == "debian" ]]; then
     sudo apt-get update
-    sudo apt-get install gcc
+    sudo apt-get install gcc libprotobuf-dev protobuf-compiler
   fi
   
   echo
@@ -438,6 +437,13 @@ isOSSupported
   printf "⚠️ The public key is open to anybody to see and it represents a unique node in the Fleek Network, a bit like a bank account number. On the other hand, the private key is secret and the operator is responsible to store it privately.\n\n"
   printf "⚠️ Fleek Network has no way to help access, retrieve or recover lost keys. The keys are the node operator responsability! Learn more about the keystore by checking the documentation site at %s\n\n" "$defaultDocsSite"
 
+  echo "🤖 Update the config.toml with user home path..."
+  if ! sed -i "s|~/.$defaultName|/home/$(whoami)/.$defaultName|g" "$defaultLightningConfigPath"; then
+    printf "👹 Oops! Failed to replace the user home paths in the configuration file %s. Check the documentation to do it manually %s\n" "$defaultLightningConfigPath" "https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+  else
+    printf "✅ Replaced the user home paths in the configuration file\n"
+  fi
+
   printf "👌 Great! You have successfully installed required packages, libraries, have compiled and installed %s\n" "$defaultName"
   printf "The %s CLI should be available globally, there's a symlink to the /usr/local/bin/%s. Which means that from now on you can start a Network Node by typing %s\n" "$defaultName" "$defaultCLIAlias" "$defaultCLIAlias"
 
@@ -474,10 +480,10 @@ Type=simple
 MemoryHigh=32G
 RestartSec=15s
 Restart=always
-ExecStart=$defaultCLIAlias run
+ExecStart=$defaultCLIAlias -c $defaultLightningConfigPath run
 StandardOutput=append:$defaultLightningOutputLogAbsPath
 StandardError=append:$defaultLightningDiagnosticLogAbsPath
-Environment="TMPDIR=$defaultTempLogFilePath"
+Environment=TMPDIR=$defaultTempLogFilePath
 
 [Install]
 WantedBy=multi-user.target
