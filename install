@@ -437,6 +437,13 @@ isOSSupported
   printf "⚠️ The public key is open to anybody to see and it represents a unique node in the Fleek Network, a bit like a bank account number. On the other hand, the private key is secret and the operator is responsible to store it privately.\n\n"
   printf "⚠️ Fleek Network has no way to help access, retrieve or recover lost keys. The keys are the node operator responsability! Learn more about the keystore by checking the documentation site at %s\n\n" "$defaultDocsSite"
 
+  echo "🤖 Update the config.toml with user home path..."
+  if ! sudo sed -i "s|~/.lightning|/home/$(whoami)|g" "$defaultLightningConfigPath"; then
+    printf "👹 Oops! Failed to replace the user home paths in the configuration file %s. Check the documentation to do it manually %s\n" "$defaultLightningConfigPath" "https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+  else
+    printf "✅ Replaced the user home paths in the configuration file\n"
+  fi
+
   printf "👌 Great! You have successfully installed required packages, libraries, have compiled and installed %s\n" "$defaultName"
   printf "The %s CLI should be available globally, there's a symlink to the /usr/local/bin/%s. Which means that from now on you can start a Network Node by typing %s\n" "$defaultName" "$defaultCLIAlias" "$defaultCLIAlias"
 
