@@ -1,0 +1,132 @@
+#!/bin/bash
+
+# Defaults
+defaultName="lightning"
+defaultCLIBuildName="$defaultName-node"
+defaultCLIAlias="lgtn"
+defaultAlphaTestnetBranch="testnet-alpha-0"
+defaultLightningPath="$HOME/fleek-network/$defaultName"
+defaultDiscordUrl="https://discord.gg/fleekxyz"
+defaultLightningDiagnosticFilename="diagnostic.log"
+defaultLightningOutputFilename="output.log"
+defaultLightningLogPath="/var/log/$defaultName"
+defaultLightningDiagnosticLogAbsPath="$defaultLightningLogPath/$defaultLightningDiagnosticFilename"
+defaultLightningOutputLogAbsPath="$defaultLightningLogPath/$defaultLightningOutputFilename"
+defaultTargetName="release"
+defaultLightningSystemdServiceName="$defaultName"
+defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
+defaultLightningBasePath="$HOME/.$defaultName"
+defaultLightningConfigFilename="config.toml"
+defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
+defaultTempLogFilePath="/var/tmp"
+
+## State
+configIssueCount=0
+healthIssueCount=0
+warningCount=0
+
+(
+  exec < /dev/tty;
+
+  while read -rp "🤖 Are you logged with the user account used to install the Fleek Network Lightning CLI? (yes/no) " answer; do
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+      printf "👹 Oops! You should be logged in with the user account used to install the fleek Network Lightning CLI, switch the account and try again!\n"
+
+      exit 1
+    elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+      break;
+    fi
+
+    printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+  done
+
+  echo
+
+  if [[ ! -d "/home/$(whoami)/fleek-network/$defaultName" ]]; then
+    echo "⚠️ WARNING: The Fleek Network Lightning CLI source code wasn't found in /home/$(whoami)/fleek-network/$defaultName. If you have installed the service with the username $(whoami) and haven't customised the path, the source code is not in the expected location"
+
+    ((warningCount++))
+  else
+    echo "✅ Found source code in /home/$(whoami)/fleek-network/$defaultName"
+  fi
+
+  if [[ ! -d "/home/$(whoami)/.$defaultName" ]]; then
+    echo "⚠️ WARNING: Missing the Fleek Network configuration directory /home/$(whoami)/.$defaultName"
+
+    ((warningCount++))
+  else
+    echo "✅ Found configuration directory in /home/$(whoami)/.$defaultName"
+  fi
+
+  if [[ ! -f "/home/$(whoami)/.$defaultName/$defaultLightningConfigFilename" ]]; then
+    echo "⚠️ WARNING: Missing the Fleek Network configuration file /home/$(whoami)/.$defaultName/$defaultLightningConfigFilename"
+
+    ((warningCount++))
+  else
+    echo "✅ Found configuration file in /home/$(whoami)/.$defaultName/$defaultLightningConfigFilename"
+  fi
+
+  if [[ ! -L "/usr/local/bin/$defaultCLIAlias" ]]; then
+    echo "⚠️ WARNING: Missing the Fleek Network Lightning symlink in /usr/local/bin/$defaultCLIAlias"
+
+    ((warningCount++))
+  else
+    echo "✅ Found symlink /usr/local/bin/$defaultCLIAlias"
+  fi
+
+  if [[ ! -f "$defaultLightningSystemdServicePath" ]]; then
+    echo "⚠️ WARNING: Missing the Fleek Network Systemd unit service unit file in $defaultLightningSystemdServicePath"
+
+    ((warningCount++))
+  else
+    echo "✅ Found the Systemd unit service $defaultLightningSystemdServicePath"
+
+    if ! grep 'ExecStart' "$defaultLightningSystemdServicePath" | grep -q "\-c /home/$(whoami)/.$defaultName/config.toml"; then
+      echo "⚠️ WARNING: Missing the flag -c and config path in $defaultLightningSystemdServicePath"
+
+    ((warningCount++))
+    else
+      echo "✅ Found the flag -c with config path in $defaultLightningSystemdServicePath"
+    fi
+  fi
+
+  homeUsernamePaths=$(grep -oE '/home\/(\w+)' "$defaultLightningConfigPath" | cut -d / -f 3)
+  for username in $homeUsernamePaths; do
+    if [[ "$username" != $(whoami) ]] && grep -q "/home/$username" "$defaultLightningConfigPath"; then
+      echo "⚠️ WARNING: The configuration contains a path for user /home/$username that doesn't match current user /home/$(whoami). If there isn't a reason for this mismatch, update the file manually."
+
+      ((warningCount++))
+      ((configIssueCount++))
+    fi
+  done
+  
+  if [[ "$configIssueCount" -eq 0 ]]; then
+    echo "✅ Verified the $defaultLightningConfigPath"
+  else
+    echo "🐛 Found some possible issues in the $defaultLightningConfigPath"
+  fi
+
+  if ! curl -s -w "\p" localhost:4069/health | grep -q 'OK'; then
+    echo "⚠️ WARNING: Failed to get a response from localhost:4069/health"
+
+    ((warningCount++))
+    ((healthIssueCount++))
+  else
+    echo "✅ The localhost:4069/health is okay"
+  fi
+
+  echo
+  echo
+  echo "==== Summary ===="
+  echo
+  echo "⚠️ Found $warningCount warnings"
+  echo "🚑 Found $healthIssueCount node status issue"
+  echo
+  echo "================="
+  echo
+  echo "The health check has now completed, see the result above."
+  echo
+  echo "To learn more about Fleek Network check our documentation at https://docs.fleek.network"
+  echo
+  echo "✨ That's all!"
+)
