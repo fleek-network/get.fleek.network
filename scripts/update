@@ -16,6 +16,8 @@ defaultTargetName="release"
 defaultLightningSystemdServiceName="$defaultName"
 defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
 defaultLightningBasePath="$HOME/.$defaultName"
+defaultLightningConfigFilename="config.toml"
+defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
 defaultTempLogFilePath="/var/tmp"
 
 (
@@ -119,6 +121,12 @@ defaultTempLogFilePath="/var/tmp"
     read -rp "😅 After the installation, if $defaultName $defaultCLIBuildName CLI command is unavailable globally, then you need to add $defaultLightningPath/target/$defaultTargetName/$defaultCLIBuildName to your system PATH or symlink the binary to /usr/local/bin/$defaultCLIAlias, as we've failed to do it. Press ENTER to continue..."
   fi
 
+  echo "🤖 Update the config.toml with user home path..."
+  if ! sudo sed -i "s|~/.lightning|/home/$(whoami)|g" "$defaultLightningConfigPath"; then
+    printf "👹 Oops! Failed to replace the user home paths in the configuration file %s. Check the documentation to do it manually %s\n" "$defaultLightningConfigPath" "https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+  else
+    printf "✅ Replaced the user home paths in the configuration file\n"
+  fi
 
   echo "🤖 Update the systemd $defaultName.service"
 
