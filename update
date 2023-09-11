@@ -164,7 +164,7 @@ defaultTempLogFilePath="/var/tmp"
     fi
   fi
 
-  if ! rm -rf "$defaultLightningBasePath/data"; then
+  if ! sudo rm -rf "$defaultLightningBasePath/data"; then
     echo "👹 Oops! Failed to clear the path $defaultLightningBasePath/data for some reason. Check the documentation in https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
   fi
 
