@@ -369,7 +369,7 @@ isOSSupported
 
   if [[ "$(identifyDistro)" == "debian" ]]; then
     sudo apt-get update
-    sudo apt-get install gcc
+    sudo apt-get install gcc libprotobuf-dev protobuf-compiler
   fi
   
   echo
