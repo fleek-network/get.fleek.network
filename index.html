@@ -368,8 +368,8 @@ isOSSupported
   sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential cmake clang pkg-config libssl-dev protobuf-compiler gcc-multilib -yq
 
   if [[ "$(identifyDistro)" == "debian" ]]; then
-    sudo apt-get update
-    sudo apt-get install gcc libprotobuf-dev protobuf-compiler
+    sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
+    sudo apt-get DEBIAN_FRONTEND=noninteractive install gcc libprotobuf-dev protobuf-compiler
   fi
   
   echo
