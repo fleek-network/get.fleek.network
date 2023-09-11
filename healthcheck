@@ -21,6 +21,7 @@ defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFil
 defaultTempLogFilePath="/var/tmp"
 
 ## State
+basePath="/home/$(whoami)"
 configIssueCount=0
 healthIssueCount=0
 warningCount=0
@@ -42,28 +43,36 @@ warningCount=0
 
   echo
 
-  if [[ ! -d "/home/$(whoami)/fleek-network/$defaultName" ]]; then
-    echo "⚠️ WARNING: The Fleek Network Lightning CLI source code wasn't found in /home/$(whoami)/fleek-network/$defaultName. If you have installed the service with the username $(whoami) and haven't customised the path, the source code is not in the expected location"
+  if [[ "$EUID" -eq 0 ]]; then
+    echo "⚠️ WARNING: You're running the health check as ROOT user. If you have installed the Fleek Network Lightning CLI as ROOT this is not recommended. Read our documentation in https://docs.fleek.network"
 
-    ((warningCount++))
-  else
-    echo "✅ Found source code in /home/$(whoami)/fleek-network/$defaultName"
+    basePath="/root"
   fi
 
-  if [[ ! -d "/home/$(whoami)/.$defaultName" ]]; then
-    echo "⚠️ WARNING: Missing the Fleek Network configuration directory /home/$(whoami)/.$defaultName"
+  echo
+
+  if [[ ! -d "$basePath/fleek-network/$defaultName" ]]; then
+    echo "⚠️ WARNING: The Fleek Network Lightning CLI source code wasn't found in $basePath/fleek-network/$defaultName. If you have installed the service with the username $(whoami) and haven't customised the path, the source code is not in the expected location"
 
     ((warningCount++))
   else
-    echo "✅ Found configuration directory in /home/$(whoami)/.$defaultName"
+    echo "✅ Found source code in $basePath/fleek-network/$defaultName"
   fi
 
-  if [[ ! -f "/home/$(whoami)/.$defaultName/$defaultLightningConfigFilename" ]]; then
-    echo "⚠️ WARNING: Missing the Fleek Network configuration file /home/$(whoami)/.$defaultName/$defaultLightningConfigFilename"
+  if [[ ! -d "$basePath/.$defaultName" ]]; then
+    echo "⚠️ WARNING: Missing the Fleek Network configuration directory $basePath/.$defaultName"
 
     ((warningCount++))
   else
-    echo "✅ Found configuration file in /home/$(whoami)/.$defaultName/$defaultLightningConfigFilename"
+    echo "✅ Found configuration directory in $basePath/.$defaultName"
+  fi
+
+  if [[ ! -f "$basePath/.$defaultName/$defaultLightningConfigFilename" ]]; then
+    echo "⚠️ WARNING: Missing the Fleek Network configuration file $basePath/.$defaultName/$defaultLightningConfigFilename"
+
+    ((warningCount++))
+  else
+    echo "✅ Found configuration file in $basePath/.$defaultName/$defaultLightningConfigFilename"
   fi
 
   if [[ ! -L "/usr/local/bin/$defaultCLIAlias" ]]; then
@@ -81,7 +90,7 @@ warningCount=0
   else
     echo "✅ Found the Systemd unit service $defaultLightningSystemdServicePath"
 
-    if ! grep 'ExecStart' "$defaultLightningSystemdServicePath" | grep -q "\-c /home/$(whoami)/.$defaultName/config.toml"; then
+    if ! grep 'ExecStart' "$defaultLightningSystemdServicePath" | grep -q "\-c $basePath/.$defaultName/config.toml"; then
       echo "⚠️ WARNING: Missing the flag -c and config path in $defaultLightningSystemdServicePath"
 
     ((warningCount++))
@@ -93,7 +102,7 @@ warningCount=0
   homeUsernamePaths=$(grep -oE '/home\/(\w+)' "$defaultLightningConfigPath" | cut -d / -f 3)
   for username in $homeUsernamePaths; do
     if [[ "$username" != $(whoami) ]] && grep -q "/home/$username" "$defaultLightningConfigPath"; then
-      echo "⚠️ WARNING: The configuration contains a path for user /home/$username that doesn't match current user /home/$(whoami). If there isn't a reason for this mismatch, update the file manually."
+      echo "⚠️ WARNING: The configuration contains a path for user /home/$username that doesn't match current user $basePath. If there isn't a reason for this mismatch, update the file manually."
 
       ((warningCount++))
       ((configIssueCount++))
