@@ -121,11 +121,22 @@ defaultTempLogFilePath="/var/tmp"
     read -rp "😅 After the installation, if $defaultName $defaultCLIBuildName CLI command is unavailable globally, then you need to add $defaultLightningPath/target/$defaultTargetName/$defaultCLIBuildName to your system PATH or symlink the binary to /usr/local/bin/$defaultCLIAlias, as we've failed to do it. Press ENTER to continue..."
   fi
 
-  echo "🤖 Update the config.toml with user home path..."
-  if ! sed -i "s|~/.$defaultName|/home/$(whoami)/.$defaultName|g" "$defaultLightningConfigPath"; then
-    printf "👹 Oops! Failed to replace the user home paths in the configuration file %s. Check the documentation to do it manually %s\n" "$defaultLightningConfigPath" "https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+  echo "🚑 Verify $defaultLightningConfigPath..."
+  grep -oE '/home\/(\w+)' "$defaultLightningConfigPath" | cut -d / -f 3 | while IFS= read -r username; do
+    if [[ "$username" != $(whoami) ]] && grep -q "/home/$username" "$defaultLightningConfigPath"; then
+      echo "⚠️ WARNING: The configuration contains a path for user /home/$username that doesn't match current user /home/$(whoami). If there isn't a reason for this mismatch, update the file manually."
+    fi
+  done
+
+  if grep -q "~\/.$defaultName" "$defaultLightningConfigPath" || ! grep -q "$HOME" "$defaultLightningConfigPath"; then
+    echo "🤖 Update the config.toml with user home path..."
+    if ! sed -i "s|~/.$defaultName|/home/$(whoami)/.$defaultName|g" "$defaultLightningConfigPath"; then
+      printf "👹 Oops! Failed to replace the user home paths in the configuration file %s. Check the documentation to do it manually %s\n" "$defaultLightningConfigPath" "https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+    else
+      printf "✅ Replaced the user home path in the configuration file\n"
+    fi
   else
-    printf "✅ Replaced the user home paths in the configuration file\n"
+      printf "✅ Found user home path in the configuration file\n"
   fi
 
   echo "🤖 Update the systemd $defaultName.service"
