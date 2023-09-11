@@ -243,7 +243,7 @@ isOSSupported
   # 🚑 Check if ports available
   if ! hasCommand lsof; then
     printf "🤖 Install lsof for installer port verification\n"
-    DEBIAN_FRONTEND=noninteractive sudo apt-get install lsof -yq
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install lsof -yq
   fi
 
   # Obs: In the future there'll be ports for Worker (80*1) and Mempool (80*2)
@@ -310,7 +310,7 @@ isOSSupported
   # Dependencies verification process
   if ! hasCommand git; then
     printf "🤖 Install Git\n"
-    DEBIAN_FRONTEND=noninteractive sudo apt-get install git -yq
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install git -yq
   fi
 
   echo
@@ -365,7 +365,7 @@ isOSSupported
   echo
 
   printf "🤖 Install the build-essentials, libraries and packages, necessary for compiling general software and for our use-case %s CLI\n" "$defaultName"
-  DEBIAN_FRONTEND=noninteractive sudo apt-get install build-essential cmake clang pkg-config libssl-dev protobuf-compiler gcc-multilib -yq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install build-essential cmake clang pkg-config libssl-dev protobuf-compiler gcc-multilib -yq
 
   if [[ "$(identifyDistro)" == "debian" ]]; then
     sudo apt-get update
