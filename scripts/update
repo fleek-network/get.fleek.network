@@ -122,7 +122,7 @@ defaultTempLogFilePath="/var/tmp"
   fi
 
   echo "🤖 Update the config.toml with user home path..."
-  if ! sudo sed -i "s|~/.lightning|/home/$(whoami)|g" "$defaultLightningConfigPath"; then
+  if ! sudo sed -i "s|~/.$defaultName|/home/$(whoami)/.$defaultName|g" "$defaultLightningConfigPath"; then
     printf "👹 Oops! Failed to replace the user home paths in the configuration file %s. Check the documentation to do it manually %s\n" "$defaultLightningConfigPath" "https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
   else
     printf "✅ Replaced the user home paths in the configuration file\n"
