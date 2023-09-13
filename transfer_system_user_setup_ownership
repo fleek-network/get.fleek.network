@@ -1,0 +1,348 @@
+#!/bin/bash
+
+# Defaults
+defaultName="lightning"
+defaultCLIBuildName="$defaultName-node"
+defaultCLIAlias="lgtn"
+defaultAlphaTestnetBranch="testnet-alpha-0"
+defaultBasePath="fleek-network/$defaultName"
+defaultLightningPath="$HOME/$defaultBasePath"
+defaultDiscordUrl="https://discord.gg/fleekxyz"
+defaultLightningDiagnosticFilename="diagnostic.log"
+defaultLightningOutputFilename="output.log"
+defaultLightningLogPath="/var/log/$defaultName"
+defaultLightningDiagnosticLogAbsPath="$defaultLightningLogPath/$defaultLightningDiagnosticFilename"
+defaultLightningOutputLogAbsPath="$defaultLightningLogPath/$defaultLightningOutputFilename"
+defaultTargetName="release"
+defaultLightningSystemdServiceName="$defaultName"
+defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
+defaultLightningSystemPath="$HOME/.$defaultName"
+defaultLightningConfigFilename="config.toml"
+defaultLightningConfigPath="$defaultLightningSystemPath/$defaultLightningConfigFilename"
+defaultTempLogFilePath="/var/tmp"
+defaultSymlinkPath="/usr/local/bin/lgtn"
+
+# Error codes
+err_non_root=87
+
+# App state
+targetUsername=""
+targetLightningSourceCodePath=""
+targetLightningConfigSystemPath=""
+targetRustReleasePath=""
+warningCount=0
+
+userExists() {
+  grep -q "^$1:" /etc/passwd
+}
+
+changeOwnershipDir() {
+  sudo chown -R "$1:$1" "$2"
+}
+
+directoryExists(){
+  if [[ -d $1 ]] && [[ -n $1 ]]; then
+    return 0
+  else
+    echo "⚠️ WARNING: Directory ($1) doesn't exist"
+
+    return 1
+  fi
+}
+
+isLightningSourceCode() {
+  for subdir in core lib services; do
+    if [[ ! -d "$1/$subdir" ]]; then
+      echo "👹 Oops! Doesn't seem to be the Lightning source code repository. Couldn't locate the expected subdirectory $subdir. Are  you sure that's the correct location? Verify and try again later..."
+
+      return 1
+    fi
+  done
+}
+
+isLightningSystemDir() {
+  if [[ ! -d "$1" ]]; then
+    echo "⚠️ WARNING: The directory $1 doesn't exist"
+
+    return 1
+  fi
+
+  if [[ ! -f "$1/config.toml" ]]; then
+    echo "⚠️ WARNING: Couldn't find the expected configuration file in $1/config.toml"
+
+    return 1
+  fi
+ 
+  return 0
+}
+
+checkCustomPathForFleekNetworkSourceCode() {
+  while read -rp "🤖 What is the complete pathname for Fleek Network Lightning source code repository? " answer; do
+    if [[ ! -d "$answer" ]]; then
+      echo "👹 Oops! The pathname $answer doesn't seem to exist. Are  you sure that's the correct location? Verify and try again later..."
+
+      exit 1
+    fi
+
+    if ! isLightningSourceCode "$answer"; then
+      exit 1
+    fi
+
+    defaultLightningPath="$answer"
+  
+    break;          
+  done
+
+  read -rp "👋 Since you have a custom path, you need to let us know about the .lightning directory where the config.toml is located, which the default pathname is ~/.lightning. Press ENTER to continue..."
+
+  while read -rp "🤖 What is the complete pathname for .lightning directory? " answer; do
+    if ! isLightningSystemDir "$answer"; then
+      echo "👹 Oops! Doesn't seem to be a .lightning directory."
+
+      exit 1
+    fi
+
+    defaultLightningSystemPath="$answer"
+    defaultLightningConfigPath="$answer/$defaultLightningConfigFilename"
+
+    break;
+  done
+
+  return 0
+}
+
+moveDirectoryFromTo() {
+  echo "🤖 Move the $1 directory to $2"
+  if ! sudo mv "$1" "$2"; then
+    echo "👹 Oops! Failed to move the directory. Check the source and target location and try again later!"
+
+    exit 1
+  else
+    echo "✅ Moved the $1 directory to $2"
+  fi
+}
+
+(
+  exec < /dev/tty;
+
+  if ! groups | grep -q 'root\|sudo'; then
+    echo "⛔️ Attention! The username you're logged in as $(whoami) has to have admin privileges (sudo), add the user to the sudo group and try again later!";
+
+    exit "$err_non_root";
+  else
+    echo "✅ Found that username $(whoami) has correct admin privileges (sudo) to perform the ownership transfer"
+  fi
+
+  read -rp "👋 To transfer the setup ownership of Fleek Network Lightning Node Setup, you'll have to provide the username used to install. Press ENTER to continue..."
+
+  while read -rp "🤖 What's the username used to install the Fleek Network Lightning Node setup? " answer; do
+    if userExists "$answer"; then
+      echo "✅ Found the username $answer"
+
+      if [[ "$answer" == "root" && ! -d "/root/$defaultBasePath" ]] || [[ "$answer" != "root" && ! -d "/home/$answer/$defaultBasePath" ]]; then
+        echo "⚠️ WARNING: The source code wasn't found in default path. It seems that you have customized the location, thus tou'll have to provide the full pathname location, which by default is ~/$defaultBasePath."
+
+        checkCustomPathForFleekNetworkSourceCode
+      elif [[ "$answer" == "root" ]]; then
+        defaultLightningPath="/root/$defaultBasePath"
+        defaultLightningSystemPath="/root/.$defaultName"
+        defaultLightningConfigPath="$defaultLightningSystemPath/$defaultLightningConfigFilename"
+      else
+        defaultLightningPath="/home/$answer/$defaultBasePath"
+        defaultLightningSystemPath="/home/$answer/.$defaultName"
+        defaultLightningConfigPath="$defaultLightningSystemPath/$defaultLightningConfigFilename"
+      fi
+
+      echo "✅ Found the Lightning source code at $defaultLightningPath"
+
+      break;
+    fi
+
+    echo "👹 Oops! Failed to find the username $answer. Find the correct username and try again later!"
+
+    exit 1
+  done
+
+  echo
+
+  echo "🤖 Before we proceeding with changes required for the transfering, the process will have to stop the lightning.service."
+  if ! sudo systemctl stop "$defaultName.service"; then
+    echo "👹 Oops! Failed to stop the $defaultName.service. Do it manually and try this script again later!"
+
+    exit 1
+  fi
+
+  echo "🤖 Clear the .lightning data"
+  if ! sudo rm -rf "$defaultLightningSystemPath/data"; then
+    echo "⚠️ WARNING: Failed to clear the path $defaultLightningSystemPath/data for some reason. Nothing to worry, as the step is to avoid moving unnecessary files."
+  fi
+
+  echo
+
+  read -rp "👋 To proceed with the transfer of ownership, we'll need to have a username to transfer the ownership to. You can either use an existing username or create a new user. Press ENTER to continue..."
+
+  echo
+
+  while read -rp "🤖 Do you have an existing username account to transfer the ownership to? (yes/no) " answer; do
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+      echo "👹 Oops! You need to create a sudo user to transfer the ownership."
+
+      exit 1
+    elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+      while read -rp "🤖 What is the username you'd like to transfer the ownership to? " answer; do
+        if userExists "$answer"; then
+          echo "✅ Found the username $answer"
+
+          targetUsername="$answer"
+
+          break;
+        fi
+
+        echo "💩 Uh-oh! The username $answer doesn't seem to exist. Try again or type Q to exit!"
+      done
+
+      break;
+    fi
+
+    printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+  done
+
+  echo
+
+  read -rp "👋 We'll now move the ownership to $targetUsername. Press ENTER to continue..."
+
+  echo "🤖 Change directory to the user home path (/home/$targetUsername)"
+  if ! cd "/home/$targetUsername"; then
+    echo "👹 Oops! Failed to change directory to the user home (/home/$targetUsername) for some reason. Check the /home/$targetUsername and try again later!"
+
+    exit 1
+  else
+    echo "✅ Changed directory to target user home /home/$targetUsername"
+  fi
+
+  echo
+
+  targetLightningConfigSystemPath="/home/$targetUsername/.$defaultName"
+
+  moveDirectoryFromTo "$defaultLightningSystemPath" "$targetLightningConfigSystemPath"
+
+  echo
+
+  targetLightningSourceCodePath="/home/$targetUsername/$defaultBasePath"
+  targetRustReleasePath="$targetLightningSourceCodePath/target/release/$defaultCLIBuildName"
+
+  if [[ ! -d "$targetLightningSourceCodePath" ]]; then
+    if ! sudo mkdir -p "$targetLightningSourceCodePath"; then
+      echo "👹 Oops! Failed to create the target directory $targetLightningSourceCodePath. Check the path $targetLightningSourceCodePath and try again later!"
+      
+      exit 1
+    fi
+  fi
+
+  moveDirectoryFromTo "$defaultLightningPath" "/home/$targetUsername/fleek-network"
+
+  # Update app state
+  defaultLightningPath="/home/$targetUsername/$defaultBasePath"
+  defaultLightningSystemPath="/home/$targetUsername/.$defaultName"
+  defaultLightningConfigPath="$defaultLightningSystemPath/$defaultLightningConfigFilename"
+
+  echo
+
+  if ! changeOwnershipDir "$targetUsername" "$targetLightningConfigSystemPath"; then
+    echo "⚠️ WARNING: Failed to change ownership of $targetLightningConfigSystemPath"
+
+    ((warningCount++))
+  else
+    echo "✅ Changed ownership of $targetLightningConfigSystemPath to $targetUsername:$targetUsername"
+  fi
+
+  if ! changeOwnershipDir "$targetUsername" "$targetLightningSourceCodePath"; then
+    echo "⚠️ WARNING: Failed to change ownership of $targetLightningSourceCodePath"
+
+    ((warningCount++))
+  else
+    echo "✅ Changed ownership of $targetLightningSourceCodePath to $targetUsername:$targetUsername"
+  fi
+
+  echo
+
+  echo "🤖 Unlink the lgtn ($defaultSymlinkPath)"
+  if ! sudo unlink "$defaultSymlinkPath"; then
+    echo "⚠️ WARNING: Failed to unlink $defaultSymlinkPath"
+
+    ((warningCount++))
+  fi
+
+  echo "🤖 Create the symlink"
+  # TODO: Check if the release binary exists if not ask if wants to build?
+  if [[ ! -f "$targetRustReleasePath" ]]; then
+    echo "⚠️ WARNING: The binary $defaultCLIBuildName doesn't seem to exist in $targetRustReleasePath"
+
+    ((warningCount++))    
+  fi
+
+  if ! sudo ln -s "$targetLightningSourceCodePath/target/release/lightning-node" "$defaultSymlinkPath"; then
+    echo "⚠️ WARNING: Failed to create symlink $defaultSymlinkPath"
+
+    ((warningCount++))
+  fi
+
+  echo
+
+  echo "🤖 Update the systemd $defaultName.service"
+  if ! grep -q "Environment=$defaultTempLogFilePath" "$defaultLightningSystemdServicePath"; then
+    echo "🤖 The TMPDIR environment variable doesn't seem correct"
+
+    if ! sudo sed -i -e '/StandardError=/a\' -e "Environment=$defaultTempLogFilePath" "$defaultLightningSystemdServicePath"; then
+      echo "👹 Oops! Failed setup the environment variable for TMPDIR where the syslog for Lightning CLI should be stored. Check the documentation to do it manually  https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+    fi
+  else
+    echo "✅ The TMPDIR environment variable seems correct"
+  fi
+
+  if ! sudo sed -i "s|^ExecStart=.*|ExecStart=$defaultCLIAlias -c $defaultLightningConfigPath run|g" "$defaultLightningSystemdServicePath"; then
+    echo "👹 Oops! Failed to find and replace the property name ExecStart in $defaultLightningSystemdServicePath. You're advised to check our reference document to help troubleshoot https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+
+    exit 1
+  else
+    echo "✅ Updated the systemd $defaultName.service unit file"
+    echo "🤖 Should reload the systemctl daemon..."
+
+    if ! sudo systemctl daemon-reload; then
+      printf "👹 Oops! Failed to reload the systemctl daemon for some reason\n"
+    fi
+  fi
+
+  echo "🤖 Reload the daemon to apply the changes"
+  sudo systemctl daemon-reload
+
+  echo
+
+  echo "🚑 Verify $defaultLightningConfigPath..."
+  if grep -q "~\/.$defaultName" "$defaultLightningConfigPath" || ! grep -q "/home/$targetUsername" "$defaultLightningConfigPath"; then
+    echo "🤖 Update the config.toml with user home path /home/$targetUsername"
+    if ! sed -i "s|~/.$defaultName|/home/$targetUsername/.$defaultName|g" "$defaultLightningConfigPath"; then
+      printf "👹 Oops! Failed to replace the user home paths in the configuration file %s. Check the documentation to do it manually %s\n" "$defaultLightningConfigPath" "https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+    else
+      printf "✅ Replaced the user home path in the configuration file\n"
+    fi
+  else
+      printf "✅ Found user home path in the configuration file\n"
+  fi
+
+  echo
+
+  echo "🌈 The ownership transfer has now completed."
+  echo
+  echo "🤖 Restart the Network Node by running the restart command:"
+  echo "sudo systemctl restart $defaultName"
+  echo
+  echo "👀 You can watch the Node output by running the command:"
+  echo "tail -f $defaultLightningOutputLogAbsPath"
+  echo
+  echo "🥼 For diagnostics run the command:"
+  echo "tail -f $defaultLightningDiagnosticLogAbsPath"
+  echo
+  echo "Learn more by checking our guides at https://docs.fleek.network"
+  echo "✨ That's all!"
+)
