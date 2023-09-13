@@ -1,0 +1,117 @@
+#!/bin/bash
+
+# Defaults
+defaultName="lightning"
+defaultCLIBuildName="$defaultName-node"
+defaultCLIAlias="lgtn"
+defaultAlphaTestnetBranch="testnet-alpha-0"
+defaultBasePath="fleek-network/$defaultName"
+defaultLightningPath="$HOME/$defaultBasePath"
+defaultDiscordUrl="https://discord.gg/fleekxyz"
+defaultLightningDiagnosticFilename="diagnostic.log"
+defaultLightningOutputFilename="output.log"
+defaultLightningLogPath="/var/log/$defaultName"
+defaultLightningDiagnosticLogAbsPath="$defaultLightningLogPath/$defaultLightningDiagnosticFilename"
+defaultLightningOutputLogAbsPath="$defaultLightningLogPath/$defaultLightningOutputFilename"
+defaultTargetName="release"
+defaultLightningSystemdServiceName="$defaultName"
+defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
+defaultLightningBasePath="$HOME/.$defaultName"
+defaultLightningConfigFilename="config.toml"
+defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
+defaultTempLogFilePath="/var/tmp"
+
+# Error codes
+err_non_root=87
+
+userExists() {
+  grep -q "^$1:" /etc/passwd
+}
+
+isLightningSourceCode() {
+  for subdir in core lib services; do
+    if [[ ! -d "$1/$subdir" ]]; then
+      return 1
+    fi
+  done
+}
+
+checkCustomPathForFleekNetworkSourceCode() {
+  while read -rp "🤖 What is the complete pathname for Fleek Network Lightning source code repository? " answer; do
+    if [[ ! -d "$answer" ]]; then
+      echo "👹 Oops! The pathname $answer doesn't seem to exist. Are  you sure that's the correct location? Verify and try again later..."
+
+      exit 1
+    fi
+
+    if ! isLightningSourceCode "$answer"; then
+      echo "👹 Oops! Doesn't seem to be the Lightning source code repository. Couldn't locate the expected subdirectory $subdir. Are  you sure that's the correct location? Verify and try again later..."
+
+      exit 1
+    fi
+
+    break;          
+  done
+
+  defaultLightningPath=$answer
+
+  return 0
+}
+
+(
+  exec < /dev/tty;
+
+  read -rp "👋 To transfer the setup ownership of Fleek Network Lightning Node Setup, you'll have to provide the username used to install. Press ENTER to continue..."
+
+  while read -rp "🤖 What's the username used to install the Fleek Network Lightning Node setup? " answer; do
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+      printf "👹 Oops! You should be logged in with the user account used to install the fleek Network Lightning CLI, switch the account and try again!\n"
+
+      exit 1
+    elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+      break;
+    fi
+
+    if userExists "$answer"; then
+      echo "✅ Found the username $answer"
+
+      if ! groups | grep -q 'root\|sudo'; then
+        printf "⛔️ Attention! The username has to have admin privileges (sudo), add the user to the sudo group and try again later!\n" >&2;
+
+        exit "$err_non_root";
+      else
+        echo "✅ Found that username $answer has correct admin privileges (sudo)"
+      fi
+
+      if [[ "$answer" == "root" && ! -d "/root/$defaultBasePath" ]] || [[ "$answer" != "root" && ! -d "/home/$answer/$defaultBasePath" ]]; then
+        echo "⚠️ WARNING: The source code wasn't found in default path. You'll have to provide the full pathname location, which by default is ~/$defaultBasePath."
+
+        checkCustomPathForFleekNetworkSourceCode
+      elif [[ "$answer" == "root" ]]; then
+        defaultLightningPath=/root/$defaultBasePath
+      else
+        defaultLightningPath=/home/$answer/$defaultBasePath
+      fi
+
+      echo "✅ Found the Lightning source code at $defaultLightningPath"
+
+      break;
+    fi
+  done
+
+  echo
+
+  echo "🌈 The ownership transfer has now completed."
+  echo
+  echo "🤖 Restart the Network Node by running the restart command:"
+  echo "sudo systemctl restart $defaultName"
+  echo
+  echo "👀 You can watch the Node output by running the command:"
+  echo "tail -f $defaultLightningOutputLogAbsPath"
+  echo
+  echo "🥼 For diagnostics run the command:"
+  echo "tail -f $defaultLightningDiagnosticLogAbsPath"
+  echo
+  echo "Learn more by checking our guides at https://docs.fleek.network"
+  echo "✨ That's all!"
+)
