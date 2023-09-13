@@ -26,6 +26,7 @@ jobs:
           cp ./scripts/whitelist ./build
           cp ./scripts/update ./build
           cp ./scripts/healthcheck ./build
+          cp ./scripts/transfer_setup_ownership ./build
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
