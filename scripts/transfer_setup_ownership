@@ -103,6 +103,7 @@ checkCustomPathForFleekNetworkSourceCode() {
     fi
 
     defaultLightningSystemPath="$answer"
+    defaultLightningConfigPath="$answer/$defaultLightningConfigFilename"
 
     break;
   done
@@ -143,11 +144,13 @@ moveDirectoryFromTo() {
 
         checkCustomPathForFleekNetworkSourceCode
       elif [[ "$answer" == "root" ]]; then
-        defaultLightningPath=/root/$defaultBasePath
-        defaultLightningSystemPath=/root/.$defaultName
+        defaultLightningPath="/root/$defaultBasePath"
+        defaultLightningSystemPath="/root/.$defaultName"
+        defaultLightningConfigPath="$defaultLightningSystemPath/$defaultLightningConfigFilename"
       else
-        defaultLightningPath=/home/$answer/$defaultBasePath
-        defaultLightningSystemPath=/home/$answer/.$defaultName
+        defaultLightningPath="/home/$answer/$defaultBasePath"
+        defaultLightningSystemPath="/home/$answer/.$defaultName"
+        defaultLightningConfigPath="$defaultLightningSystemPath/$defaultLightningConfigFilename"
       fi
 
       echo "✅ Found the Lightning source code at $defaultLightningPath"
@@ -238,6 +241,11 @@ moveDirectoryFromTo() {
 
   moveDirectoryFromTo "$defaultLightningPath" "/home/$targetUsername/fleek-network"
 
+  # Update app state
+  defaultLightningPath="/home/$targetUsername/$defaultBasePath"
+  defaultLightningSystemPath="/home/$targetUsername/.$defaultName"
+  defaultLightningConfigPath="$defaultLightningSystemPath/$defaultLightningConfigFilename"
+
   echo
 
   if ! changeOwnershipDir "$targetUsername" "$targetLightningConfigSystemPath"; then
@@ -307,6 +315,20 @@ moveDirectoryFromTo() {
 
   echo "🤖 Reload the daemon to apply the changes"
   sudo systemctl daemon-reload
+
+  echo
+
+  echo "🚑 Verify $defaultLightningConfigPath..."
+  if grep -q "~\/.$defaultName" "$defaultLightningConfigPath" || ! grep -q "/home/$targetUsername" "$defaultLightningConfigPath"; then
+    echo "🤖 Update the config.toml with user home path /home/$targetUsername"
+    if ! sed -i "s|~/.$defaultName|/home/$targetUsername/.$defaultName|g" "$defaultLightningConfigPath"; then
+      printf "👹 Oops! Failed to replace the user home paths in the configuration file %s. Check the documentation to do it manually %s\n" "$defaultLightningConfigPath" "https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+    else
+      printf "✅ Replaced the user home path in the configuration file\n"
+    fi
+  else
+      printf "✅ Found user home path in the configuration file\n"
+  fi
 
   echo
 
