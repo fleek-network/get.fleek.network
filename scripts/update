@@ -152,7 +152,7 @@ defaultTempLogFilePath="/var/tmp"
   fi
 
   if ! sudo sed -i "s|^ExecStart=.*|ExecStart=$defaultCLIAlias -c $defaultLightningConfigPath run|g" "$defaultLightningSystemdServicePath"; then
-    echo "👹 Oops! Failed to find and replace the property name ExecStart in $defaultLightningSystemdServicePath. You're advised to check our reference document to help troubleshoot https://docs.fleek.network/references/Lightning%20CLI/error-linking-with-cc-failed-exist-status-1/"
+    echo "👹 Oops! Failed to find and replace the property name ExecStart in $defaultLightningSystemdServicePath. You're advised to check our reference document to help troubleshoot https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
 
     exit 1
   else
