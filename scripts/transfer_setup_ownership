@@ -281,6 +281,35 @@ moveDirectoryFromTo() {
 
   echo
 
+  echo "🤖 Update the systemd $defaultName.service"
+  if ! grep -q "Environment=$defaultTempLogFilePath" "$defaultLightningSystemdServicePath"; then
+    echo "🤖 The TMPDIR environment variable doesn't seem correct"
+
+    if ! sudo sed -i -e '/StandardError=/a\' -e "Environment=$defaultTempLogFilePath" "$defaultLightningSystemdServicePath"; then
+      echo "👹 Oops! Failed setup the environment variable for TMPDIR where the syslog for Lightning CLI should be stored. Check the documentation to do it manually  https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+    fi
+  else
+    echo "✅ The TMPDIR environment variable seems correct"
+  fi
+
+  if ! sudo sed -i "s|^ExecStart=.*|ExecStart=$defaultCLIAlias -c $defaultLightningConfigPath run|g" "$defaultLightningSystemdServicePath"; then
+    echo "👹 Oops! Failed to find and replace the property name ExecStart in $defaultLightningSystemdServicePath. You're advised to check our reference document to help troubleshoot https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+
+    exit 1
+  else
+    echo "✅ Updated the systemd $defaultName.service unit file"
+    echo "🤖 Should reload the systemctl daemon..."
+
+    if ! sudo systemctl daemon-reload; then
+      printf "👹 Oops! Failed to reload the systemctl daemon for some reason\n"
+    fi
+  fi
+
+  echo "🤖 Reload the daemon to apply the changes"
+  sudo systemctl daemon-reload
+
+  echo
+
   echo "🌈 The ownership transfer has now completed."
   echo
   echo "🤖 Restart the Network Node by running the restart command:"
