@@ -2,7 +2,7 @@
 
 # Defaults
 defaultName="lightning"
-defaultCLIBuildName="$defaultName-node"
+defaultCLIBuildName="$defaultName-cli"
 defaultCLIAlias="lgtn"
 defaultAlphaTestnetBranch="testnet-alpha-0"
 defaultLightningPath="$HOME/fleek-network/$defaultName"
