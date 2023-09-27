@@ -13,13 +13,15 @@
 # If that's your preference, go ahead and check our guides https://docs.fleek.network
 #
 # Contributing?
-# - If you'd like to test changes locally use the env var `USE_BRANCH_NAME_FOR_GH_RAW`, for remote locales pulls
+# - If you'd like to test changes locally based on a Lightning repo branch use the env var `USE_LIGHTNING_BRANCH`
+# - If you'd like to test changes locally based on a get.fleek.network repo branch use the env var `USE_GET_BRANCH`
 #
 # Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
 
 # TODO: Switch to main on release
 # Default to branch "testnet-alpha-0"
-useBranch=${USE_BRANCH_NAME_FOR_GH_RAW="testnet-alpha-0"}
+useBranch=${USE_LIGHTNING_BRANCH="testnet-alpha-0"}
+useGetBranch=${USE_GET_BRANCH="main"}
 
 # Workdir
 if ! cd "$(mktemp -d)"; then
@@ -78,7 +80,7 @@ echo
       echo
       read -rp "Let's launch the process, press ENTER to continue..."
 
-      curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$useBranch/scripts/install_native" > install_native
+      curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$useGetBranch/scripts/install_native" > install_native
       chmod +x install_native
 
       ./install_native
@@ -88,7 +90,7 @@ echo
       echo
       read -rp "We'll launch the process, press ENTER to continue..."
 
-      curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$useBranch/scripts/install_docker" > install_docker
+      curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$useGetBranch/scripts/install_docker" > install_docker
       chmod +x install_docker
 
       ./install_docker
