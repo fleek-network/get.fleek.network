@@ -51,6 +51,10 @@ vCPUsMinusOne=$(($vCPUs - 1))
 err_non_root=87
 
 # Utils
+checkCPUArchitectureSupport() {
+  uname -m
+}
+
 checkSystemHasRecommendedResources() {
   mem=$(awk '/^MemTotal:/{print $2}' /proc/meminfo);
   partDiskSpace=$(df --output=avail -B 1 "$PWD" |tail -n 1)
@@ -265,6 +269,39 @@ installDocker() {
 
   # Check if system has recommended resources (disk space and memory)
   checkSystemHasRecommendedResources "$os"
+
+  # CPU Architecture
+  cpu=$(checkCPUArchitectureSupport)
+
+  if [[ "$cpu" != 'x86_64' ]]; then
+    echo "👹 Oops! The Fleek Network node binary is only supported on CPUs that adhere to the x86_64 architecture (64-bit)."
+
+    exit 1;
+  elif ! lscpu | grep -q 'GenuineIntel'; then
+    if lscpu | grep -q 'AuthenticAMD'; then
+      echo
+      echo "An AuthenticAMD CPU architecture was detected!"
+      echo "Our pre-built Docker image is built on GenuineIntel x64 CPU architecture. The Docker Container might fail to run on your AuthenticAMD machine."
+      echo "If you find issues and can provide feedback, feel free to build and troubleshoot on your own by checking our guide $defaultDocsSite/guides/Node%20Operators/running-a-node-in-docker"
+      echo
+
+      while read -rp "To confirm you have read the warning message, type the name of your CPU to proceed. What's the CPU name described above?" answer; do
+        if [[ "$answer" == "AuthenticAMD" ]]; then
+          break;
+        elif [[ "$answer" == "quit" ]]; then
+          echo "🦖 The install process has terminated."
+
+          exit 1;
+        fi
+
+        printf "💩 Uh-oh! Try again or type quit to exit\n"
+      done
+    else
+      echo "👹 Oops! Our pre-built Docker image is built for GenuineIntel x64 CPU architectures only. Support for other may come in the future. Meanwhile, feel free to build and troubleshoot on your own by checking our guide $defaultDocsSite/guides/Node%20Operators/running-a-node-in-docker"
+
+      exit 1
+    fi
+  fi
 
   # Warning for root users
   if [[ "$EUID" -eq 0 ]]; then
