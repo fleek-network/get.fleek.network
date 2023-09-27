@@ -306,6 +306,13 @@ installDocker() {
 
   checkIfDockerInstalled
 
+  # Create the directory to bound
+  if ! sudo mkdir -p "$defaultLightningBasePath"; then
+    echo "👹 Oops! Failed to create the directory $defaultLightningBasePath"
+
+    exit 1
+  fi
+
 # Important: the LIGHTNING_SERVICE it does not have identation on purpose, do not change
 echo "
 [Unit]
