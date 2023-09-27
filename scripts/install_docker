@@ -9,7 +9,8 @@
 # Quick install: `curl https://get.fleek.network | bash`
 #
 # Contributing?
-# - If you'd like to test changes locally use the env var `USE_LIGHTNING_BRANCH` and `URSA_BRANCH`, for remote locales pulls
+# - If you'd like to test changes locally based on a Lightning repo branch use the env var `USE_LIGHTNING_BRANCH`
+# - If you'd like to test changes locally based on a get.fleek.network repo branch use the env var `USE_GET_BRANCH`
 #
 # Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
 
