@@ -313,6 +313,12 @@ installDocker() {
 
       exit 1
     fi
+
+    if ! sudo chown "$(whoami):$(whoami)" "$defaultLightningBasePath"; then
+      echo "👹 Oops! Failed to change owner of the directory $defaultLightningBasePath"
+    else
+      echo "✅ Updated ownership of the directory $defaultLightningBasePath to $(whoami)"
+    fi
   else
     echo "✅ The Lightning $defaultLightningBasePath exists"
   fi
