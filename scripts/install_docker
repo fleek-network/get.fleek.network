@@ -152,18 +152,18 @@ exitInstaller() {
 
 checkIfDockerInstalled() {
   if ! hasCommand docker; then
-    printf "👹 Oops! Docker is required and was not found!"
+    printf "👹 Oops! Docker is required and was not found!\n"
 
     installDocker
 
     if [[ "$?" = 1 ]]; then
-      showErrorMessage "Oops! Failed to install docker."
+      printf "👹 Oops! Failed to install docker.\n"
 
       exitInstaller
     fi
   fi
 
-  printf "✅ Docker is installed!"
+  printf "✅ Docker is installed!\n"
 }
 
 installDocker() {
