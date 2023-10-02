@@ -32,7 +32,7 @@ kbPerGb=1000000
 
 # Defaults
 defaultName="lightning"
-defaultCLIBuildName="$defaultName-cli"
+defaultCLIBuildName="$defaultName-node"
 defaultAlphaTestnetBranch="testnet-alpha-0"
 defaultCLIAlias="lgtn"
 defaultLightningPath="$HOME/fleek-network/$defaultName"
