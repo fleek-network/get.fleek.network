@@ -23,7 +23,7 @@ dateRuntime=$(date '+%Y%m%d%H%M%S')
 # Defaults
 defaultName="lightning"
 defaultDockerImageName="$defaultName"
-defaultDockerContainerName="$defaultName-cli"
+defaultDockerContainerName="$defaultName-node"
 defaultDockerRegistryUrl="ghcr.io/fleek-network/lightning"
 defaultDockerRegistryTag="latest"
 defaultDockerRegistryName="$defaultDockerRegistryUrl:$defaultDockerRegistryTag"
