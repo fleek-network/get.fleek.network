@@ -281,7 +281,7 @@ moveDirectoryFromTo() {
     ((warningCount++))    
   fi
 
-  if ! sudo ln -s "$targetLightningSourceCodePath/target/release/lightning-node" "$defaultSymlinkPath"; then
+  if ! sudo ln -s "$targetLightningSourceCodePath/target/release/$defaultCLIBuildName" "$defaultSymlinkPath"; then
     echo "⚠️ WARNING: Failed to create symlink $defaultSymlinkPath"
 
     ((warningCount++))
