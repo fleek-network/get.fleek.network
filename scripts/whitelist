@@ -8,7 +8,9 @@ defaultLightningOutputFilename="output.log"
 defaultLightningDiagnosticLogAbsPath="$defaultLightningLogPath/$defaultLightningDiagnosticFilename"
 defaultLightningOutputLogAbsPath="$defaultLightningLogPath/$defaultLightningOutputFilename"
 defaultLightningSystemdServiceName="$defaultName"
+defaultLightningSystemdServiceNameForDocker="docker-$defaultName"
 defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
+defaultLightningSystemdServicePathForDocker="/etc/systemd/system/$defaultLightningSystemdServiceNameForDocker.service"
 
 (
   exec < /dev/tty;
@@ -29,10 +31,14 @@ defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemd
 
   echo
 
-  if [[ ! -f "$defaultLightningSystemdServicePath" ]]; then
-      echo "👹 Oops! The systemd unit service file for Fleek Network $defaultName was not found, meaning that you have not followed or accepted the recommendations in our installation document. Make sure you setup a systemd service https://docs.fleek.network/docs/node/Install/#systemd-service-setup"
+  if [[ ! -f "$defaultLightningSystemdServicePath" ]] && [[ ! -f "$defaultLightningSystemdServicePathForDocker" ]]; then
+    echo "👹 Oops! The systemd unit service file for Fleek Network $defaultName was not found, meaning that you have not followed or accepted the recommendations in our installation document. Make sure you setup a systemd service https://docs.fleek.network/docs/node/install/#systemd-service-setup"
 
-      exit 1
+    exit 1
+  elif [[ ! -f "$defaultLightningSystemdServicePathForDocker" ]]; then
+    echo "👹 Oops! The systemd unit service file for Fleek Network $defaultName was not found, meaning that you have not followed or accepted the recommendations in our installation document. Make sure you setup a systemd service https://docs.fleek.network/docs/node/install/#docker-container-as-a-systemd-service"
+
+    exit 1
   fi
 
   while read -rp "🤖 This process requires to clear the logs and restart the service. Should it clear the logs and restart the service? (yes/no) " answer; do
