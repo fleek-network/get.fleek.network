@@ -50,7 +50,11 @@ defaultLightningSystemdServicePathForDocker="/etc/systemd/system/$defaultLightni
       sudo rm "$defaultLightningOutputLogAbsPath"
       sudo rm "$defaultLightningDiagnosticLogAbsPath"
 
-      sudo systemctl restart "$defaultName"
+      if [[ -f "$defaultLightningSystemdServicePathForDocker" ]]; then
+        sudo systemctl restart "$defaultLightningSystemdServiceNameForDocker"
+      else
+        sudo systemctl restart "$defaultName"
+      fi
 
       serverOutputWaitAttempts=0
       while [[ -f "$defaultLightningOutputLogAbsPath" && ! -s "$defaultLightningOutputLogAbsPath" ]]; do
