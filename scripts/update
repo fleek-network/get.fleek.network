@@ -3,6 +3,8 @@
 # Defaults
 defaultName="lightning"
 defaultCLIBuildName="$defaultName-node"
+defaultDockerRegistryUrl="ghcr.io/fleek-network/lightning"
+defaultDockerRegistryTag="latest"
 defaultCLIAlias="lgtn"
 defaultAlphaTestnetBranch="testnet-alpha-0"
 defaultLightningPath="$HOME/fleek-network/$defaultName"
@@ -14,7 +16,9 @@ defaultLightningDiagnosticLogAbsPath="$defaultLightningLogPath/$defaultLightning
 defaultLightningOutputLogAbsPath="$defaultLightningLogPath/$defaultLightningOutputFilename"
 defaultTargetName="release"
 defaultLightningSystemdServiceName="$defaultName"
+defaultLightningSystemdServiceNameForDocker="docker-$defaultName"
 defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
+defaultLightningSystemdServicePathForDocker="/etc/systemd/system/$defaultLightningSystemdServiceNameForDocker.service"
 defaultLightningBasePath="$HOME/.$defaultName"
 defaultLightningConfigFilename="config.toml"
 defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
@@ -22,6 +26,33 @@ defaultTempLogFilePath="/var/tmp"
 
 (
   exec < /dev/tty;
+
+  if [[ -f "$defaultLightningSystemdServicePathForDocker" ]] && grep -q 'docker run' "$defaultLightningSystemdServicePathForDocker"; then
+    if ! sudo docker pull $defaultDockerRegistryUrl:$defaultDockerRegistryTag; then
+      echo "👹 Oops! Failed to pull the latest docker image for some reason"
+
+      exit 1
+    fi
+
+    echo
+    echo "⚠️ Attention: Docker users, don't have to run this update script to get latest updates. Docker users can run systemctl restart to get the latest version."
+    echo
+    echo "🌈 The update has now completed."
+    echo
+    echo "🤖 Restart the Network Node by running the restart command:"
+    echo "sudo systemctl restart $defaultLightningSystemdServiceNameForDocker"
+    echo
+    echo "👀 You can watch the Node output by running the command:"
+    echo "tail -f $defaultLightningOutputLogAbsPath"
+    echo
+    echo "🥼 For diagnostics run the command:"
+    echo "tail -f $defaultLightningDiagnosticLogAbsPath"
+    echo
+    echo "Learn more by checking our guides at https://docs.fleek.network"
+    echo "✨ That's all!"
+
+    exit
+  fi
 
   while read -rp "🤖 Are you logged with the user account used to install the Fleek Network Lightning CLI? (yes/no) " answer; do
     if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
