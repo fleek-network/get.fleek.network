@@ -35,7 +35,7 @@ defaultTempLogFilePath="/var/tmp"
     fi
 
     echo
-    echo "⚠️ Attention: Docker users, don't have to run this update script to get latest updates. Docker users can run systemctl restart to get the latest version."
+    echo "⚠️  Attention: Docker users, don't have to run the update script to get latest updates. Docker users when run systemctl restart get the latest version."
     echo
     echo "🌈 The update has now completed."
     echo
