@@ -421,14 +421,14 @@ isOSSupported
   echo
 
   printf "🔑 Generate keys"
-  if ! lgtn keys generate; then
+  if ! lgtn key generate; then
     printf "⚠️ Keys already exist, will NOT generate new keys!\n"
   fi
 
   echo
 
   printf "🔑 The public keys are\n"
-  if ! lgtn keys show | grep 'Node Public\|Consensus Public'; then
+  if ! lgtn key show | grep 'Node Public\|Consensus Public'; then
     printf "👹 Oops! Failed to show the public keys for Node and Consensus for some reason\n"
   fi
 
