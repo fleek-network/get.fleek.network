@@ -47,6 +47,11 @@ defaultLightningSystemdServiceName="$defaultName"
 defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
 defaultLightningConfigFilename="config.toml"
 defaultLightningBasePath="$HOME/.$defaultName"
+defaultLightningKeystorePath="$defaultLightningBasePath/keystore"
+defaultLightningKeystoreNodePemFilename="node.pem"
+defaultLightningKeystoreConsensusPemFilename="consensus.pem"
+defaultLightningKeystoreNodePemPath="$defaultLightningKeystorePath/$defaultLightningKeystoreNodePemFilename"
+defaultLightningKeystoreConsensusPemPath="$defaultLightningKeystorePath/$defaultLightningKeystoreConsensusPemFilename"
 defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
 defaultLightningHttpsRepository="https://github.com/fleek-network/$defaultName.git"
 defaultDiscordUrl="https://discord.gg/fleekxyz"
@@ -420,9 +425,11 @@ isOSSupported
 
   echo
 
-  printf "🔑 Generate keys"
-  if ! lgtn key generate; then
-    printf "⚠️ Keys already exist, will NOT generate new keys!\n"
+  if [[ ! -d "$defaultLightningKeystorePath" ]] || [[ ! -f "$defaultLightningKeystoreNodePemPath" ]] && [[ ! -f "$defaultLightningKeystoreConsensusPemPath" ]]; then
+    printf "🔑 Generate keys"
+    if ! lgtn key generate; then
+      echo "👹 Oops! Failed to generate keys"
+    fi
   fi
 
   echo
