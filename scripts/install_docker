@@ -323,6 +323,13 @@ installDocker() {
     echo "✅ The Lightning $defaultLightningBasePath exists"
   fi
 
+  echo "📒 Clear logs"
+  for file in "$defaultLightningDiagnosticLogAbsPath" "$defaultLightningOutputLogAbsPath"; do
+    if [[ -f "$file" ]] && ! sudo rm "$file"; then
+      echo "👹 Oops! Failed to remove $file"
+    fi
+  done
+
 # Important: the LIGHTNING_SERVICE it does not have identation on purpose, do not change
 echo "
 [Unit]
