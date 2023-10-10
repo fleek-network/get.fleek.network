@@ -475,6 +475,15 @@ isOSSupported
 
   echo
 
+  echo "📒 Clear logs"
+  for file in "$defaultLightningDiagnosticLogAbsPath" "$defaultLightningOutputLogAbsPath"; do
+    if [[ -f "$file" ]] && ! sudo rm "$file"; then
+      echo "👹 Oops! Failed to remove $file"
+    fi
+  done
+
+  echo
+
   printf "🤖 Declare the service and store in the system path\n"
 
 # Important: the LIGHTNING_SERVICE it does not have identation on purpose, do not change
