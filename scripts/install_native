@@ -33,8 +33,7 @@ kbPerGb=1000000
 # Defaults
 defaultName="lightning"
 defaultCLIBuildName="$defaultName-node"
-# TODO: rename the testnet branch to expected
-defaultAlphaTestnetBranch="main"
+defaultAlphaTestnetBranch="testnet-alpha-0"
 defaultCLIAlias="lgtn"
 defaultLightningPath="$HOME/fleek-network/$defaultName"
 defaultLightningLogPath="/var/log/$defaultName"
