@@ -438,7 +438,7 @@ isOSSupported
 
   if [[ ! -d "$defaultLightningKeystorePath" ]] || [[ ! -f "$defaultLightningKeystoreNodePemPath" ]] && [[ ! -f "$defaultLightningKeystoreConsensusPemPath" ]]; then
     printf "🔑 Generate keys"
-    if ! lgtn key generate; then
+    if ! lgtn keys generate; then
       echo "👹 Oops! Failed to generate keys"
     fi
   fi
@@ -446,7 +446,7 @@ isOSSupported
   echo
 
   printf "🔑 The public keys are\n"
-  if ! lgtn key show | grep 'Node Public\|Consensus Public'; then
+  if ! lgtn keys show | grep 'Node Public\|Consensus Public'; then
     printf "👹 Oops! Failed to show the public keys for Node and Consensus for some reason\n"
   fi
 
