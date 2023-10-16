@@ -41,6 +41,12 @@ defaultDocsSite="https://docs.fleek.network"
 defaultMinMemoryKBytesRequired=32000000
 defaultMinDiskSpaceKBytesRequired=20000000
 defaultDockerDaemonJson="/etc/docker/daemon.json"
+defaultPortRangeTCPStart=4200
+defaultPortRangeTCPEnd=4299
+defaultPortRangeUDPStart=4300
+defaultPortRangeUDPEnd=4399
+defaultPortRangeTCP="$defaultPortRangeTCPStart-$defaultPortRangeTCPStart"
+defaultPortRangeUDP="$defaultPortRangeUDPStart-$defaultPortRangeUDPEnd"
 
 # App state
 vCPUs=$(nproc --all)
@@ -279,20 +285,11 @@ installDocker() {
     sudo DEBIAN_FRONTEND=noninteractive apt-get install lsof -yq
   fi
 
-  # Obs: In the future there'll be ports for Worker (80*1) and Mempool (80*2)
-  declare -a requiredPorts=(4069 4200 6969 18000 18101 18102)
+  hasTCPPortsAvailable=$(hasFreePortRange "$defaultPortRangeTCPStart" "$defaultPortRangeTCPEnd")
+  hasUDPPortsAvailable=$(hasFreePortRange "$defaultPortRangeUDPStart" "$defaultPortRangeUDPEnd")
 
-  hasPortsAvailable=0
-  for port in "${requiredPorts[@]}"; do
-    if lsof -i :"$port" >/dev/null; then
-      printf "💩 Uh-oh! The port %s is required but is in use...\n" "$port"
-
-      hasPortsAvailable=1
-    fi
-  done
-
-  if [[ "$hasPortsAvailable" -eq 1 ]]; then
-    printf "👹 Oops! Required port(s) are in use, make sure the ports are open before retrying, please!\n"
+  if [[ "$hasTCPPortsAvailable" -eq 1 || "$hasUDPPortsAvailable" -eq 1 ]]; then
+    echo "👹 Oops! Required port(s) are in use, make sure the ports are freed before retrying, please! To learn more about required ports https://docs.fleek.network/docs/node/requirements"
 
     exit 1
   fi
