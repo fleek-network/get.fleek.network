@@ -70,7 +70,7 @@ defaultLightningSystemdServicePathForDocker="/etc/systemd/system/$defaultLightni
 
       echo
 
-      if curl -qsS localhost:4069/health 2>/dev/null | grep -q 'OK'; then
+      if curl -qsS localhost:4230/health 2>/dev/null | grep -q 'OK'; then
         echo "🌈 The service health check was successful! The node is healthy, thus whitelisted."
 
         exit 0

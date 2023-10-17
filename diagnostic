@@ -33,7 +33,7 @@ bold=$(tput bold)
 normal=$(tput sgr0)
 
 # Service ports
-declare -a fleekNetworkServicePorts=(80 443 4069 6009)
+declare -a fleekNetworkServicePorts=(80 443 4230 6009)
 
 tempWorkDir=$(mktemp -d)
 

@@ -115,13 +115,13 @@ warningCount=0
     echo "🐛 Found some possible issues in the $defaultLightningConfigPath"
   fi
 
-  if ! curl -s -w "\p" localhost:4069/health | grep -q 'OK'; then
-    echo "⚠️ WARNING: Failed to get a response from localhost:4069/health. The node is not running, if you are participating in testnet, then read the https://docs.fleek.network/docs/node/testnet-onboarding, you need to apply and receive approval for the node to run successfully"
+  if ! curl -s -w "\p" localhost:4230/health | grep -q 'OK'; then
+    echo "⚠️ WARNING: Failed to get a response from localhost:4230/health. The node is not running, if you are participating in testnet, then read the https://docs.fleek.network/docs/node/testnet-onboarding, you need to apply and receive approval for the node to run successfully"
 
     ((warningCount++))
     ((healthIssueCount++))
   else
-    echo "✅ The localhost:4069/health is okay"
+    echo "✅ The localhost:4230/health is okay"
   fi
 
   echo

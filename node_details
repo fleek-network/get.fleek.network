@@ -22,6 +22,7 @@ defaultLightningKeystoreNodePemFilename="node.pem"
 defaultLightningKeystoreConsensusPemFilename="consensus.pem"
 defaultLightningKeystoreNodePemPath="$defaultLightningKeystorePath/$defaultLightningKeystoreNodePemFilename"
 defaultLightningKeystoreConsensusPemPath="$defaultLightningKeystorePath/$defaultLightningKeystoreConsensusPemFilename"
+defaultRPCUrl="https://rpc.testnet.fleek.network/rpc/v0"
 
 # Utils
 hasCommand() {
@@ -89,6 +90,11 @@ keys=$(lgtn keys show | cut -d : -f 2)
 nodePubKey=$(echo "$keys" | sed -n '1p' | cut -d : -f 2 | xargs)
 consensusPubKey=$(echo "$keys" | sed -n '1p' | cut -d : -f 2 | xargs)
 ipAddr=$(curl -sw '\n' ifconfig.me || curl -sw '\n' ident.me)
+# TODO: Show if stake
+# hasStake=$(curl -X POST \
+#   "$defaultRPCUrl" \
+#   -H 'Content-Type: application/json' \
+#   -d "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"flk_get_node_info\",\"params\":[\"$nodePubKey\"]}")
 
 echo "🤖 Your server details are the following"
 echo
