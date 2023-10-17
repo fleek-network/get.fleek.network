@@ -14,6 +14,15 @@
 #
 # Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
 
+# Defaults
+defaultName="lightning"
+defaultLightningBasePath="$HOME/.$defaultName"
+defaultLightningKeystorePath="$defaultLightningBasePath/keystore"
+defaultLightningKeystoreNodePemFilename="node.pem"
+defaultLightningKeystoreConsensusPemFilename="consensus.pem"
+defaultLightningKeystoreNodePemPath="$defaultLightningKeystorePath/$defaultLightningKeystoreNodePemFilename"
+defaultLightningKeystoreConsensusPemPath="$defaultLightningKeystorePath/$defaultLightningKeystoreConsensusPemFilename"
+
 # Utils
 hasCommand() {
   command -v "$1" >/dev/null 2>&1
@@ -63,6 +72,15 @@ echo
 
 if ! hasCommand lgtn; then
   echo "👹 Oops! Failed to locate the Lightning CLI lgtn alias. This script is made to support default installations made with the tools or instructions, if you have a custom installation you're better of getting the details on your own."
+
+  exit 1
+fi
+
+if [[ ! -d "$defaultLightningKeystorePath" ]] || [[ ! -f "$defaultLightningKeystoreNodePemPath" ]] && [[ ! -f "$defaultLightningKeystoreConsensusPemPath" ]]; then
+  echo "👹 Oops! Failed to find the keystore"
+  echo
+  echo "The keys are generated for you if you have installed with the assisted installer, followed the documentation recommendation or the Docker install."
+  echo "If you missed the step, read the documentation instructions provided in https://docs.fleek.network/docs/node/install/#key-generator, or troubleshoot by learning how to manage the keystore in the guide here https://docs.fleek.network/guides/Node%20Operators/managing-the-keystore/ "
 
   exit 1
 fi
