@@ -73,7 +73,7 @@ consensusPubKey=$(echo "$keys" | sed -n '1p' | cut -d : -f 2 | xargs)
 ipAddr=$(curl -sw '\n' ifconfig.me || curl -sw '\n' ident.me)
 
 echo "🤖 Your server details are the following"
-
+echo
 echo "The Node Public Key is $nodePubKey"
 echo "The Consensus Public Key is $consensusPubKey"
 echo "The Node Server IP address is $ipAddr"
