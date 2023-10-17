@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# <!-- IGNORE: This line is intentional DO NOT MODIFY --><pre><script>document.querySelector('body').firstChild.textContent = '#!/bin/bash'</script>
+
+# "Get Fleek Network" is an attempt to make our software more accessible.
+# By providing scripts to automate the installation process of our software,
+# we believe that it can help improve the onboarding experience of our users.
+#
+# Quick install: `curl https://get.fleek.network | bash`
+#
+# Contributing?
+# - If you'd like to test changes locally based on a Lightning repo branch use the env var `USE_LIGHTNING_BRANCH`
+# - If you'd like to test changes locally based on a get.fleek.network repo branch use the env var `USE_GET_BRANCH`
+#
+# Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
+
+# Utils
+hasCommand() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+# The white space before and after is intentional
+cat << "ART"
+
+  ⭐️ Fleek Network Node details ⭐️
+
+              zeeeeee-
+              z$$$$$$"
+            d$$$$$$"
+            d$$$$$P
+          d$$$$$P
+          $$$$$$"
+        .$$$$$$"
+      .$$$$$$"
+      4$$$$$$$$$$$$$"
+    z$$$$$$$$$$$$$"
+    """""""3$$$$$"
+          z$$$$P
+          d$$$$"
+        .$$$$$"
+      z$$$$$"
+      z$$$$P
+    d$$$$$$$$$$"
+    *******$$$"
+        .$$$"
+        .$$"
+      4$P"
+      z$"
+    zP
+    z"
+  /
+
+ART
+
+echo
+echo "★★★★★★★★★ 🌍 Website https://fleek.network"
+echo "★★★★★★★★★ 📚 Documentation https://docs.fleek.network"
+echo "★★★★★★★★★ 💾 Git repository https://github.com/fleek-network/lightning"
+echo "★★★★★★★★★ 🤖 Discord https://discord.gg/fleekxyz"
+echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
+echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
+echo
+
+if ! hasCommand lgtn; then
+  echo "👹 Oops! Failed to locate the Lightning CLI lgtn alias. This script is made to support default installations made with the tools or instructions, if you have a custom installation you're better of getting the details on your own."
+
+  exit 1
+fi
+
+keys=$(lgtn keys show | cut -d : -f 2)
+nodePubKey=$(echo "$keys" | sed -n '1p' | cut -d : -f 2 | xargs)
+consensusPubKey=$(echo "$keys" | sed -n '1p' | cut -d : -f 2 | xargs)
+ipAddr=$(curl -sw '\n' ifconfig.me || curl -sw '\n' ident.me)
+
+echo "🤖 Your server details are the following"
+
+echo "The Node Public Key is $nodePubKey"
+echo "The Consensus Public Key is $consensusPubKey"
+echo "The Node Server IP address is $ipAddr"
+
+echo
+echo "Learn more by checking our guides at https://docs.fleek.network"
+echo "✨ That's all!"
