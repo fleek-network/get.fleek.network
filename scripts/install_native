@@ -540,9 +540,9 @@ WantedBy=multi-user.target
 
   #     printf "🦖 Please be patient as the Fleek Network Node is launching and may take awhile 🙏\n\n"
 
-  #     while ! curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; do
+  #     while ! curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4230/rpc/v0 | grep -q "\"result\"\:\"pong\""; do
   #       if [[ "$pingAttempts" -gt 10 ]]; then
-  #         printf "👹 Oh no! Failed to health-check the localhost on port 4069\n"
+  #         printf "👹 Oh no! Failed to health-check the localhost on port 4230\n"
 
   #         break;
   #       fi
@@ -553,7 +553,7 @@ WantedBy=multi-user.target
   #         exit 1
   #       fi
 
-  #       printf "🤖 Awaiting %s on port 4069...\n" "$defaultName"
+  #       printf "🤖 Awaiting %s on port 4230...\n" "$defaultName"
   #       sleep 10
 
   #       ((pingAttempts++))
@@ -566,7 +566,7 @@ WantedBy=multi-user.target
   # done
 
   # TODO: Switch to /health
-  if curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4069/rpc/v0 | grep -q "\"result\"\:\"pong\""; then
+  if curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4230/rpc/v0 | grep -q "\"result\"\:\"pong\""; then
     echo "🌈 The Fleek Network Node is running!"
   else
     echo "🌈 The Fleek Network Node lightning CLI was installed and a Systemd Service was setup, to learn how to launch the service read below!"

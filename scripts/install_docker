@@ -342,7 +342,7 @@ ExecStartPre=-/usr/bin/docker kill $defaultDockerContainerName
 ExecStartPre=-/usr/bin/docker rm $defaultDockerContainerName
 ExecStartPre=/usr/bin/docker pull $defaultDockerRegistryUrl:$defaultDockerRegistryTag
 ExecStart=/usr/bin/docker run \
-  -p 4069:4069 \
+  -p 4230:4230 \
   -p 4200:4200 \
   -p 6969:6969 \
   -p 18000:18000 \
