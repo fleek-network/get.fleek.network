@@ -102,7 +102,7 @@ echo "The Node Public Key is $nodePubKey"
 echo "The Consensus Public Key is $consensusPubKey"
 echo "The Node Server IP address is $ipAddr"
 
-if $hasStake; then
+if [[ ! "$hasStake" -eq "" ]]; then
   echo "The Node staked amount is $hasStake"
 fi
 
