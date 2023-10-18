@@ -167,8 +167,20 @@ warningCount=0
           ((healthIssueCount++))
 
           break;
-        elif tail -n 500 "$defaultLightningOutputLogAbsPath" | grep -iq "Please update your node"; then
+        fi
+        
+        if tail -n 500 "$defaultLightningOutputLogAbsPath" | grep -iq "Please update your node"; then
           echo "⚠️ WARNING: Binary process version mismatch, you have to update your node. A quick reference is available in https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code/"
+          echo
+
+          ((warningCount++))
+          ((healthIssueCount++))
+
+          break;
+        fi
+
+        if tail -n 500 "$defaultLightningDiagnosticLogAbsPath" | grep -iq "Node secret key does not exist"; then
+          echo "⚠️ WARNING: The Node Key wasn't found, this might be due to missing keystore or user delegation permissions (sudo). A quick reference to help troubleshoout is available in https://docs.fleek.network/references/Lightning%20CLI/keys-not-found/"
           echo
 
           ((warningCount++))
