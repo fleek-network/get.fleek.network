@@ -14,7 +14,9 @@ defaultLightningDiagnosticLogAbsPath="$defaultLightningLogPath/$defaultLightning
 defaultLightningOutputLogAbsPath="$defaultLightningLogPath/$defaultLightningOutputFilename"
 defaultTargetName="release"
 defaultLightningSystemdServiceName="$defaultName"
+defaultLightningSystemdServiceNameForDocker="docker-$defaultName"
 defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
+defaultLightningSystemdServicePathForDocker="/etc/systemd/system/$defaultLightningSystemdServiceNameForDocker.service"
 defaultLightningBasePath="$HOME/.$defaultName"
 defaultLightningConfigFilename="config.toml"
 defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
@@ -29,6 +31,14 @@ warningCount=0
 (
   exec < /dev/tty;
 
+  if [[ "$EUID" -eq 0 ]]; then
+    echo "⚠️ WARNING: You're running the health check as ROOT user. If you have installed the Fleek Network Lightning CLI as ROOT this is not recommended. Read our documentation in https://docs.fleek.network"
+
+    basePath="/root"
+  fi
+
+  echo
+
   while read -rp "🤖 Are you logged with the user account used to install the Fleek Network Lightning CLI? (yes/no) " answer; do
     if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
       printf "👹 Oops! You should be logged in with the user account used to install the fleek Network Lightning CLI, switch the account and try again!\n"
@@ -40,14 +50,6 @@ warningCount=0
 
     printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
   done
-
-  echo
-
-  if [[ "$EUID" -eq 0 ]]; then
-    echo "⚠️ WARNING: You're running the health check as ROOT user. If you have installed the Fleek Network Lightning CLI as ROOT this is not recommended. Read our documentation in https://docs.fleek.network"
-
-    basePath="/root"
-  fi
 
   echo
 
@@ -116,12 +118,65 @@ warningCount=0
   fi
 
   if ! curl -s -w "\p" localhost:4230/health | grep -q 'OK'; then
-    echo "⚠️ WARNING: Failed to get a response from localhost:4230/health. The node is not running, if you are participating in testnet, then read the https://docs.fleek.network/docs/node/testnet-onboarding, you need to apply and receive approval for the node to run successfully"
+    echo "⚠️ WARNING: Failed to get a response from localhost:4230/health. The node is not running, if you are participating in testnet, then read the instructions in https://docs.fleek.network/docs/node/testnet-onboarding, to run successfully!"
 
     ((warningCount++))
     ((healthIssueCount++))
   else
     echo "✅ The localhost:4230/health is okay"
+  fi
+
+  if [[ -f "$defaultLightningSystemdServicePath" ]]; then
+    while read -rp "🤖 This process requires to clear the logs and restart the service. Should it clear the logs and restart the service? (yes/no) " answer; do
+      if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+        echo "👹 Oops! The healthcheck verification was exited."
+        
+        exit 1
+      elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+        sudo rm "$defaultLightningOutputLogAbsPath"
+        sudo rm "$defaultLightningDiagnosticLogAbsPath"
+
+        if [[ -f "$defaultLightningSystemdServicePathForDocker" ]]; then
+          sudo systemctl restart "$defaultLightningSystemdServiceNameForDocker"
+        else
+          sudo systemctl restart "$defaultName"
+        fi
+
+        serverOutputWaitAttempts=0
+        while [[ -f "$defaultLightningOutputLogAbsPath" && ! -s "$defaultLightningOutputLogAbsPath" ]]; do
+          echo "🤖 Please wait for the service output logs..."
+          sleep 5
+
+          if [[ "$serverOutputWaitAttempts" -gt 10 ]]; then
+            break
+          fi
+
+          ((serverOutputWaitAttempts++))
+        done
+
+        echo
+
+        if ! curl -qsS localhost:4230/health 2>/dev/null | grep -q 'OK'; then
+          if tail -n 5 "$defaultLightningOutputLogAbsPath" | grep -iq "Node is not staked"; then
+            echo "⚠️ WARNING: The node is not staked. Have you read the instructions to get onboarded? Find it here https://docs.fleek.network/docs/node/testnet-onboarding"
+            echo
+
+            ((warningCount++))
+            ((healthIssueCount++))
+          elif tail -n 5 "$defaultLightningOutputLogAbsPath" | grep -iq "Please update your node"; then
+            echo "⚠️ WARNING: Binary process version mismatch, you have to update your node. A quick reference is available in https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code/"
+            echo
+
+            ((warningCount++))
+            ((healthIssueCount++))
+          fi
+
+          break;
+        fi
+      fi
+
+      printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+    done
   fi
 
   echo
