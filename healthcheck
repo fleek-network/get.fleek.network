@@ -4,7 +4,7 @@
 defaultName="lightning"
 defaultCLIBuildName="$defaultName-node"
 defaultCLIAlias="lgtn"
-defaultAlphaTestnetBranch="testnet-alpha-0"
+defaultAlphaTestnetBranch="testnet-alpha-1"
 defaultLightningPath="$HOME/fleek-network/$defaultName"
 defaultDiscordUrl="https://discord.gg/fleekxyz"
 defaultLightningDiagnosticFilename="diagnostic.log"
@@ -43,6 +43,20 @@ warningCount=0
     if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
       printf "👹 Oops! You should be logged in with the user account used to install the fleek Network Lightning CLI, switch the account and try again!\n"
 
+      exit 1
+    elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+      break;
+    fi
+
+    printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+  done
+
+  echo
+
+  while read -rp "🤖 This process might require to clear the logs and restart the service. Is it ok to clear the logs and restart the service? (yes/no) " answer; do
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+      echo "👹 Oops! The healthcheck verification was exited."
+      
       exit 1
     elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
       break;
@@ -122,76 +136,61 @@ warningCount=0
     echo "🐛 Found some possible issues in the $defaultLightningConfigPath"
   fi
 
-  if ! curl -s -w "\p" localhost:4230/health | grep -iq 'OK'; then
-    echo "⚠️ WARNING: Failed to get a response from localhost:4230/health. The node is not running, if you are participating in testnet, then read the instructions in https://docs.fleek.network/docs/node/testnet-onboarding, to run successfully!"
-
-    ((warningCount++))
-    ((healthIssueCount++))
-  else
-    echo "✅ The localhost:4230/health is okay"
-  fi
-
   if [[ -f "$defaultLightningSystemdServicePath" ]]; then
-    while read -rp "🤖 This process requires to clear the logs and restart the service. Should it clear the logs and restart the service? (yes/no) " answer; do
-      if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
-        echo "👹 Oops! The healthcheck verification was exited."
-        
-        exit 1
-      elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
-        sudo rm "$defaultLightningOutputLogAbsPath"
-        sudo rm "$defaultLightningDiagnosticLogAbsPath"
+    sudo rm "$defaultLightningOutputLogAbsPath"
+    sudo rm "$defaultLightningDiagnosticLogAbsPath"
 
-        if [[ -f "$defaultLightningSystemdServicePathForDocker" ]]; then
-          sudo systemctl restart "$defaultLightningSystemdServiceNameForDocker"
-        else
-          sudo systemctl restart "$defaultName"
-        fi
+    if [[ -f "$defaultLightningSystemdServicePathForDocker" ]]; then
+      sudo systemctl restart "$defaultLightningSystemdServiceNameForDocker"
+    else
+      sudo systemctl restart "$defaultName"
+    fi
 
-        serverOutputWaitAttempts=0
-        while [[ -f "$defaultLightningOutputLogAbsPath" && ! -s "$defaultLightningOutputLogAbsPath" ]]; do
-          echo "🤖 Please wait for the service output logs..."
-          sleep 5
+    serverOutputWaitAttempts=0
+    while [[ -f "$defaultLightningOutputLogAbsPath" && ! -s "$defaultLightningOutputLogAbsPath" ]]; do
+      sleep 1
 
-          if [[ "$serverOutputWaitAttempts" -gt 10 ]]; then
-            break
-          fi
+      if [[ "$serverOutputWaitAttempts" -gt 10 ]]; then
+        echo "⚠️ WARNING: The Node failed to provide log information, the script will not be able to analyze the log for you. If you'd like to learn how to analyze the logs manually check https://docs.fleek.network/docs/node/analyzing-logs"
 
-          ((serverOutputWaitAttempts++))
-        done
-
-        if tail -n 500 "$defaultLightningOutputLogAbsPath" | grep -iq "Node is not staked"; then
-          echo "⚠️ WARNING: The node is not staked. Have you read the instructions to get onboarded? Find it here https://docs.fleek.network/docs/node/testnet-onboarding"
-          echo
-
-          ((warningCount++))
-          ((healthIssueCount++))
-
-          break;
-        fi
-        
-        if tail -n 500 "$defaultLightningOutputLogAbsPath" | grep -iq "Please update your node"; then
-          echo "⚠️ WARNING: Binary process version mismatch, you have to update your node. A quick reference is available in https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code/"
-          echo
-
-          ((warningCount++))
-          ((healthIssueCount++))
-
-          break;
-        fi
-
-        if tail -n 500 "$defaultLightningDiagnosticLogAbsPath" | grep -iq "Node secret key does not exist"; then
-          echo "⚠️ WARNING: The Node Key wasn't found, this might be due to missing keystore or user delegation permissions (sudo). A quick reference to help troubleshoout is available in https://docs.fleek.network/references/Lightning%20CLI/keys-not-found/"
-          echo
-
-          ((warningCount++))
-          ((healthIssueCount++))
-
-          break;
-        fi
+        break
       fi
 
-      printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+      ((serverOutputWaitAttempts++))
     done
+
+    if tail -n 500 "$defaultLightningOutputLogAbsPath" | grep -iq "Node is not staked"; then
+      echo "⚠️ WARNING: The node is not staked. Have you read the instructions to get onboarded? Find it here https://docs.fleek.network/docs/node/testnet-onboarding"
+      echo
+
+      ((warningCount++))
+      ((healthIssueCount++))
+    fi
+    
+    if tail -n 500 "$defaultLightningOutputLogAbsPath" | grep -iq "Please update your node"; then
+      echo "⚠️ WARNING: Binary process version mismatch, you have to update your node. A quick reference is available in https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code/"
+      echo
+
+      ((warningCount++))
+      ((healthIssueCount++))
+    fi
+
+    if tail -n 500 "$defaultLightningDiagnosticLogAbsPath" | grep -iq "Node secret key does not exist"; then
+      echo "⚠️ WARNING: The Node Key wasn't found, this might be due to missing keystore or user delegation permissions (sudo). A quick reference to help troubleshoout is available in https://docs.fleek.network/references/Lightning%20CLI/keys-not-found/"
+      echo
+
+      ((warningCount++))
+      ((healthIssueCount++))
+    fi
+    
+    if ! curl -s -w "\p" localhost:4230/health | grep -iq 'OK'; then
+      echo "⚠️ WARNING: Failed to get a response from localhost:4230/health. The node is not running, if you are participating in testnet, then read the instructions in https://docs.fleek.network/docs/node/testnet-onboarding, to run successfully!"
+
+      ((warningCount++))
+      ((healthIssueCount++))
+    else
+      echo "✅ The localhost:4230/health is okay"
+    fi
   fi
 
   echo
