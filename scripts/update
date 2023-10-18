@@ -116,7 +116,9 @@ defaultTempLogFilePath="/var/tmp"
 
   echo
 
-  echo "⚠️ WARNING: This process will clear any changes made in the local source code repository by resetting it to be in sync with the remote origin, you'll lose any changes made in the local repository. This shouldn't be of any concern if you are not a contributor to the source-code of the project, have done any changes you'd be interested in keeping. Also, note that this is only related to the binary source code, not the ~/.lightning system config that holds the keystore (config.toml, private keys and identity)."
+  echo "⚠️ WARNING: This process will clear any changes made in the local source code repository by resetting it to be in sync with the remote origin, you'll lose any changes made in the local repository."
+  echo "This shouldn't be of any concern if you are not a contributor to the source-code of the project, have done any changes you'd be interested in keeping. Also, note that this is only related to the binary source code, not the ~/.lightning system config that holds the keystore (config.toml, private keys and identity)."
+  echo
 
   while read -rp "🤖 Should the installer proceed and reset the local source code? (yes/no) " answer; do
     if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
@@ -206,6 +208,13 @@ defaultTempLogFilePath="/var/tmp"
   if ! sudo rm -rf "$defaultLightningBasePath/data"; then
     echo "👹 Oops! Failed to clear the path $defaultLightningBasePath/data for some reason. Check the documentation in https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
   fi
+
+  echo "📒 Clear logs"
+  for file in "$defaultLightningDiagnosticLogAbsPath" "$defaultLightningOutputLogAbsPath"; do
+    if [[ -f "$file" ]] && ! sudo rm "$file"; then
+      echo "👹 Oops! Failed to remove $file"
+    fi
+  done
 
   echo "🌈 The update has now completed."
   echo
