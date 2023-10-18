@@ -116,7 +116,7 @@ warningCount=0
   fi
 
   if ! curl -s -w "\p" localhost:4230/health | grep -q 'OK'; then
-    echo "⚠️ WARNING: Failed to get a response from localhost:4230/health. The node is not running, if you are participating in testnet, then read the https://docs.fleek.network/docs/node/testnet-onboarding, you need to apply and receive approval for the node to run successfully"
+    echo "⚠️ WARNING: Failed to get a response from localhost:4230/health. The node is not running, if you are participating in testnet, then read the instructions in https://docs.fleek.network/docs/node/testnet-onboarding, to run successfully!"
 
     ((warningCount++))
     ((healthIssueCount++))
