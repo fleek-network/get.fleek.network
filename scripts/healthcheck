@@ -122,15 +122,6 @@ warningCount=0
     echo "🐛 Found some possible issues in the $defaultLightningConfigPath"
   fi
 
-  if ! curl -s -w "\p" localhost:4230/health | grep -iq 'OK'; then
-    echo "⚠️ WARNING: Failed to get a response from localhost:4230/health. The node is not running, if you are participating in testnet, then read the instructions in https://docs.fleek.network/docs/node/testnet-onboarding, to run successfully!"
-
-    ((warningCount++))
-    ((healthIssueCount++))
-  else
-    echo "✅ The localhost:4230/health is okay"
-  fi
-
   if [[ -f "$defaultLightningSystemdServicePath" ]]; then
     while read -rp "🤖 This process requires to clear the logs and restart the service. Should it clear the logs and restart the service? (yes/no) " answer; do
       if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
@@ -185,6 +176,17 @@ warningCount=0
 
           ((warningCount++))
           ((healthIssueCount++))
+
+          break;
+        fi
+        
+        if ! curl -s -w "\p" localhost:4230/health | grep -iq 'OK'; then
+          echo "⚠️ WARNING: Failed to get a response from localhost:4230/health. The node is not running, if you are participating in testnet, then read the instructions in https://docs.fleek.network/docs/node/testnet-onboarding, to run successfully!"
+
+          ((warningCount++))
+          ((healthIssueCount++))
+        else
+          echo "✅ The localhost:4230/health is okay"
 
           break;
         fi
