@@ -567,8 +567,8 @@ WantedBy=multi-user.target
   fi
 
   echo
-  echo "⚠️ WARNING: You'll have to request access to participate on Testnet. Only whitelisted nodes will be able to participate, if you fail to request the node will not run."
-  read -rp "Request access by reading the onboarding instructions provided in our documentation https://docs.fleek.network/docs/node/testnet-onboarding to enable the network node to run successfully. Once happy with the information provided, press ENTER to continue..."
+  echo "⚠️ WARNING: You are required to stake to participate on Testnet. Only staked nodes will be able to participate."
+  read -rp "To learn how to stake for Testnet, read the instructions provided in https://docs.fleek.network/docs/node/testnet-onboarding to run successfully. Once happy with the information provided, press ENTER to continue..."
   echo
 
   echo "🤖 Launch or stop the Network Node by running:"
