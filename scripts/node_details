@@ -82,6 +82,28 @@ if ! hasCommand lgtn; then
   exit 1
 fi
 
+(
+  exec < /dev/tty;
+
+  if [[ "$EUID" -eq 0 ]]; then
+    read -rp "⚠️ WARNING: You're running the health check as ROOT user. If you have installed the Fleek Network Lightning CLI as ROOT this is not recommended. Read our documentation in https://docs.fleek.network. Press ENTER to continue..."
+  fi
+
+  echo
+
+  while read -rp "🤖 Are you logged with the user account used to install the Fleek Network Lightning CLI? (yes/no) " answer; do
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+      printf "👹 Oops! You should be logged in with the user account used to install the fleek Network Lightning CLI, switch the account and try again!\n"
+
+      exit 1
+    elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+      break;
+    fi
+
+    printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+  done
+)
+
 if [[ ! -d "$defaultLightningKeystorePath" ]] || [[ ! -f "$defaultLightningKeystoreNodePemPath" ]] && [[ ! -f "$defaultLightningKeystoreConsensusPemPath" ]]; then
   echo "👹 Oops! Failed to find the keystore"
   echo
@@ -96,11 +118,13 @@ nodePubKey=$(echo "$keys" | sed -n '1p' | cut -d : -f 2 | xargs)
 consensusPubKey=$(echo "$keys" | sed -n '1p' | cut -d : -f 2 | xargs)
 ipAddr=$(curl -sw '\n' ifconfig.me || curl -sw '\n' ident.me)
 # TODO: Show if stake
-hasStake=$(curl -X POST \
+hasStake=$(curl -sX POST \
   "$defaultRPCUrl" \
   -H 'Content-Type: application/json' \
   -d "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"flk_get_node_info\",\"params\":[\"$nodePubKey\"]}" | grep -Eo '"staked"[^,]*' | grep -Eo '[^:]*$' | cut -d "\"" -f 2)
 
+echo
+echo
 echo "🤖 Your server details are the following"
 echo
 echo "The Node Public Key is $nodePubKey"
