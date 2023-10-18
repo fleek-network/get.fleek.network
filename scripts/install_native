@@ -526,14 +526,14 @@ WantedBy=multi-user.target
   printf "🤖 Enable %s service on startup when the system boots\n" "$defaultName"
   sudo systemctl enable "$defaultLightningSystemdServiceName"
 
-  # TODO: Disabled during early testnet due to whitelisting
+  # TODO: Disabled during early testnet
   # echo
   # while read -rp "🤖 The installer can launch the service for you. Would you like to start the service? (yes/no)" answer; do
   #   if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
   #     break;
   #   elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
   #     printf "🤖 Start the %s service\n" "$defaultName"
-  #     systemctl start "$defaultLightningSystemdServiceName"
+  #     sudo systemctl start "$defaultLightningSystemdServiceName"
 
   #     printf "🤖 %s service availability check\n" "$defaultName"
   #     pingAttempts=0
@@ -545,12 +545,6 @@ WantedBy=multi-user.target
   #         printf "👹 Oh no! Failed to health-check the localhost on port 4230\n"
 
   #         break;
-  #       fi
-
-  #       if grep -sqin 'node is not whitelisted' "$defaultLightningDiagnosticLogAbsPath"; then
-  #         printf "⚠️ Warning: The node is not whitelisted! Learn how to request access to testnet in https://docs.fleek.network/docs/node/testnet-onboarding\n\n"
-
-  #         exit 1
   #       fi
 
   #       printf "🤖 Awaiting %s on port 4230...\n" "$defaultName"
