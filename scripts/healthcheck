@@ -137,8 +137,8 @@ warningCount=0
   fi
 
   if [[ -f "$defaultLightningSystemdServicePath" ]]; then
-    sudo rm "$defaultLightningOutputLogAbsPath"
-    sudo rm "$defaultLightningDiagnosticLogAbsPath"
+    sudo rm -f "$defaultLightningOutputLogAbsPath"
+    sudo rm -f "$defaultLightningDiagnosticLogAbsPath"
 
     if [[ -f "$defaultLightningSystemdServicePathForDocker" ]]; then
       sudo systemctl restart "$defaultLightningSystemdServiceNameForDocker"
