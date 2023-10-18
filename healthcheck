@@ -200,6 +200,12 @@ warningCount=0
   echo "⚠️ Found $warningCount warnings"
   echo "🚑 Found $healthIssueCount node status issue"
   echo
+
+  if [[ "$warningCount" -eq "0" && "$healthIssueCount" -eq "0" ]]; then
+    echo "🌈 The Node is running correctly, no issues found!"
+  fi
+
+  echo
   echo "================="
   echo
   echo "The health check has now completed, see the result above."
