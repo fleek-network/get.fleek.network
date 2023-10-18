@@ -157,13 +157,13 @@ warningCount=0
         echo
 
         if ! curl -qsS localhost:4230/health 2>/dev/null | grep -q 'OK'; then
-          if tail -n 5 "$defaultLightningOutputLogAbsPath" | grep -iq "Node is not staked"; then
+          if tail -n 500 "$defaultLightningOutputLogAbsPath" | grep -iq "Node is not staked"; then
             echo "⚠️ WARNING: The node is not staked. Have you read the instructions to get onboarded? Find it here https://docs.fleek.network/docs/node/testnet-onboarding"
             echo
 
             ((warningCount++))
             ((healthIssueCount++))
-          elif tail -n 5 "$defaultLightningOutputLogAbsPath" | grep -iq "Please update your node"; then
+          elif tail -n 500 "$defaultLightningOutputLogAbsPath" | grep -iq "Please update your node"; then
             echo "⚠️ WARNING: Binary process version mismatch, you have to update your node. A quick reference is available in https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code/"
             echo
 
