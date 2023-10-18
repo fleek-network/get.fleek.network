@@ -101,6 +101,11 @@ warningCount=0
     fi
   fi
 
+  if [[ -f "$defaultLightningSystemdServicePath" && -f "$defaultLightningSystemdServicePathForDocker" ]]; then
+    echo "⚠️ WARNING: Found conflicting Systemd setup, as Native and Docker Systemd are present. If you are using the get.fleek.network tools, the automation might make wrong conclusions about your preferred way of running the node. To avoid confusion you should opt for a single method to run a node, either natively or docker."
+    echo
+  fi
+
   homeUsernamePaths=$(grep -oE '/home\/(\w+)' "$defaultLightningConfigPath" | cut -d / -f 3)
   for username in $homeUsernamePaths; do
     if [[ "$username" != $(whoami) ]] && grep -q "/home/$username" "$defaultLightningConfigPath"; then
