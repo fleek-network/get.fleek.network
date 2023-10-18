@@ -22,8 +22,6 @@ jobs:
           cp install ./build/index.html
           cp ./static/CNAME ./build
           chmod 755 ./build/index.html
-          cp ./scripts/diagnostic ./build
-          cp ./scripts/whitelist ./build
           cp ./scripts/update ./build
           cp ./scripts/healthcheck ./build
           cp ./scripts/transfer_system_user_setup_ownership ./build
