@@ -23,10 +23,15 @@ defaultLightningKeystoreConsensusPemFilename="consensus.pem"
 defaultLightningKeystoreNodePemPath="$defaultLightningKeystorePath/$defaultLightningKeystoreNodePemFilename"
 defaultLightningKeystoreConsensusPemPath="$defaultLightningKeystorePath/$defaultLightningKeystoreConsensusPemFilename"
 defaultRPCUrl="https://rpc.testnet.fleek.network/rpc/v0"
+defaultUnitPrecision="10^18"
 
 # Utils
 hasCommand() {
   command -v "$1" >/dev/null 2>&1
+}
+
+flkMinorUnitToFlk() {
+  echo "$1 / $defaultUnitPrecision" | bc
 }
 
 # The white space before and after is intentional
@@ -103,7 +108,9 @@ echo "The Consensus Public Key is $consensusPubKey"
 echo "The Node Server IP address is $ipAddr"
 
 if [[ ! "$hasStake" -eq "" ]]; then
-  echo "The Node staked amount is $hasStake"
+  flkAmount=$(flkMinorUnitToFlk "$hasStake")
+
+  echo "The Node staked amount is $flkAmount FLK"
 fi
 
 echo
