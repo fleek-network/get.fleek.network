@@ -29,6 +29,14 @@ warningCount=0
 (
   exec < /dev/tty;
 
+  if [[ "$EUID" -eq 0 ]]; then
+    echo "⚠️ WARNING: You're running the health check as ROOT user. If you have installed the Fleek Network Lightning CLI as ROOT this is not recommended. Read our documentation in https://docs.fleek.network"
+
+    basePath="/root"
+  fi
+
+  echo
+
   while read -rp "🤖 Are you logged with the user account used to install the Fleek Network Lightning CLI? (yes/no) " answer; do
     if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
       printf "👹 Oops! You should be logged in with the user account used to install the fleek Network Lightning CLI, switch the account and try again!\n"
@@ -40,14 +48,6 @@ warningCount=0
 
     printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
   done
-
-  echo
-
-  if [[ "$EUID" -eq 0 ]]; then
-    echo "⚠️ WARNING: You're running the health check as ROOT user. If you have installed the Fleek Network Lightning CLI as ROOT this is not recommended. Read our documentation in https://docs.fleek.network"
-
-    basePath="/root"
-  fi
 
   echo
 
