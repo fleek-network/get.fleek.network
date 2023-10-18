@@ -115,7 +115,7 @@ fi
 
 keys=$(lgtn keys show | cut -d : -f 2)
 nodePubKey=$(echo "$keys" | sed -n '1p' | cut -d : -f 2 | xargs)
-consensusPubKey=$(echo "$keys" | sed -n '1p' | cut -d : -f 2 | xargs)
+consensusPubKey=$(echo "$keys" | sed -n '2p' | cut -d : -f 2 | xargs)
 ipAddr=$(curl -sw '\n' ifconfig.me || curl -sw '\n' ident.me)
 # TODO: Show if stake
 hasStake=$(curl -sX POST \
