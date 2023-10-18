@@ -163,6 +163,12 @@ warningCount=0
 
             ((warningCount++))
             ((healthIssueCount++))
+          elif tail -n 5 "$defaultLightningOutputLogAbsPath" | grep -iq "Please update your node"; then
+            echo "⚠️ WARNING: Binary process version mismatch, you have to update your node. A quick reference is available in https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code/"
+            echo
+
+            ((warningCount++))
+            ((healthIssueCount++))
           fi
 
           break;
