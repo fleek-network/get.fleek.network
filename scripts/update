@@ -110,7 +110,9 @@ defaultTempLogFilePath="/var/tmp"
 
   echo
 
-  while read -rp "🤖 The script will clear any changes made in the local source code repository by resetting it to be in sync with the remote origin, you'll lose any changes made in the repository. It's only related to the binary source code, not the ~/.lightning system config that holds your private keys and identity. Should the installer proceed and reset? (yes/no) " answer; do
+  echo "⚠️ WARNING: This process will clear any changes made in the local source code repository by resetting it to be in sync with the remote origin, you'll lose any changes made in the local repository. This shouldn't be of any concern if you are not a contributor to the source-code of the project, have done any changes you'd be interested in keeping. Also, note that this is only related to the binary source code, not the ~/.lightning system config that holds the keystore (config.toml, private keys and identity)."
+
+  while read -rp "🤖 Should the installer proceed and reset the local source code? (yes/no) " answer; do
     if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
       echo "🦖 The update script terminated. It has to reset the local repository to be in synch with remote. Read the documentation reference if you'd like to learn how to do it manually if thats your preference."
 
