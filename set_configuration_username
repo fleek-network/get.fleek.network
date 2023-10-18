@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Defaults
+defaultName="lightning"
+defaultLightningConfigFilename="config.toml"
+defaultLightningBasePath="$HOME/.$defaultName"
+defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
+
+(
+  exec < /dev/tty;
+
+  while read -rp "🤖 Are you logged with the user account used to install the Fleek Network Lightning CLI? (yes/no) " answer; do
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+      printf "👹 Oops! You should be logged in with the user account used to install the fleek Network Lightning CLI, switch the account and try again!\n"
+
+      exit 1
+    elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+      break;
+    fi
+
+    printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+  done
+
+  while read -rp "🤖 The lightning system configuration directory for the current user must be located at $defaultLightningConfigPath is this correct? (yes/no) " answer; do
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+      printf "👹 Oops! This script automates the process for the condition where the user lightning system configuraiton directory is in the default location.\n"
+
+      exit 1
+    elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+      read -rp "⚠️ WARNING: The script will try to replace the user home path in the configuration file. Press ENTER to continue..."
+
+      break;
+    fi
+
+    printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+  done
+
+  if grep -q "~\/.$defaultName" "$defaultLightningConfigPath" || ! grep -q "$HOME" "$defaultLightningConfigPath"; then
+    echo "🤖 Update the config.toml with user home path..."
+    if ! sed -i "s|~/.$defaultName|/home/$(whoami)/.$defaultName|g" "$defaultLightningConfigPath"; then
+      printf "👹 Oops! Failed to replace the user home paths in the configuration file %s. Check the documentation to do it manually %s\n" "$defaultLightningConfigPath" "https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code"
+    else
+      printf "✅ Replaced the user home path in the configuration file\n"
+    fi
+  else
+    printf "✅ Found user home path in the configuration file, no changes required\n"
+  fi
+)
