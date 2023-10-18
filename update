@@ -66,6 +66,12 @@ defaultTempLogFilePath="/var/tmp"
     printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
   done
 
+  if ! sudo systemctl stop "$defaultLightningSystemdServiceName"; then
+    echo "⚠️ WARNING: Failed to stop the Fleek Network Lightning Service"
+  else
+    echo "✅ Stopped the Fleek Network Lightning Service"
+  fi
+
   if ! source "$HOME/.cargo/env"; then
     printf "💩 Uh-oh! Are you sure you're logged in with the user account used to install the Lightning CLI?\n"
 
