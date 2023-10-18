@@ -180,7 +180,7 @@ warningCount=0
         fi
 
         if tail -n 500 "$defaultLightningDiagnosticLogAbsPath" | grep -iq "Node secret key does not exist"; then
-          echo "⚠️ WARNING: The Node Key wasn't found, this might be due to user file permissions. A quick reference to help troubleshoout is available in https://docs.fleek.network/references/Lightning%20CLI/keys-not-found/"
+          echo "⚠️ WARNING: The Node Key wasn't found, this might be due to missing keystore or user delegation permissions (sudo). A quick reference to help troubleshoout is available in https://docs.fleek.network/references/Lightning%20CLI/keys-not-found/"
           echo
 
           ((warningCount++))
