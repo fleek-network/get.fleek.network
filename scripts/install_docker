@@ -320,6 +320,15 @@ installDocker() {
     echo "✅ The Lightning $defaultLightningBasePath exists"
   fi
 
+  printf "🤖 Create the %s log directory %s\n" "$defaultName" "$defaultLightningLogPath"
+  if ! sudo mkdir -p "$defaultLightningLogPath"; then
+    printf "💩 Uh-oh! Failed to create the %s system log dir %s for some reason...\n" "$defaultName" "$defaultLightningLogPath"
+  else
+    if ! sudo chown "$(whoami):$(whoami)" "$defaultLightningLogPath"; then
+      printf "💩 Uh-oh! Failed to chown %s\n" "$defaultLightningLogPath"
+    fi
+  fi
+
   echo "📒 Clear logs"
   for file in "$defaultLightningDiagnosticLogAbsPath" "$defaultLightningOutputLogAbsPath"; do
     if [[ -f "$file" ]] && ! sudo rm "$file"; then
