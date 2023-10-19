@@ -239,6 +239,22 @@ installDocker() {
   fi
 }
 
+hasFreePortRange() {
+  hasUsedPort=0
+  portStart=$1
+  portEnd=$2
+
+  for (( port=portStart; port <= portEnd; port++ )); do
+    if lsof -i :"$port" >/dev/null; then
+      echo "💩 Uh-oh! The port $port is required but is in use" >&2
+
+      hasUsedPort=1
+    fi
+  done
+
+  echo "$hasUsedPort"
+}
+
 (
   exec < /dev/tty;
 
@@ -360,6 +376,7 @@ ExecStart=/usr/bin/docker run \
   --mount type=bind,source=$defaultLightningBasePath,target=/root/.$defaultName \
   --name $defaultDockerContainerName \
   $defaultDockerRegistryName
+ExecStop=/usr/bin/docker stop
 StandardOutput=append:$defaultLightningOutputLogAbsPath
 StandardError=append:$defaultLightningDiagnosticLogAbsPath
 
