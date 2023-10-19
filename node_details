@@ -17,6 +17,7 @@
 # Defaults
 defaultName="lightning"
 defaultLightningBasePath="$HOME/.$defaultName"
+defaultDockerContainerName="$defaultName-node"
 defaultLightningKeystorePath="$defaultLightningBasePath/keystore"
 defaultLightningKeystoreNodePemFilename="node.pem"
 defaultLightningKeystoreConsensusPemFilename="consensus.pem"
@@ -24,6 +25,11 @@ defaultLightningKeystoreNodePemPath="$defaultLightningKeystorePath/$defaultLight
 defaultLightningKeystoreConsensusPemPath="$defaultLightningKeystorePath/$defaultLightningKeystoreConsensusPemFilename"
 defaultRPCUrl="https://rpc.testnet.fleek.network/rpc/v0"
 defaultUnitPrecision="10^18"
+defaultLightningSystemdServiceName="$defaultName"
+defaultLightningSystemdServiceNameForDocker="docker-$defaultName"
+defaultLightningSystemdServicePath="/etc/systemd/system/$defaultLightningSystemdServiceName.service"
+defaultLightningSystemdServicePathForDocker="/etc/systemd/system/$defaultLightningSystemdServiceNameForDocker.service"
+defaultLightningSystemdServiceName="docker-$defaultName"
 
 # Utils
 hasCommand() {
@@ -76,10 +82,24 @@ echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
 echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
 echo
 
-if ! hasCommand lgtn; then
-  echo "👹 Oops! Failed to locate the Lightning CLI lgtn alias. This script is made to support default installations made with the tools or instructions, if you have a custom installation you're better of getting the details on your own."
+if [[ -f "$defaultLightningSystemdServicePathForDocker" ]] && grep -q 'docker run' "$defaultLightningSystemdServicePathForDocker"; then
+  echo "✅ Docker Lightning CLI found!"
 
-  exit 1
+  if [[ $(sudo docker container inspect -f '{{.State.Running}}' "$defaultDockerContainerName") = "false" ]]; then
+    read -rp "🤖 The Docker $defaultDockerContainerName isn't running and is going to be started. Presse ENTER to continue..."
+
+    if ! sudo systemctl restart "$defaultLightningSystemdServiceName"; then
+      echo "👹 Oops! Failed to restart $defaultLightningSystemdServiceName"
+
+      exit 1
+    fi
+  fi
+else
+  if ! hasCommand lgtn; then
+    echo "👹 Oops! Failed to locate the Lightning CLI lgtn alias. This script is made to support default installations made with the tools or instructions, if you have a custom installation you're better of getting the details on your own."
+
+    exit 1
+  fi
 fi
 
 (
@@ -113,7 +133,12 @@ if [[ ! -d "$defaultLightningKeystorePath" ]] || [[ ! -f "$defaultLightningKeyst
   exit 1
 fi
 
-keys=$(lgtn keys show | cut -d : -f 2)
+if [[ -f "$defaultLightningSystemdServicePathForDocker" ]] && grep -q 'docker run' "$defaultLightningSystemdServicePathForDocker"; then
+  keys=$(sudo docker exec -it lightning-node lgtn keys show | cut -d : -f 2)
+else
+  keys=$(lgtn keys show | cut -d : -f 2)
+fi
+
 nodePubKey=$(echo "$keys" | sed -n '1p' | cut -d : -f 2 | xargs)
 consensusPubKey=$(echo "$keys" | sed -n '2p' | cut -d : -f 2 | xargs)
 ipAddr=$(curl -sw '\n' ifconfig.me || curl -sw '\n' ident.me)
@@ -122,6 +147,7 @@ hasStake=$(curl -sX POST \
   "$defaultRPCUrl" \
   -H 'Content-Type: application/json' \
   -d "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"flk_get_node_info\",\"params\":[\"$nodePubKey\"]}" | grep -Eo '"staked"[^,]*' | grep -Eo '[^:]*$' | cut -d "\"" -f 2)
+
 
 echo
 echo
