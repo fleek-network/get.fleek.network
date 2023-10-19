@@ -120,7 +120,7 @@ warningCount=0
     echo
   fi
 
-  homeUsernamePaths=$(grep -oE '/home\/([a-zA-Z0-9_\-]+)' ./test | cut -d / -f 3)
+  homeUsernamePaths=$(grep -oE '/home\/([a-zA-Z0-9_\-]+)' "$defaultLightningConfigPath" | cut -d / -f 3)
   for username in $homeUsernamePaths; do
     if [[ "$username" != $(whoami) ]] && grep -q "/home/$username" "$defaultLightningConfigPath"; then
       echo "⚠️ WARNING: The configuration contains a path for user /home/$username that doesn't match current user's home $basePath. If there isn't a reason for this mismatch, update the file manually."
