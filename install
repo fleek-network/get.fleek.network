@@ -20,7 +20,6 @@
 # Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
 
 # TODO: Switch to main on release
-# Default to branch "testnet-alpha-0"
 useBranch=${USE_LIGHTNING_BRANCH="testnet-alpha-1"}
 useGetBranch=${USE_GET_BRANCH="main"}
 
