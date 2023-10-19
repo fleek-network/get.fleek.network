@@ -183,7 +183,7 @@ warningCount=0
       ((healthIssueCount++))
     fi
     
-    if ! curl -s -w "\p" localhost:4230/health | grep -iq 'OK'; then
+    if ! curl -s -w "\p" localhost:4230/health | grep -iq 'running and staked'; then
       echo "⚠️ WARNING: Failed to get a response from localhost:4230/health. The node seems to be offline (not running), if you are participating in testnet, then read the instructions in https://docs.fleek.network/docs/node/testnet-onboarding, to run successfully!"
 
       ((warningCount++))

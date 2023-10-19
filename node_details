@@ -37,7 +37,11 @@ hasCommand() {
 }
 
 flkMinorUnitToFlk() {
-  echo "$1 / $defaultUnitPrecision" | bc
+  if hasCommand bc; then
+    echo "$1 / $defaultUnitPrecision" | bc
+  else
+    echo "$(( $1 / defaultUnitPrecision ))"
+  fi
 }
 
 # The white space before and after is intentional
@@ -85,14 +89,22 @@ echo
 if [[ -f "$defaultLightningSystemdServicePathForDocker" ]] && grep -q 'docker run' "$defaultLightningSystemdServicePathForDocker"; then
   echo "✅ Docker Lightning CLI found!"
 
-  if [[ $(sudo docker container inspect -f '{{.State.Running}}' "$defaultDockerContainerName") = "false" ]]; then
-    read -rp "🤖 The Docker $defaultDockerContainerName isn't running and is going to be started. Presse ENTER to continue..."
+  # if [[ $(sudo docker container inspect -f '{{.State.Running}}' "$defaultDockerContainerName") = "false" ]]; then
+  #   read -rp "🤖 The Docker $defaultDockerContainerName isn't running and is going to be started. Presse ENTER to continue..."
 
-    if ! sudo systemctl restart "$defaultLightningSystemdServiceName"; then
-      echo "👹 Oops! Failed to restart $defaultLightningSystemdServiceName"
+  #   if ! sudo systemctl restart "$defaultLightningSystemdServiceName"; then
+  #     echo "👹 Oops! Failed to restart $defaultLightningSystemdServiceName"
 
-      exit 1
-    fi
+  #     exit 1
+  #   fi
+  # fi
+
+  read -rp "🤖 The Docker $defaultDockerContainerName is going to be started. Presse ENTER to continue..."
+
+  if ! sudo systemctl restart "$defaultLightningSystemdServiceName"; then
+    echo "👹 Oops! Failed to restart $defaultLightningSystemdServiceName"
+
+    exit 1
   fi
 else
   if ! hasCommand lgtn; then
@@ -142,12 +154,10 @@ fi
 nodePubKey=$(echo "$keys" | sed -n '1p' | cut -d : -f 2 | xargs)
 consensusPubKey=$(echo "$keys" | sed -n '2p' | cut -d : -f 2 | xargs)
 ipAddr=$(curl -sw '\n' ifconfig.me || curl -sw '\n' ident.me)
-# TODO: Show if stake
 hasStake=$(curl -sX POST \
   "$defaultRPCUrl" \
   -H 'Content-Type: application/json' \
   -d "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"flk_get_node_info\",\"params\":[\"$nodePubKey\"]}" | grep -Eo '"staked"[^,]*' | grep -Eo '[^:]*$' | cut -d "\"" -f 2)
-
 
 echo
 echo
