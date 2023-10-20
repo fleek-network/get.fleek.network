@@ -149,9 +149,17 @@ warningCount=0
   if [[ -f "$defaultLightningSystemdServicePath" || -f  "$defaultLightningSystemdServicePathForDocker" ]]; then
     sudo rm -f "$defaultLightningOutputLogAbsPath"
     sudo rm -f "$defaultLightningDiagnosticLogAbsPath"
-
+  
+    echo "🤖 The Systemd service will restart, be patient..."
+    
     if [[ -f "$defaultLightningSystemdServicePathForDocker" ]]; then
-      sudo systemctl restart "$defaultLightningSystemdServiceNameForDocker"
+      if ! sudo systemctl restart "$defaultLightningSystemdServiceNameForDocker"; then
+        echo "👹 Oops! Failed to restart the Docker Container for some reason..."
+      fi
+
+      # This is intentional to allow Docker service to launch
+      # TODO: Replace with while loop and docker inspect checkup
+      sleep 5
     else
       sudo systemctl restart "$defaultName"
     fi
