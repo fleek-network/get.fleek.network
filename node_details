@@ -44,6 +44,24 @@ flkMinorUnitToFlk() {
   fi
 }
 
+validateIpAddress() {
+  local validate="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
+
+  [[ "$1" =~ $validate ]] && ping -c1 -W1 "$1" > /dev/null
+}
+
+findIp() {
+  for url in "ipinfo.io/ip" "api.ipify.org" "ipecho.net/plain" "ifconfig.me" "ident.me"; do
+    ip=$(curl -sw "\n" "$url")
+
+    if validateIpAddress "$ip"; then
+      echo "$ip"
+
+      return
+    fi
+  done
+}
+
 # The white space before and after is intentional
 cat << "ART"
 
@@ -153,7 +171,7 @@ fi
 
 nodePubKey=$(echo "$keys" | sed -n '1p' | cut -d : -f 2 | xargs)
 consensusPubKey=$(echo "$keys" | sed -n '2p' | cut -d : -f 2 | xargs)
-ipAddr=$(curl -sw '\n' ifconfig.me || curl -sw '\n' ident.me)
+ipAddr=$(findIp)
 hasStake=$(curl -sX POST \
   "$defaultRPCUrl" \
   -H 'Content-Type: application/json' \
