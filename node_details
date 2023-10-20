@@ -40,7 +40,9 @@ flkMinorUnitToFlk() {
   if hasCommand bc; then
     echo "$1 / $defaultUnitPrecision" | bc
   else
-    echo "$(( $1 / defaultUnitPrecision ))"
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install bc -yq
+
+    flkMinorUnitToFlk
   fi
 }
 
