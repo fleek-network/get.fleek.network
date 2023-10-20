@@ -1,0 +1,338 @@
+#!/bin/bash
+
+# "Get Fleek Network" is an attempt to make our software more accessible.
+# By providing scripts to automate the installation process of our software,
+# we believe that it can help improve the onboarding experience of our users.
+#
+# Quick server_details: `curl https://get.fleek.network/server_details | bash`
+#
+# Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
+
+# 🚑 Check if running in Bash and supported version
+[ "$BASH" ] || { printf >&2 '🙏 Run the script with Bash, please!\n'; exit 1; }
+(( BASH_VERSINFO[0] > 4 || BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2 )) || { printf >&2 '🙏 Bash 4.2 or newer is required!\n'; exit 1; }
+
+#defaults
+defaultName="lightning"
+defaultCLIBuildName="$defaultName-node"
+defaultAlphaTestnetBranch="testnet-alpha-1"
+defaultCLIAlias="lgtn"
+defaultLightningPath="$HOME/fleek-network/$defaultName"
+defaultPortRangeTCPStart=4200
+defaultPortRangeTCPEnd=4299
+defaultPortRangeUDPStart=4300
+defaultPortRangeUDPEnd=4399
+defaultPortRangeTCP="$defaultPortRangeTCPStart-$defaultPortRangeTCPStart"
+defaultPortRangeUDP="$defaultPortRangeUDPStart-$defaultPortRangeUDPEnd"
+pasteCliUrl="https://0x0.st"
+separator="----------"
+defaultLightningConfigFilename="config.toml"
+defaultDockerContainerName="$defaultName-node"
+defaultLightningBasePath="$HOME/.$defaultName"
+defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
+defaultLightningKeystore="$defaultLightningBasePath/keystore"
+defaultDiagnosticFilename="diagnostic.log"
+defaultDiscordUrl="https://discord.gg/fleekxyz"
+
+# styles
+bold=$(tput bold)
+normal=$(tput sgr0)
+
+tempWorkDir=$(mktemp -d)
+
+onInterruption() {
+  rm -rf "$tempWorkDir"
+}
+
+trap onInterruption INT
+
+if ! cd "$tempWorkDir"; then
+  echo "👹 Oops! Failed to create temporary directory to store diagnostic logs"
+
+  exit 1
+fi
+
+validateIpAddress() {
+  local validate="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
+
+  [[ "$1" =~ $validate ]] && ping -c1 -W1 "$1" > /dev/null
+}
+
+findIp() {
+  for url in "ipinfo.io/ip" "api.ipify.org" "ipecho.net/plain" "ifconfig.me" "ident.me"; do
+    ip=$(curl -sw "\n" "$url")
+
+    if validateIpAddress "$ip"; then
+      echo "$ip"
+
+      return
+    fi
+  done
+}
+
+hasFreePortRange() {
+  hasUsedPort=0
+  portStart=$1
+  portEnd=$2
+
+  for (( port=portStart; port <= portEnd; port++ )); do
+    if lsof -i :"$port" >/dev/null; then
+      echo "💩 Uh-oh! The port $port is required but is in use" >&2
+
+      hasUsedPort=1
+    fi
+  done
+
+  echo "$hasUsedPort"
+}
+
+hasCommand() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+cat << "EOF"
+
+                  .eeeeeeeee
+                  .$$$$$$$$P"
+                .$$$$$$$$P
+                z$$$$$$$$P
+              z$$$$$$$$"
+              z$$$$$$$$"
+            d$$$$$$$$"
+            d$$$$$$$$"
+          .d$$$$$$$P
+        .$$$$$$$$P
+        .$$$$$$$$$.........
+      .$$$$$$$$$$$$$$$$$$"
+      z$$$$$$$$$$$$$$$$$P"
+    -**********$$$$$$$P
+              d$$$$$$"
+            .d$$$$$$"
+            .$$$$$$P"
+          z$$$$$$P
+          d$$$$$$"
+        .d$$$$$$"
+      .$$$$$$$"
+      z$$$$$$$beeeeee
+    d$$$$$$$$$$$$$*
+    ^""""""""$$$$$"
+            d$$$*
+          d$$$"
+          d$$*
+        d$P"
+      .$$"
+      .$P"
+    .$"
+    .P"
+  ."
+  /"
+
+EOF
+
+echo
+echo "⚡️ Server details utility ⚡️"
+echo
+echo "★★★★★★★★★ 🌍 Website https://fleek.network"
+echo "★★★★★★★★★ 📚 Documentation https://docs.fleek.network"
+echo "★★★★★★★★★ 💾 Git repository https://github.com/fleek-network/lightning"
+echo "★★★★★★★★★ 🤖 Discord https://discord.gg/fleekxyz"
+echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
+echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
+echo
+
+echo "🙋‍♀️ We're going save the server details to https://0x0.st. When complete copy and share the details URL to us in our Discord channel!"
+echo
+
+echo "🙏 Be patient while we generate the URL for you, please!"
+echo
+
+(
+  echo "🤖 Display Linux distro version"
+  echo
+
+  cat /etc/*-release
+  echo
+
+  echo "🤖 The /proc/version"
+  cat /proc/version
+
+  echo "🤖 CPU details"
+  cat /proc/cpuinfo
+
+  echo "🤖 Memory info"
+  mem=$(awk '/^MemTotal:/{print $2}' /proc/meminfo);
+  partDiskSpace=$(df --output=avail -B 1 "$PWD" |tail -n 1)
+  echo "Total memory $mem"
+  echo "Disk space $partDiskSpace"
+
+  echo "🤖 User home"
+  echo "$HOME"
+  echo
+
+  echo "💡 The current user details"
+  id
+  echo
+
+  echo "User name is $USER"
+  echo
+
+  echo "🤖 System PATH"
+  echo "$PATH"
+  echo
+
+  echo "🤖 User IP Address"
+  findIp
+
+  # 🚑 Check if ports available
+  if ! hasCommand lsof; then
+    printf "🤖 Install lsof for installer port verification\n"
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install lsof -yq
+  fi
+
+  hasTCPPortsAvailable=$(hasFreePortRange "$defaultPortRangeTCPStart" "$defaultPortRangeTCPEnd")
+  hasUDPPortsAvailable=$(hasFreePortRange "$defaultPortRangeUDPStart" "$defaultPortRangeUDPEnd")
+
+  if [[ "$hasTCPPortsAvailable" -eq 1 || "$hasUDPPortsAvailable" -eq 1 ]]; then
+    echo "👹 Oops! Required port(s) are in use, make sure the ports are freed before retrying, please! To learn more about required ports https://docs.fleek.network/docs/node/requirements"
+
+    exit 1
+  fi
+
+  echo
+
+  echo "🤖 Iptables list of rules"
+  sudo iptables -S
+  echo
+
+  if command -v "ufw" >/dev/null 2>&1; then
+    echo "✅ ufw found!"
+
+    echo "🤖 UFW Status"
+    sudo ufw status
+  fi
+
+  echo
+
+  echo "🤖 Is the Ursa source-code installed in user home?"
+  echo
+
+  if [[ ! -d "$defaultLightningPath" ]]; then
+    echo "💩 Uh-oh! The Lightning CLI source-code is not installed in the current user $(whoam) HOME path $HOME. Have you switch to the correct user?"
+    echo
+
+    echo "🤖 Is the Lightning CLI source-code installed in root home?"
+    echo
+    
+    if [[ ! -d "/root/fleek-network/$defaultName" ]]; then
+      echo "💩 Uh-oh! The Lightning CLI source-code is not installed in the root HOME path /root/fleek-network/$defaultName"
+      echo
+    else
+      echo "✅ Found the Lightning CLI source stored in /root/fleek-network/$defaultName"
+      echo "⚠️ WARNING: You have installed the source-code in the root directory which is not recommended. Create a sudo account, which allows you to execute commands with root privileges without logging in as root. Check our documentation to learn how to create a new user https://docs.fleek.network/docs/node/Install"
+    fi
+  else
+    echo "✅ Found the Lightning CLI source stored in $HOME/fleek-network/$defaultName"
+    echo
+  fi
+
+  echo "🤖 File permissions"
+  echo
+  ls -la "$defaultLightningPath"
+  echo
+
+  echo "🤖 Check Docker"
+  echo
+
+  if command -v "docker" >/dev/null 2>&1; then
+    echo "✅ Docker is installed!"
+    echo
+
+    echo "Docker path"
+    dockerPath=$(which docker)
+    echo
+
+    echo "$dockerPath"
+    echo
+
+    echo "Docker permissions"
+    ls -la "$dockerPath"
+    echo
+
+    echo "Docker version"
+    sudo docker -v
+    echo
+
+    echo "Docker compose version"
+    sudo docker compose version
+
+    echo "Docker-compose is installed?"
+    which docker-compose
+
+    echo "Docker systemd status"
+    sudo systemctl status --no-pager docker
+    echo
+
+    echo "Docker process status"
+    sudo docker ps -a
+    echo
+
+    echo "Is Docker container running?"
+    if ! sudo docker container inspect -f '{{.State.Running}}' "$defaultDockerContainerName"; then
+      echo "⚠️ WARNING: Docker container $defaultDockerContainerName is not running!"
+    fi
+    echo
+  fi
+
+  echo "🤖 Dot $defaultName"
+  echo
+
+  if [[ -d $HOME/.$defaultName ]]; then
+    echo "✅ Found dot $defaultName at $defaultLightningBasePath"
+    echo
+
+    echo "🤖 Dot $defaultName Config.toml content is:"
+    echo
+
+    cat "$defaultLightningConfigPath"
+    echo
+
+    echo "🤖 Dot $defaultName file permissions"
+    ls -la "$defaultLightningConfigPath"
+    echo
+  else
+    echo "💩 Uh-oh! The dot $defaultName was not found"
+    echo
+  fi
+
+  if [[ -d "$defaultLightningKeystore" ]]; then
+    echo "✅ Found dot $defaultName keystore at $defaultLightningKeystore"
+    echo
+    echo "🤖 The file list in $defaultLightningKeystore is:"
+    ls -la "$defaultLightningKeystore"
+  else
+    echo "💩 Uh-oh! The dot Ursa, ursa-proxy was not found"
+    echo
+  fi
+
+  if command -v "$defaultCLIAlias" >/dev/null 2>&1; then
+    echo "✅ $defaultName binary globally accessible"
+    echo
+  fi
+
+) > "$defaultDiagnosticFilename"
+
+pasteUrl=$(curl -sF "file=@$defaultDiagnosticFilename" $pasteCliUrl)
+
+if [[ ! $pasteUrl = $pasteCliUrl*  ]]; then
+  echo "👹 Oops! We failed to create the diagnostic URL for some reason, try again later?" >&2
+
+  exit 1
+fi
+
+echo "✅ The details are available at ${bold}$pasteUrl${normal}"
+echo
+echo "👋 If you need help, Copy and paste the details URL and share in our Discord $defaultDiscordUrl"
+echo
+echo
+echo "Learn more by checking our guides at https://docs.fleek.network"
+echo "✨ That's all!"
