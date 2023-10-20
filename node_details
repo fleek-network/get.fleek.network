@@ -147,52 +147,52 @@ fi
 
     printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
   done
-)
 
-if [[ ! -d "$defaultLightningKeystorePath" ]] || [[ ! -f "$defaultLightningKeystoreNodePemPath" ]] && [[ ! -f "$defaultLightningKeystoreConsensusPemPath" ]]; then
-  echo "👹 Oops! Failed to find the keystore"
+  if [[ ! -d "$defaultLightningKeystorePath" ]] || [[ ! -f "$defaultLightningKeystoreNodePemPath" ]] && [[ ! -f "$defaultLightningKeystoreConsensusPemPath" ]]; then
+    echo "👹 Oops! Failed to find the keystore"
+    echo
+    echo "The keys are generated for you if you have installed with the assisted installer, followed the documentation recommendation or the Docker install."
+    echo "If you missed the step, read the documentation instructions provided in https://docs.fleek.network/docs/node/install/#key-generator, or troubleshoot by learning how to manage the keystore in the guide here https://docs.fleek.network/guides/Node%20Operators/managing-the-keystore/ "
+
+    exit 1
+  fi
+
+  if [[ -f "$defaultLightningSystemdServicePathForDocker" ]] && grep -q 'docker run' "$defaultLightningSystemdServicePathForDocker"; then
+    keys=$(sudo docker exec -it lightning-node lgtn keys show | cut -d : -f 2)
+  else
+    keys=$(lgtn keys show | cut -d : -f 2)
+  fi
+
+  nodePubKey=$(echo "$keys" | sed -n '1p' | cut -d : -f 2 | xargs)
+  consensusPubKey=$(echo "$keys" | sed -n '2p' | cut -d : -f 2 | xargs)
+  ipAddr=$(findIp)
+  hasStake=$(curl -sX POST \
+    "$defaultRPCUrl" \
+    -H 'Content-Type: application/json' \
+    -d "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"flk_get_node_info\",\"params\":[\"$nodePubKey\"]}" | grep -Eo '"staked"[^,]*' | grep -Eo '[^:]*$' | cut -d "\"" -f 2)
+
+  if [[ "$nodePubKey" == "" || "$consensusPubKey" == "" ]]; then
+    echo "👹 Oops! Failed to get the public keys. Try again later!"
+    echo "⚠️ WARNING: If this issue persists, report to us via our discord. Thank you!"
+
+    exit 1
+  fi
+
   echo
-  echo "The keys are generated for you if you have installed with the assisted installer, followed the documentation recommendation or the Docker install."
-  echo "If you missed the step, read the documentation instructions provided in https://docs.fleek.network/docs/node/install/#key-generator, or troubleshoot by learning how to manage the keystore in the guide here https://docs.fleek.network/guides/Node%20Operators/managing-the-keystore/ "
+  echo
+  echo "🤖 Your server details are the following"
+  echo
+  echo "The Node Public Key is $nodePubKey"
+  echo "The Consensus Public Key is $consensusPubKey"
+  echo "The Node Server IP address is $ipAddr"
 
-  exit 1
-fi
+  if [[ ! "$hasStake" -eq "" ]]; then
+    flkAmount=$(flkMinorUnitToFlk "$hasStake")
 
-if [[ -f "$defaultLightningSystemdServicePathForDocker" ]] && grep -q 'docker run' "$defaultLightningSystemdServicePathForDocker"; then
-  keys=$(sudo docker exec -it lightning-node lgtn keys show | cut -d : -f 2)
-else
-  keys=$(lgtn keys show | cut -d : -f 2)
-fi
+    echo "The Node staked amount is $flkAmount FLK"
+  fi
 
-nodePubKey=$(echo "$keys" | sed -n '1p' | cut -d : -f 2 | xargs)
-consensusPubKey=$(echo "$keys" | sed -n '2p' | cut -d : -f 2 | xargs)
-ipAddr=$(findIp)
-hasStake=$(curl -sX POST \
-  "$defaultRPCUrl" \
-  -H 'Content-Type: application/json' \
-  -d "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"flk_get_node_info\",\"params\":[\"$nodePubKey\"]}" | grep -Eo '"staked"[^,]*' | grep -Eo '[^:]*$' | cut -d "\"" -f 2)
-
-if [[ "$nodePubKey" == "" || "$consensusPubKey" == "" ]]; then
-  echo "👹 Oops! Failed to get the public keys. Try again later!"
-  echo "⚠️ WARNING: If this issue persists, report to us via our discord. Thank you!"
-
-  exit 1
-fi
-
-echo
-echo
-echo "🤖 Your server details are the following"
-echo
-echo "The Node Public Key is $nodePubKey"
-echo "The Consensus Public Key is $consensusPubKey"
-echo "The Node Server IP address is $ipAddr"
-
-if [[ ! "$hasStake" -eq "" ]]; then
-  flkAmount=$(flkMinorUnitToFlk "$hasStake")
-
-  echo "The Node staked amount is $flkAmount FLK"
-fi
-
-echo
-echo "Learn more by checking our guides at https://docs.fleek.network"
-echo "✨ That's all!"
+  echo
+  echo "Learn more by checking our guides at https://docs.fleek.network"
+  echo "✨ That's all!"
+)
