@@ -509,7 +509,7 @@ MemoryHigh=32G
 RestartSec=15s
 Restart=always
 ExecStart=$defaultCLIAlias -c $defaultLightningConfigPath -vv run
-ExecStop=$defaultCLIAlias stop
+ExecStop=pkill -f $defaultCLIAlias
 StandardOutput=append:$defaultLightningOutputLogAbsPath
 StandardError=append:$defaultLightningDiagnosticLogAbsPath
 Environment=TMPDIR=$defaultTempLogFilePath
