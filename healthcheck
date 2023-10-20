@@ -67,12 +67,14 @@ warningCount=0
 
   echo
 
-  if [[ ! -d "$basePath/fleek-network/$defaultName" ]]; then
-    echo "⚠️ WARNING: The Fleek Network Lightning CLI source code wasn't found in $basePath/fleek-network/$defaultName. If you have installed the service with the username $(whoami) and haven't customised the path, the source code is not in the expected location"
+  if [[ ! -f "$defaultLightningSystemdServicePathForDocker" ]]; then
+    if [[ ! -d "$basePath/fleek-network/$defaultName" ]]; then
+      echo "⚠️ WARNING: The Fleek Network Lightning CLI source code wasn't found in $basePath/fleek-network/$defaultName. If you have installed the service with the username $(whoami) and haven't customised the path, the source code is not in the expected location"
 
-    ((warningCount++))
-  else
-    echo "✅ Found source code in $basePath/fleek-network/$defaultName"
+      ((warningCount++))
+    else
+      echo "✅ Found source code in $basePath/fleek-network/$defaultName"
+    fi
   fi
 
   if [[ ! -d "$basePath/.$defaultName" ]]; then
@@ -99,19 +101,27 @@ warningCount=0
     echo "✅ Found symlink /usr/local/bin/$defaultCLIAlias"
   fi
 
-  if [[ ! -f "$defaultLightningSystemdServicePath" ]]; then
-    echo "⚠️ WARNING: Missing the Fleek Network Systemd unit service unit file in $defaultLightningSystemdServicePath"
+  if [[ ! -f "$defaultLightningSystemdServicePathForDocker" ]]; then
+    if [[ ! -f "$defaultLightningSystemdServicePath" ]]; then
+      echo "⚠️ WARNING: Missing the Fleek Network Systemd unit service unit file in $defaultLightningSystemdServicePath"
 
-    ((warningCount++))
-  else
-    echo "✅ Found the Systemd unit service $defaultLightningSystemdServicePath"
-
-    if ! grep 'ExecStart' "$defaultLightningSystemdServicePath" | grep -q "\-c $basePath/.$defaultName/config.toml"; then
-      echo "⚠️ WARNING: Missing the flag -c and config path in $defaultLightningSystemdServicePath"
-
-    ((warningCount++))
+      ((warningCount++))
     else
-      echo "✅ Found the flag -c with config path in $defaultLightningSystemdServicePath"
+      echo "✅ Found the Systemd unit service $defaultLightningSystemdServicePath"
+
+      if ! grep 'ExecStart' "$defaultLightningSystemdServicePath" | grep -q "\-c $basePath/.$defaultName/config.toml"; then
+        echo "⚠️ WARNING: Missing the flag -c and config path in $defaultLightningSystemdServicePath"
+
+      ((warningCount++))
+      else
+        echo "✅ Found the flag -c with config path in $defaultLightningSystemdServicePath"
+      fi
+    fi
+  else
+    if [[ ! -f "$defaultLightningSystemdServicePathForDocker" ]]; then
+      echo "⚠️ WARNING: Missing the Fleek Network Systemd unit service unit file in $defaultLightningSystemdServicePathForDocker"
+    else
+      echo "✅ Found the Systemd unit service $defaultLightningSystemdServicePathForDocker"
     fi
   fi
 
@@ -136,7 +146,7 @@ warningCount=0
     echo "🐛 Found some possible issues in the $defaultLightningConfigPath"
   fi
 
-  if [[ -f "$defaultLightningSystemdServicePath" ]]; then
+  if [[ -f "$defaultLightningSystemdServicePath" || -f  "$defaultLightningSystemdServicePathForDocker" ]]; then
     sudo rm -f "$defaultLightningOutputLogAbsPath"
     sudo rm -f "$defaultLightningDiagnosticLogAbsPath"
 
@@ -183,7 +193,7 @@ warningCount=0
       ((healthIssueCount++))
     fi
     
-    if ! curl -s -w "\p" localhost:4230/health | grep -iq 'running and staked'; then
+    if ! curl -s -w "\n" localhost:4230/health | grep -iq 'running and staked'; then
       echo "⚠️ WARNING: Failed to get a response from localhost:4230/health. The node seems to be offline (not running), if you are participating in testnet, then read the instructions in https://docs.fleek.network/docs/node/testnet-onboarding, to run successfully!"
 
       ((warningCount++))
