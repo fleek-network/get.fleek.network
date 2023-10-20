@@ -176,6 +176,8 @@ fi
     echo "⚠️ WARNING: If this issue persists, report to us via our discord. Thank you!"
 
     exit 1
+  elif [[ "$ipAddr" == "" ]]; then
+    echo "⚠️ WARNING: Couldn't find the server IP address for some reason. You have to check it check manually or try again later!"
   fi
 
   echo
@@ -184,7 +186,10 @@ fi
   echo
   echo "The Node Public Key is $nodePubKey"
   echo "The Consensus Public Key is $consensusPubKey"
-  echo "The Node Server IP address is $ipAddr"
+
+  if validateIpAddress "$ipAddr"; then
+    echo "The Node Server IP address is $ipAddr"
+  fi
 
   if [[ ! "$hasStake" -eq "" ]]; then
     flkAmount=$(flkMinorUnitToFlk "$hasStake")
