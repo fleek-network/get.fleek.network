@@ -217,7 +217,7 @@ echo
   echo
 
   if [[ ! -d "$defaultLightningPath" ]]; then
-    echo "💩 Uh-oh! The Lightning CLI source-code is not installed in the current user $(whoam) HOME path $HOME. Have you switch to the correct user?"
+    echo "💩 Uh-oh! The Lightning CLI source-code is not installed in the current user $(whoami) HOME path $HOME. Have you switch to the correct user?"
     echo
 
     echo "🤖 Is the Lightning CLI source-code installed in root home?"
