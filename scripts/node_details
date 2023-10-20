@@ -109,24 +109,15 @@ echo
 if [[ -f "$defaultLightningSystemdServicePathForDocker" ]] && grep -q 'docker run' "$defaultLightningSystemdServicePathForDocker"; then
   echo "✅ Docker Lightning CLI found!"
 
-  sleep 5
+  dockerInspectRes=$(sudo docker container inspect -f '{{.State.Running}}' "$defaultDockerContainerName" 2>&1 | xargs | grep 'true\|false')
+  if [[ "$dockerInspectRes" == "" || "$dockerInspectRes" == "false" ]]; then
+    read -rp "🤖 The Docker $defaultDockerContainerName isn't running and is going to be started. Presse ENTER to continue..."
 
-  # if [[ $(sudo docker container inspect -f '{{.State.Running}}' "$defaultDockerContainerName") = "false" ]]; then
-  #   read -rp "🤖 The Docker $defaultDockerContainerName isn't running and is going to be started. Presse ENTER to continue..."
+    if ! sudo systemctl restart "$defaultLightningSystemdServiceName"; then
+      echo "👹 Oops! Failed to restart $defaultLightningSystemdServiceName"
 
-  #   if ! sudo systemctl restart "$defaultLightningSystemdServiceName"; then
-  #     echo "👹 Oops! Failed to restart $defaultLightningSystemdServiceName"
-
-  #     exit 1
-  #   fi
-  # fi
-
-  read -rp "🤖 The Docker $defaultDockerContainerName is going to be started. Presse ENTER to continue..."
-
-  if ! sudo systemctl restart "$defaultLightningSystemdServiceName"; then
-    echo "👹 Oops! Failed to restart $defaultLightningSystemdServiceName"
-
-    exit 1
+      exit 1
+    fi
   fi
 else
   if ! hasCommand lgtn; then
@@ -181,7 +172,7 @@ hasStake=$(curl -sX POST \
   -H 'Content-Type: application/json' \
   -d "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"flk_get_node_info\",\"params\":[\"$nodePubKey\"]}" | grep -Eo '"staked"[^,]*' | grep -Eo '[^:]*$' | cut -d "\"" -f 2)
 
-if [[ "$nodePubKey" -eq "" || "$consensusPubKey" -eq "" ]]; then
+if [[ "$nodePubKey" == "" || "$consensusPubKey" == "" ]]; then
   echo "👹 Oops! Failed to get the public keys. Try again later!"
   echo "⚠️ WARNING: If this issue persists, report to us via our discord. Thank you!"
 
