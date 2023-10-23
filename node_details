@@ -177,7 +177,7 @@ fi
 
     exit 1
   elif [[ "$ipAddr" == "" ]]; then
-    echo "⚠️ WARNING: Couldn't find the server IP address for some reason. You have to check it check manually or try again later!"
+    echo "⚠️ WARNING: Couldn't find the server IP address for some reason. You have to check it manually or try again later!"
   fi
 
   echo

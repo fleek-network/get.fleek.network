@@ -71,6 +71,12 @@ warningCount=0
     if [[ ! -d "$basePath/fleek-network/$defaultName" ]]; then
       echo "⚠️ WARNING: The Fleek Network Lightning CLI source code wasn't found in $basePath/fleek-network/$defaultName. If you have installed the service with the username $(whoami) and haven't customised the path, the source code is not in the expected location"
 
+      getent passwd | while IFS=: read -r name password uid gid gecos home shell; do
+        if [[ -d "/home/$name/fleek-network/$defaultName" ]]; then
+          echo "💡 Found the repository installed under username $name and path /home/$name/fleek-network/$defaultName. You should probably switch to user $name"
+        fi
+      done
+
       ((warningCount++))
     else
       echo "✅ Found source code in $basePath/fleek-network/$defaultName"
