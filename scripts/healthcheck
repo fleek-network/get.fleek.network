@@ -37,6 +37,11 @@ findHintInstallPath() {
   done
 }
 
+# Log
+successLog=""
+warningLog=""
+healthIssueLog=""
+
 (
   exec < /dev/tty;
 
@@ -78,73 +83,73 @@ findHintInstallPath() {
 
   if [[ ! -f "$defaultLightningSystemdServicePathForDocker" ]]; then
     if [[ ! -d "$basePath/fleek-network/$defaultName" ]]; then
-      echo "⚠️ WARNING: The Fleek Network Lightning CLI source code wasn't found in $basePath/fleek-network/$defaultName. If you have installed the service with the username $(whoami) and haven't customised the path, the source code is not in the expected location"
+      warningLog+=$'\n'"⚠️ WARNING: The Fleek Network Lightning CLI source code wasn't found in $basePath/fleek-network/$defaultName. If you have installed the service with the username $(whoami) and haven't customised the path, the source code is not in the expected location"
 
       findHintInstallPath
 
       ((warningCount++))
     else
-      echo "✅ Found source code in $basePath/fleek-network/$defaultName"
+      successLog+=$'\n'"✅ Found source code in $basePath/fleek-network/$defaultName"
     fi
   fi
 
   if [[ ! -d "$basePath/.$defaultName" ]]; then
-    echo "⚠️ WARNING: Missing the Fleek Network configuration directory $basePath/.$defaultName"
+    warningLog+=$'\n'"⚠️ WARNING: Missing the Fleek Network configuration directory $basePath/.$defaultName"
 
     ((warningCount++))
   else
-    echo "✅ Found configuration directory in $basePath/.$defaultName"
+    successLog+=$'\n'"✅ Found configuration directory in $basePath/.$defaultName"
   fi
 
   if [[ ! -f "$basePath/.$defaultName/$defaultLightningConfigFilename" ]]; then
-    echo "⚠️ WARNING: Missing the Fleek Network configuration file $basePath/.$defaultName/$defaultLightningConfigFilename"
+    warningLog+=$'\n'"⚠️ WARNING: Missing the Fleek Network configuration file $basePath/.$defaultName/$defaultLightningConfigFilename"
 
     ((warningCount++))
   else
-    echo "✅ Found configuration file in $basePath/.$defaultName/$defaultLightningConfigFilename"
+    sucessLog+="✅ Found configuration file in $basePath/.$defaultName/$defaultLightningConfigFilename"
   fi
 
   if [[ ! -L "/usr/local/bin/$defaultCLIAlias" ]]; then
-    echo "⚠️ WARNING: Missing the Fleek Network Lightning symlink in /usr/local/bin/$defaultCLIAlias"
+    warningLog+=$'\n'"⚠️ WARNING: Missing the Fleek Network Lightning symlink in /usr/local/bin/$defaultCLIAlias"
 
     ((warningCount++))
   else
-    echo "✅ Found symlink /usr/local/bin/$defaultCLIAlias"
+    successLog+=$'\n'"✅ Found symlink /usr/local/bin/$defaultCLIAlias"
   fi
 
   if [[ ! -f "$defaultLightningSystemdServicePathForDocker" ]]; then
     if [[ ! -f "$defaultLightningSystemdServicePath" ]]; then
-      echo "⚠️ WARNING: Missing the Fleek Network Systemd unit service unit file in $defaultLightningSystemdServicePath"
+      warningLog+=$'\n'"⚠️ WARNING: Missing the Fleek Network Systemd unit service unit file in $defaultLightningSystemdServicePath"
 
       ((warningCount++))
     else
-      echo "✅ Found the Systemd unit service $defaultLightningSystemdServicePath"
+      successLog+=$'\n'"✅ Found the Systemd unit service $defaultLightningSystemdServicePath"
 
       if ! grep 'ExecStart' "$defaultLightningSystemdServicePath" | grep -q "\-c $basePath/.$defaultName/config.toml"; then
-        echo "⚠️ WARNING: Missing the flag -c and config path in $defaultLightningSystemdServicePath"
+        warningLog+=$'\n'"⚠️ WARNING: Missing the flag -c and config path in $defaultLightningSystemdServicePath"
 
       ((warningCount++))
       else
-        echo "✅ Found the flag -c with config path in $defaultLightningSystemdServicePath"
+        successLog+=$'\n'"✅ Found the flag -c with config path in $defaultLightningSystemdServicePath"
       fi
     fi
   else
     if [[ ! -f "$defaultLightningSystemdServicePathForDocker" ]]; then
-      echo "⚠️ WARNING: Missing the Fleek Network Systemd unit service unit file in $defaultLightningSystemdServicePathForDocker"
+      warningLog+=$'\n'"⚠️ WARNING: Missing the Fleek Network Systemd unit service unit file in $defaultLightningSystemdServicePathForDocker"
     else
-      echo "✅ Found the Systemd unit service $defaultLightningSystemdServicePathForDocker"
+      successLog+=$'\n'"✅ Found the Systemd unit service $defaultLightningSystemdServicePathForDocker"
     fi
   fi
 
   if [[ -f "$defaultLightningSystemdServicePath" && -f "$defaultLightningSystemdServicePathForDocker" ]]; then
-    echo "⚠️ WARNING: Found conflicting Systemd setup, as Native and Docker Systemd are present. If you are using the get.fleek.network tools, the automation might make wrong conclusions about your preferred way of running the node. To avoid confusion you should opt for a single method to run a node, either natively or docker."
+    warningLog+=$'\n'"⚠️ WARNING: Found conflicting Systemd setup, as Native and Docker Systemd are present. If you are using the get.fleek.network tools, the automation might make wrong conclusions about your preferred way of running the node. To avoid confusion you should opt for a single method to run a node, either natively or docker."
     echo
   fi
 
   homeUsernamePaths=$(grep -oE '/home\/([a-zA-Z0-9_\-]+)' "$defaultLightningConfigPath" | cut -d / -f 3)
   for username in $homeUsernamePaths; do
     if [[ "$username" != $(whoami) ]] && grep -q "/home/$username" "$defaultLightningConfigPath"; then
-      echo "⚠️ WARNING: The configuration contains a path for user /home/$username that doesn't match current user's home $basePath. If there isn't a reason for this mismatch, update the file manually."
+      warningLog+=$'\n'"⚠️ WARNING: The configuration contains a path for user /home/$username that doesn't match current user's home $basePath. If there isn't a reason for this mismatch, update the file manually."
 
       ((warningCount++))
       ((configIssueCount++))
@@ -152,7 +157,7 @@ findHintInstallPath() {
   done
   
   if [[ "$configIssueCount" -eq 0 ]]; then
-    echo "✅ Verified the $defaultLightningConfigPath"
+    successLog+=$'\n'"✅ Verified the $defaultLightningConfigPath"
   else
     echo "🐛 Found some possible issues in the $defaultLightningConfigPath"
   fi
@@ -180,7 +185,7 @@ findHintInstallPath() {
       sleep 1
 
       if [[ "$serverOutputWaitAttempts" -gt 10 ]]; then
-        echo "⚠️ WARNING: The Node failed to provide log information, the script will not be able to analyze the log for you. If you'd like to learn how to analyze the logs manually check https://docs.fleek.network/docs/node/analyzing-logs"
+        warningLog+=$'\n'"⚠️ WARNING: The Node failed to provide log information, the script will not be able to analyze the log for you. If you'd like to learn how to analyze the logs manually check https://docs.fleek.network/docs/node/analyzing-logs"
 
         break
       fi
@@ -189,7 +194,7 @@ findHintInstallPath() {
     done
 
     if tail -n 500 "$defaultLightningOutputLogAbsPath" | grep -iq "Node is not staked"; then
-      echo "⚠️ WARNING: The node is not staked. Have you read the instructions to get onboarded? Find it here https://docs.fleek.network/docs/node/testnet-onboarding"
+      warningLog+=$'\n'"⚠️ WARNING: The node is not staked. Have you read the instructions to get onboarded? Find it here https://docs.fleek.network/docs/node/testnet-onboarding"
       echo
 
       ((warningCount++))
@@ -197,7 +202,7 @@ findHintInstallPath() {
     fi
     
     if tail -n 500 "$defaultLightningOutputLogAbsPath" | grep -iq "Please update your node"; then
-      echo "⚠️ WARNING: Binary process version mismatch, you have to update your node. A quick reference is available in https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code/"
+      warningLog+=$'\n'"⚠️ WARNING: Binary process version mismatch, you have to update your node. A quick reference is available in https://docs.fleek.network/references/Lightning%20CLI/update-cli-from-source-code/"
       echo
 
       ((warningCount++))
@@ -205,7 +210,7 @@ findHintInstallPath() {
     fi
 
     if tail -n 500 "$defaultLightningDiagnosticLogAbsPath" | grep -iq "Node secret key does not exist"; then
-      echo "⚠️ WARNING: The Node Key wasn't found, this might be due to missing keystore or user delegation permissions (sudo). A quick reference to help troubleshoout is available in https://docs.fleek.network/references/Lightning%20CLI/keys-not-found/"
+      warningLog+=$'\n'"⚠️ WARNING: The Node Key wasn't found, this might be due to missing keystore or user delegation permissions (sudo). A quick reference to help troubleshoout is available in https://docs.fleek.network/references/Lightning%20CLI/keys-not-found/"
       echo
 
       ((warningCount++))
@@ -213,26 +218,29 @@ findHintInstallPath() {
     fi
     
     if ! curl -s -w "\n" localhost:4230/health | grep -iq 'running and staked'; then
-      echo "⚠️ WARNING: Failed to get a response from localhost:4230/health. The node seems to be offline (not running), if you are participating in testnet, then read the instructions in https://docs.fleek.network/docs/node/testnet-onboarding, to run successfully!"
+      warningLog+=$'\n'"⚠️ WARNING: Failed to get a response from localhost:4230/health. The node seems to be offline (not running), if you are participating in testnet, then read the instructions in https://docs.fleek.network/docs/node/testnet-onboarding, to run successfully!"
 
       ((warningCount++))
       ((healthIssueCount++))
     else
-      echo "✅ The localhost:4230/health is okay"
+      successLog+=$'\n'"✅ The localhost:4230/health is okay"
     fi
   else
-    echo "⚠️ WARNING: Your setup seems to be custom, e.g. running quickly with Docker or Lightning CLI, in any of this cases without Systemd service wrapper, etc. Be aware the tools provided via get.fleek.network are meant for recommeded setups via docs or tools."
+    warningLog+=$'\n'"⚠️ WARNING: Your setup seems to be custom, e.g. running quickly with Docker or Lightning CLI, in any of this cases without Systemd service wrapper, etc. Be aware the tools provided via get.fleek.network are meant for recommeded setups via docs or tools."
     echo
 
     if ! curl -s -w "\n" localhost:4230/health | grep -iq 'running and staked'; then
-      echo "⚠️ WARNING: Failed to get a response from localhost:4230/health. The node seems to be offline (not running), if you are participating in testnet, then read the instructions in https://docs.fleek.network/docs/node/testnet-onboarding, to run successfully!"
+      warningLog+=$'\n'"⚠️ WARNING: Failed to get a response from localhost:4230/health. The node seems to be offline (not running), if you are participating in testnet, then read the instructions in https://docs.fleek.network/docs/node/testnet-onboarding, to run successfully!"
 
       ((warningCount++))
       ((healthIssueCount++))
     else
-      echo "✅ The localhost:4230/health is okay"
+      successLog+=$'\n'"✅ The localhost:4230/health is okay"
     fi
   fi
+
+  echo "$warningLog"
+  echo "$successLog"
 
   echo
   echo
