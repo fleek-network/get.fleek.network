@@ -64,6 +64,14 @@ findIp() {
   done
 }
 
+findHintInstallPath() {
+  getent passwd | while IFS=: read -r name password uid gid gecos home shell; do
+    if [[ -d "/home/$name/fleek-network/$defaultName" ]]; then
+      echo "⚠️ WARNING: Found the repository installed under username $name and path /home/$name/fleek-network/$defaultName. You should probably switch to user $name"
+    fi
+  done
+}
+
 # The white space before and after is intentional
 cat << "ART"
 
@@ -147,6 +155,8 @@ fi
 
     printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
   done
+
+  findHintInstallPath
 
   if [[ ! -d "$defaultLightningKeystorePath" ]] || [[ ! -f "$defaultLightningKeystoreNodePemPath" ]] && [[ ! -f "$defaultLightningKeystoreConsensusPemPath" ]]; then
     echo "👹 Oops! Failed to find the keystore"
