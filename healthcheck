@@ -109,12 +109,14 @@ healthIssueLog=""
     sucessLog+="✅ Found configuration file in $basePath/.$defaultName/$defaultLightningConfigFilename"
   fi
 
-  if [[ ! -L "/usr/local/bin/$defaultCLIAlias" ]]; then
-    warningLog+=$'\n'"⚠️ WARNING: Missing the Fleek Network Lightning symlink in /usr/local/bin/$defaultCLIAlias"
+  if [[ ! -f "$defaultLightningSystemdServicePathForDocker" ]]; then
+    if [[ ! -L "/usr/local/bin/$defaultCLIAlias" ]]; then
+      warningLog+=$'\n'"⚠️ WARNING: Missing the Fleek Network Lightning symlink in /usr/local/bin/$defaultCLIAlias"
 
-    ((warningCount++))
-  else
-    successLog+=$'\n'"✅ Found symlink /usr/local/bin/$defaultCLIAlias"
+      ((warningCount++))
+    else
+      successLog+=$'\n'"✅ Found symlink /usr/local/bin/$defaultCLIAlias"
+    fi
   fi
 
   if [[ ! -f "$defaultLightningSystemdServicePathForDocker" ]]; then
