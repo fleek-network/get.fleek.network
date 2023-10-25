@@ -64,10 +64,24 @@ findIp() {
   done
 }
 
-findHintInstallPath() {
-  getent passwd | while IFS=: read -r name password uid gid gecos home shell; do
-    if [[ -d "/home/$name/fleek-network/$defaultName" ]]; then
-      echo "⚠️ WARNING: Found the repository installed under username $name and path /home/$name/fleek-network/$defaultName. You should probably switch to user $name"
+findInstallPath() {
+  data=$(cut -d : -f1 /etc/passwd)
+  currUser=$(whoami)
+
+  for name in $data; do
+    if [[ -d "/home/$name/fleek-network/lightning" && "$name" != "$currUser" ]]; then
+      echo
+      echo "⚠️ WARNING: You are currently logged in as $currUser, but the respository was found in another username home (/home/$name/fleek-network/lightning)"
+      echo
+      echo "So, before proceeding, do the following steps:"
+      echo
+      echo "1) Switch to the username $name, e.g. su $name"
+      echo "2) Change directory to the user home, e.g. cd \$HOME"
+      echo
+      echo "Once done, run this script again!"
+      echo
+
+      exit 1
     fi
   done
 }
@@ -150,13 +164,15 @@ fi
 
       exit 1
     elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+      if [[ ! -f "$defaultLightningSystemdServicePathForDocker" ]]; then
+        findInstallPath
+      fi
+
       break;
     fi
 
     printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
   done
-
-  findHintInstallPath
 
   if [[ ! -d "$defaultLightningKeystorePath" ]] || [[ ! -f "$defaultLightningKeystoreNodePemPath" ]] && [[ ! -f "$defaultLightningKeystoreConsensusPemPath" ]]; then
     echo "👹 Oops! Failed to find the keystore"
