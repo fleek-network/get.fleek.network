@@ -35,6 +35,7 @@ findInstallPath() {
 
   for name in $data; do
     if [[ -d "/home/$name/fleek-network/lightning" && "$name" != "$currUser" ]]; then
+      echo
       echo "⚠️ WARNING: You are currently logged in as $currUser, but the respository was found in another username home (/home/$name/fleek-network/lightning)"
       echo
       echo "So, before proceeding, do the following steps:"
@@ -72,7 +73,9 @@ healthIssueLog=""
 
       exit 1
     elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
-      findInstallPath
+      if [[ ! -f "$defaultLightningSystemdServicePathForDocker" ]]; then
+        findInstallPath
+      fi
 
       break;
     fi
