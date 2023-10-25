@@ -29,10 +29,23 @@ healthIssueCount=0
 warningCount=0
 
 # Utils
-findHintInstallPath() {
-  getent passwd | while IFS=: read -r name password uid gid gecos home shell; do
-    if [[ -d "/home/$name/fleek-network/$defaultName" ]]; then
-      echo "⚠️ WARNING: Found the repository installed under username $name and path /home/$name/fleek-network/$defaultName. You should probably switch to user $name"
+findInstallPath() {
+  data=$(cut -d : -f1 /etc/passwd)
+  currUser=$(whoami)
+
+  for name in $data; do
+    if [[ -d "/home/$name/fleek-network/lightning" && "$name" != "$currUser" ]]; then
+      echo "⚠️ WARNING: You are currently logged in as $currUser, but the respository was found in another username home (/home/$name/fleek-network/lightning)"
+      echo
+      echo "So, before proceeding, do the following steps:"
+      echo
+      echo "1) Switch to the username $name, e.g. su $name"
+      echo "2) Change directory to the user home, e.g. cd \$HOME"
+      echo
+      echo "Once done, run this script again!"
+      echo
+
+      exit 1
     fi
   done
 }
@@ -59,6 +72,8 @@ healthIssueLog=""
 
       exit 1
     elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+      findInstallPath
+
       break;
     fi
 
@@ -84,8 +99,6 @@ healthIssueLog=""
   if [[ ! -f "$defaultLightningSystemdServicePathForDocker" ]]; then
     if [[ ! -d "$basePath/fleek-network/$defaultName" ]]; then
       warningLog+=$'\n'"⚠️ WARNING: The Fleek Network Lightning CLI source code wasn't found in $basePath/fleek-network/$defaultName. If you have installed the service with the username $(whoami) and haven't customised the path, the source code is not in the expected location"
-
-      findHintInstallPath
 
       ((warningCount++))
     else
