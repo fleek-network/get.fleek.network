@@ -153,9 +153,9 @@ fi
   exec < /dev/tty;
 
   if [[ "$EUID" -eq 0 ]]; then
-    read -rp "⚠️ WARNING: You're running the health check as root user. If you have installed the Fleek Network Lightning CLI as root this is not recommended. Read our documentation in https://docs.fleek.network"
+    echo "⚠️ WARNING: You're running this script as root user. If you have installed the Fleek Network Lightning CLI as root this is not recommended. Read our documentation in https://docs.fleek.network"
 
-    echo "💩 Oh no! User should not run as root."
+    echo "💩 Oh no! Terminated becaus you should not run as root."
 
     exit 1
   fi
