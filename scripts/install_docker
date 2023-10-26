@@ -367,17 +367,13 @@ ExecStartPre=-/usr/bin/docker kill $defaultDockerContainerName
 ExecStartPre=-/usr/bin/docker rm $defaultDockerContainerName
 ExecStartPre=/usr/bin/docker pull $defaultDockerRegistryUrl:$defaultDockerRegistryTag
 ExecStart=/usr/bin/docker run \
-  -p 4230:4230 \
-  -p 4200:4200 \
-  -p 6969:6969 \
-  -p 18000:18000 \
-  -p 18101:18101 \
-  -p 18102:18102 \
-  --mount type=bind,source=$defaultLightningBasePath,target=/root/.$defaultName \
+  -p 4200-4299:4200-4299 \
+  -p 4300-4399:4300-4399 \
+  --mount type=bind,source=$defaultLightningBasePath,target=/home/lgtn/.$defaultName \
   --mount type=bind,source=/var/tmp,target=/var/tmp \
   --name $defaultDockerContainerName \
   $defaultDockerRegistryName
-ExecStop=/usr/bin/docker stop
+ExecStop=/usr/bin/docker stop $defaultDockerContainerName
 StandardOutput=append:$defaultLightningOutputLogAbsPath
 StandardError=append:$defaultLightningDiagnosticLogAbsPath
 
