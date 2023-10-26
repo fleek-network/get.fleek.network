@@ -51,15 +51,15 @@ findInstallPath() {
   done
 }
 
-# dockerInDockerVerify() {
-#   if grep -qs 'workdir=/var/lib/docker' /proc/self/mountinfo; then
-#     echo
-#     echo "💩 Oh-no! Execute the script from host machine and not from the Docker Container context."
-#     echo
+dockerInDockerVerify() {
+  if grep -qs '/docker/containers' /proc/self/mountinfo || [[ -f /.dockerenv ]]; then
+    echo
+    echo "💩 Oh-no! Execute the script from host machine and not from the Docker Container context."
+    echo
 
-#     exit 1
-#   fi
-# }
+    exit 1
+  fi
+}
 
 # Log
 successLog=""
