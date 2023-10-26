@@ -237,8 +237,13 @@ healthIssueLog=""
       ((healthIssueCount++))
     fi
     
-    if ! curl -s -w "\n" localhost:4230/health | grep -iq 'running and staked'; then
-      warningLog+=$'\n'"⚠️ WARNING: Failed to get a response from localhost:4230/health. The node seems to be offline (not running), if you are participating in testnet, then read the instructions in https://docs.fleek.network/docs/node/testnet-onboarding, to run successfully!"
+    healthCheckStatus=$(curl -s -w "\n" localhost:4230/health)
+    if ! echo "$healthCheckStatus" | grep -iq 'running and staked'; then
+      if echo "$healthCheckStatus" | grep -iq 'running'; then
+        warningLog+=$'\n'"⚠️ WARNING: The node is running but not staked!"
+      else
+        warningLog+=$'\n'"⚠️ WARNING: Failed to get a response from localhost:4230/health. The node seems to be offline (not running), if you are participating in testnet, then read the instructions in https://docs.fleek.network/docs/node/testnet-onboarding, to run successfully!"
+      fi
 
       ((warningCount++))
       ((healthIssueCount++))
@@ -249,8 +254,13 @@ healthIssueLog=""
     warningLog+=$'\n'"⚠️ WARNING: Your setup seems to be custom, e.g. running quickly with Docker or Lightning CLI, in any of this cases without Systemd service wrapper, etc. Be aware the tools provided via get.fleek.network are meant for recommeded setups via docs or tools."
     echo
 
-    if ! curl -s -w "\n" localhost:4230/health | grep -iq 'running and staked'; then
-      warningLog+=$'\n'"⚠️ WARNING: Failed to get a response from localhost:4230/health. The node seems to be offline (not running), if you are participating in testnet, then read the instructions in https://docs.fleek.network/docs/node/testnet-onboarding, to run successfully!"
+    healthCheckStatus=$(curl -s -w "\n" localhost:4230/health)
+    if ! echo "$healthCheckStatus" | grep -iq 'running and staked'; then
+      if echo "$healthCheckStatus" | grep -iq 'running'; then
+        warningLog+=$'\n'"⚠️ WARNING: The node is running but not staked!"
+      else
+        warningLog+=$'\n'"⚠️ WARNING: Failed to get a response from localhost:4230/health. The node seems to be offline (not running), if you are participating in testnet, then read the instructions in https://docs.fleek.network/docs/node/testnet-onboarding, to run successfully!"
+      fi
 
       ((warningCount++))
       ((healthIssueCount++))
