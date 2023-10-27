@@ -30,6 +30,33 @@ if ! cd "$(mktemp -d)"; then
   exit 1
 fi
 
+# Defaults
+defaultTestInstallMagicWord=I_AM_FULLY_AWARE_AND_WANT_TO_PROCEED_TO_TEST_INSTALL_ONLY
+
+# Utils
+testnetPhaseFinishedWarning() {
+  echo "⚠️ WARNING: The Testnet Phase {1} has ENDED on Thursday, Oct. 26th 2023! You'll HAVE TO WAIT for next Testnet Phase in order to run a node successfully. If you'd like TO PARTICIPATE on the next phase, keep track of our announcements by following us on Discord and Twitter to avoid disappointment!"
+  echo
+  echo "If you decide to set up a node for testing the INSTALL PROCESS ONLY, knowing that it'll fail to run successfully, you can do so by typing $defaultTestInstallMagicWord in the prompt."
+  echo
+
+  while read -rp "🙋‍♀️ What do you have to type to proceed with the installation only? " answer; do
+    if [[ "$answer" == "$defaultTestInstallMagicWord" ]]; then
+      echo
+      read -rp "⚠️ WARNING: The installer will now proceed. Remember that the node will NOT RUN SUCCESSFULLY as you have to wait for the new Testnet Phase announcement and rules. If you keep the setup, the future Testnet Phase will require you to update or troubleshoot it! Press ENTER to continue..."
+      echo
+
+      break;
+    fi
+
+    echo
+    echo "💩 Uh-oh! Seems that you haven't read the warning message. Exited!"
+    echo
+
+    exit 1
+  done
+}
+
 # The white space before and after is intentional
 cat << "ART"
 
@@ -63,16 +90,18 @@ cat << "ART"
 
 ART
 
-echo
-echo "Select how you'd like to run the Fleek Network:"
-echo
-echo "1) 🔫 Natively (recommended)"
-echo "2) 👾 Docker Stack (unstable/experimental)"
-echo
-
 (
   exec < /dev/tty;
-  
+
+  testnetPhaseFinishedWarning
+
+  echo
+  echo "Select how you'd like to run the Fleek Network:"
+  echo
+  echo "1) 🔫 Natively (recommended)"
+  echo "2) 👾 Docker Stack (unstable/experimental)"
+  echo
+
   while read -rp "Type your selection number> " answer; do
     if [[ $answer -eq 1 ]]; then
       echo
