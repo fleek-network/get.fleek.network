@@ -63,6 +63,10 @@ defaultPortRangeUDPStart=4300
 defaultPortRangeUDPEnd=4399
 defaultPortRangeTCP="$defaultPortRangeTCPStart-$defaultPortRangeTCPStart"
 defaultPortRangeUDP="$defaultPortRangeUDPStart-$defaultPortRangeUDPEnd"
+defaultLogRotateConfigFile="/etc/logrotate.conf"
+defaultLogRotatePath="/etc/logrotate.d"
+defaultLogRotateLightningConf="/etc/logrotate.d/$defaultName"
+defaultLogRotateLightningLogsPath="/var/log/lightning/*.log"
 
 # App state
 vCPUs=$(nproc --all)
@@ -207,6 +211,35 @@ EOF
 
     printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
   done
+}
+
+setupLogrotate() {
+  if [[ ! -d "$defaultLogRotatePath" ]]; then
+    sudo mkdir -p "$defaultLogRotatePath"
+  else
+    echo "✅ The $defaultLogRotatePath exists!"
+  fi
+
+  if [[ ! -f "$defaultLogRotateLightningConf" ]]; then
+    sudo touch "$defaultLogRotateLightningConf"
+
+    # warning: the identation for `/var/log/lightning/*.log` is intentional, do not change
+    cat > "$defaultLogRotateLightningConf" <<EOF
+$defaultLogRotateLightningLogsPath {
+    rotate 5
+    daily
+    size 50M
+    notifempty
+    compress
+}
+EOF
+  else
+    if ! grep -q "$defaultLogRotateLightningLogsPath" "$defaultLogRotateLightningConf"; then
+      echo "⚠️ WARNING: The $defaultLogRotateLightningConf exists but doesn't seem valid. You should check it manually!"
+    else
+      echo "✅ The $defaultLogRotateLightningConf exists!"
+    fi
+  fi
 }
 
 # The white space before and after is intentional
@@ -586,6 +619,7 @@ WantedBy=multi-user.target
   # done
 
   setupJournald
+  setupLogrotate
 
   # TODO: Switch to /health
   if curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4230/rpc/v0 | grep -q "\"result\"\:\"pong\""; then
