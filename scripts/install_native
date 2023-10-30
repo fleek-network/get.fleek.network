@@ -63,6 +63,7 @@ defaultPortRangeUDPStart=4300
 defaultPortRangeUDPEnd=4399
 defaultPortRangeTCP="$defaultPortRangeTCPStart-$defaultPortRangeTCPStart"
 defaultPortRangeUDP="$defaultPortRangeUDPStart-$defaultPortRangeUDPEnd"
+defaultJournaldConfigFilePath="/etc/systemd/journald.conf"
 defaultLogRotateBinFilename="logrotate"
 defaultLogRotateConfigFile="/etc/logrotate.conf"
 defaultLogRotatePath="/etc/logrotate.d"
@@ -190,12 +191,13 @@ hasFreePortRange() {
 }
 
 setupJournald() {
-  while read -rp "🤖 The Fleek Network Node streams a lot of text data that is stored in the log files. It can fill up the disk space quite quickly. The installer can set the journald configuration to limit the maximum usage and file size for system-wide logs, this will effectively override any settings you might currently have. Would you like the installer to make the changes for you? (yes/no)" answer; do
+  echo
+  while read -rp "🤖 The Fleek Network Node streams a lot of text data that is stored in the log files. It can fill up the disk space quite quickly. The installer can set the journald configuration to limit the maximum usage and file size for system-wide logs, but this will effectively override any settings you might currently have. Would you like the installer to make the changes for you? (yes/no) " answer; do
     if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
       break
     elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
   # The padding for [Journal] is intentional
-  cat <<EOF > /etc/systemd/journald.conf
+  cat <<EOF | sudo tee "$defaultJournaldConfigFilePath" > /dev/null
 [Journal]
 Storage=persistent
 SystemMaxUse=1G
@@ -225,13 +227,14 @@ setupLogrotate() {
       sudo mkdir -p "$defaultLogRotatePath"
     else
       echo "✅ The $defaultLogRotatePath exists!"
+      echo
     fi
 
     if [[ ! -f "$defaultLogRotateLightningConf" ]]; then
       sudo touch "$defaultLogRotateLightningConf"
 
       # warning: the identation for `/var/log/lightning/*.log` is intentional, do not change
-      cat > "$defaultLogRotateLightningConf" <<EOF
+      cat <<EOF | sudo tee "$defaultLogRotateLightningConf" > /dev/null
 $defaultLogRotateLightningLogsPath {
     rotate 5
     daily
@@ -245,6 +248,7 @@ EOF
         echo "⚠️ WARNING: The $defaultLogRotateLightningConf exists but doesn't seem valid. You should check it manually!"
       else
         echo "✅ The $defaultLogRotateLightningConf exists!"
+        echo
       fi
     fi
   fi
