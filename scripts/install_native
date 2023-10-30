@@ -63,6 +63,7 @@ defaultPortRangeUDPStart=4300
 defaultPortRangeUDPEnd=4399
 defaultPortRangeTCP="$defaultPortRangeTCPStart-$defaultPortRangeTCPStart"
 defaultPortRangeUDP="$defaultPortRangeUDPStart-$defaultPortRangeUDPEnd"
+defaultLogRotateBinFilename="logrotate"
 defaultLogRotateConfigFile="/etc/logrotate.conf"
 defaultLogRotatePath="/etc/logrotate.d"
 defaultLogRotateLightningConf="/etc/logrotate.d/$defaultName"
@@ -214,17 +215,23 @@ EOF
 }
 
 setupLogrotate() {
-  if [[ ! -d "$defaultLogRotatePath" ]]; then
-    sudo mkdir -p "$defaultLogRotatePath"
-  else
-    echo "✅ The $defaultLogRotatePath exists!"
+  if ! hasCommand "$defaultLogRotateBinFilename"; then
+    printf "🤖 Install logrotate for log management\n"
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install "$defaultLogRotateBinFilename" -yq
   fi
 
-  if [[ ! -f "$defaultLogRotateLightningConf" ]]; then
-    sudo touch "$defaultLogRotateLightningConf"
+  if [[ -f "$defaultLogRotateConfigFile" ]]; then
+    if [[ ! -d "$defaultLogRotatePath" ]]; then
+      sudo mkdir -p "$defaultLogRotatePath"
+    else
+      echo "✅ The $defaultLogRotatePath exists!"
+    fi
 
-    # warning: the identation for `/var/log/lightning/*.log` is intentional, do not change
-    cat > "$defaultLogRotateLightningConf" <<EOF
+    if [[ ! -f "$defaultLogRotateLightningConf" ]]; then
+      sudo touch "$defaultLogRotateLightningConf"
+
+      # warning: the identation for `/var/log/lightning/*.log` is intentional, do not change
+      cat > "$defaultLogRotateLightningConf" <<EOF
 $defaultLogRotateLightningLogsPath {
     rotate 5
     daily
@@ -233,11 +240,12 @@ $defaultLogRotateLightningLogsPath {
     compress
 }
 EOF
-  else
-    if ! grep -q "$defaultLogRotateLightningLogsPath" "$defaultLogRotateLightningConf"; then
-      echo "⚠️ WARNING: The $defaultLogRotateLightningConf exists but doesn't seem valid. You should check it manually!"
     else
-      echo "✅ The $defaultLogRotateLightningConf exists!"
+      if ! grep -q "$defaultLogRotateLightningLogsPath" "$defaultLogRotateLightningConf"; then
+        echo "⚠️ WARNING: The $defaultLogRotateLightningConf exists but doesn't seem valid. You should check it manually!"
+      else
+        echo "✅ The $defaultLogRotateLightningConf exists!"
+      fi
     fi
   fi
 }
