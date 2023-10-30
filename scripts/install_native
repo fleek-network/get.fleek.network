@@ -184,6 +184,31 @@ hasFreePortRange() {
   echo "$hasUsedPort"
 }
 
+setupJournald() {
+  while read -rp "🤖 The Fleek Network Node streams a lot of text data that is stored in the log files. It can fill up the disk space quite quickly. The installer can set the journald configuration to limit the maximum usage and file size for system-wide logs, this will effectively override any settings you might currently have. Would you like the installer to make the changes for you? (yes/no)" answer; do
+    if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+      break
+    elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+  # The padding for [Journal] is intentional
+  cat <<EOF > /etc/systemd/journald.conf
+[Journal]
+Storage=persistent
+SystemMaxUse=1G
+SystemMaxFileSize=100M
+RuntimeMaxUse=100M
+EOF
+
+      if ! systemctl restart systemd-journald.service; then
+        echo "⚠️ WARNING: Updated Journald, but failed to restart systemd"
+      fi
+
+      break;
+    fi
+
+    printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
+  done
+}
+
 # The white space before and after is intentional
 cat << "ART"
 
@@ -559,6 +584,8 @@ WantedBy=multi-user.target
 
   #   printf "💩 Uh-oh! We expect a yes or no answer. Try again...\n"
   # done
+
+  setupJournald
 
   # TODO: Switch to /health
   if curl -s -X POST -H "Content-Type: application/json" -d '{ "jsonrpc": "2.0", "method": "flk_ping", "params": [], "id": 1 }' localhost:4230/rpc/v0 | grep -q "\"result\"\:\"pong\""; then
