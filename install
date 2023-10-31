@@ -44,6 +44,8 @@ defaultMenuOptionUpdate="📢 Node Update"
 defaultScriptNameHealthCheck="healthcheck"
 defaultScriptNameNodeDetails="node_details"
 defaultScriptNameUpdate="update"
+defaultScriptNameInstallNative="install_native"
+defaultScriptNameInstallDocker="install_docker"
 
 # Utils
 testnetPhaseFinishedWarning() {
@@ -86,7 +88,7 @@ menuTopLevel() {
               break
               ;;
           "$defaultMenuOptionQuit")
-              quitProcess
+              selected="$defaultMenuOptionQuit"
               ;;
           *) echo "👹 Oop! Invalid option $REPLY, try again...";;
       esac
@@ -102,21 +104,23 @@ menuInstall() {
   select opt in "${options[@]}"; do
       case $opt in
           "$defaultMenuOptionNative")
-              installProcess
+              selected="$defaultMenuOptionNative"
 
-              exit 0
+              break
               ;;
           "$defaultMenuOptionDocker")
-              installDocker
+              selected="$defaultMenuOptionDocker"
 
-              exit 0
+              break
               ;;
           "$defaultMenuOptionQuit")
-              quitProcess
+              selected="$defaultMenuOptionQuit"
               ;;
           *) echo "👹 Oop! Invalid option $REPLY, try again...";;
       esac
   done
+
+  echo "$selected"
 }
 
 menuUtils() {
@@ -142,35 +146,13 @@ menuUtils() {
               break
               ;;
           "$defaultMenuOptionQuit")
-              quitProcess
+              selected="$defaultMenuOptionQuit"
               ;;
           *) echo "👹 Oop! Invalid option $REPLY, try again...";;
       esac
   done
 
   echo "$selected"
-}
-
-installProcess() {
-  echo
-  echo "Before we launch the process, just to let you know that the Lightning CLI will be compiled from the Rust 🦀 source code. Depending on your machine specifications this can be quite slow, be patient!"
-  echo
-  read -rp "Let's launch the process, press ENTER to continue..."
-
-  curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$useGetBranch/scripts/install_native" > install_native
-  chmod +x install_native
-
-  ./install_native
-}
-
-installDocker() {
-  echo
-  read -rp "We'll launch the process, press ENTER to continue..."
-
-  curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$useGetBranch/scripts/install_docker" > install_docker
-  chmod +x install_docker
-
-  ./install_docker
 }
 
 quitProcess() {
@@ -223,8 +205,6 @@ ART
 
   exec < /dev/tty;
 
-  testnetPhaseFinishedWarning
-
   echo "👋 The following menu provides you access to the installation process of a node, or the diagnostic and utility tools."
   echo
 
@@ -233,6 +213,8 @@ ART
   echo
 
   if [[ "$selected" == "$defaultMenuOptionInstall" ]]; then
+    testnetPhaseFinishedWarning
+
     echo "👉 To install a node, choose between building it natively, or running as a docker container. The native install builds the binary from source-code, while the docker container is an instance of a prebuilt image."
     echo
 
@@ -245,8 +227,20 @@ ART
   fi
 
   echo
+  
+  if [[ "$selected" == "$defaultMenuOptionNative" ]]; then
+    echo
+    echo "Before we launch the process, just to let you know that the Lightning CLI will be compiled from the Rust 🦀 source code. Depending on your machine specifications this can be quite slow, be patient!"
+    echo
+    read -rp "Let's launch the process, press ENTER to continue..."
 
-  if [[ "$selected" == "$defaultMenuOptionHealthCheck" ]]; then
+    runScriptByName "$defaultScriptNameInstallNative"
+  elif [[ "$selected" == "$defaultMenuOptionDocker" ]]; then
+    echo
+    read -rp "We'll launch the Docker install process, press ENTER to continue..."
+
+    runScriptByName "$defaultScriptNameInstallDocker"
+  elif [[ "$selected" == "$defaultMenuOptionHealthCheck" ]]; then
     runScriptByName "$defaultScriptNameHealthCheck"
   elif [[ "$selected" == "$defaultMenuOptionNodeDetails" ]]; then
     runScriptByName "$defaultScriptNameNodeDetails"
