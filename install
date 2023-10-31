@@ -40,6 +40,9 @@ defaultMenuOptionDocker="👾 Docker (unstable)"
 defaultMenuOptionHealthCheck="🚑 Health check"
 defaultMenuOptionNodeDetails="🎮 Node details"
 defaultMenuOptionUpdate="📢 Node Update"
+defaultScriptNameHealthCheck="healthcheck"
+defaultScriptNameNodeDetails="node_details"
+defaultScriptNameUpdate="update"
 
 # Utils
 testnetPhaseFinishedWarning() {
@@ -174,6 +177,13 @@ quitProcess() {
   exit 1
 }
 
+runScriptByName() {
+  curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$useGetBranch/scripts/$1" > "$1"
+  chmod +x "$1"
+
+  ./"$1"
+}
+
 # The white space before and after is intentional
 cat << "ART"
 
@@ -234,10 +244,10 @@ ART
   echo
 
   if [[ "$selected" == "$defaultMenuOptionHealthCheck" ]]; then
-    echo "todo: healthcheck"
+    runScriptByName "$defaultScriptNameHealthCheck"
   elif [[ "$selected" == "$defaultMenuOptionNodeDetails" ]]; then
-    echo "todo: node details"
+    runScriptByName "$defaultScriptNameNodeDetails"
   elif [[ "$selected" == "$defaultMenuOptionUpdate" ]]; then
-    echo "todo: update"
+    runScriptByName "$defaultScriptNameUpdate"
   fi
 )
