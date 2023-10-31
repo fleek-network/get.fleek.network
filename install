@@ -32,6 +32,14 @@ fi
 
 # Defaults
 defaultTestInstallMagicWord=I_AM_FULLY_AWARE_AND_WANT_TO_PROCEED_TO_TEST_INSTALL_ONLY
+defaultMenuOptionInstall="🤖 Install"
+defaultMenuOptionUtils="⚙️ Tools"
+defaultMenuOptionQuit="👻 Quit"
+defaultMenuOptionNative="🔫 Natively (recommended)"
+defaultMenuOptionDocker="👾 Docker (unstable)"
+defaultMenuOptionHealthCheck="🚑 Health check"
+defaultMenuOptionNodeDetails="🎮 Node details"
+defaultMenuOptionUpdate="📢 Node Update"
 
 # Utils
 testnetPhaseFinishedWarning() {
@@ -55,6 +63,115 @@ testnetPhaseFinishedWarning() {
 
     exit 1
   done
+}
+
+menuTopLevel() {
+  PS3=$'\n 🙏 Please enter your choice: \n'
+  options=("$defaultMenuOptionInstall" "$defaultMenuOptionUtils" "$defaultMenuOptionQuit")
+  selected=""
+  select opt in "${options[@]}"; do
+      case $opt in
+          "$defaultMenuOptionInstall")
+              selected="$defaultMenuOptionInstall"
+
+              break
+              ;;
+          "$defaultMenuOptionUtils")
+              selected="$defaultMenuOptionUtils"
+
+              break
+              ;;
+          "$defaultMenuOptionQuit")
+              quitProcess
+              ;;
+          *) echo "👹 Oop! Invalid option $REPLY, try again...";;
+      esac
+  done
+
+  echo "$selected"
+}
+
+menuInstall() {
+  PS3=$'\n 🙏 Please enter your choice: \n'
+  options=("$defaultMenuOptionNative" "$defaultMenuOptionDocker" "$defaultMenuOptionQuit")
+
+  select opt in "${options[@]}"; do
+      case $opt in
+          "$defaultMenuOptionNative")
+              installProcess
+
+              exit 0
+              ;;
+          "$defaultMenuOptionDocker")
+              installDocker
+
+              exit 0
+              ;;
+          "$defaultMenuOptionQuit")
+              quitProcess
+              ;;
+          *) echo "👹 Oop! Invalid option $REPLY, try again...";;
+      esac
+  done
+}
+
+menuUtils() {
+  PS3=$'\n 🙏 Please enter your choice: \n'
+  options=("$defaultMenuOptionHealthCheck" "$defaultMenuOptionNodeDetails" "$defaultMenuOptionUpdate" "$defaultMenuOptionQuit")
+  selected=""
+
+  select opt in "${options[@]}"; do
+      case $opt in
+          "$defaultMenuOptionHealthCheck")
+              selected="$defaultMenuOptionHealthCheck"
+
+              break
+              ;;
+          "$defaultMenuOptionNodeDetails")
+              selected="$defaultMenuOptionNodeDetails"
+
+              break
+              ;;
+          "$defaultMenuOptionUpdate")
+              selected="$defaultMenuOptionUpdate"
+
+              break
+              ;;
+          "$defaultMenuOptionQuit")
+              quitProcess
+              ;;
+          *) echo "👹 Oop! Invalid option $REPLY, try again...";;
+      esac
+  done
+
+  echo "$selected"
+}
+
+installProcess() {
+  echo
+  echo "Before we launch the process, just to let you know that the Lightning CLI will be compiled from the Rust 🦀 source code. Depending on your machine specifications this can be quite slow, be patient!"
+  echo
+  read -rp "Let's launch the process, press ENTER to continue..."
+
+  curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$useGetBranch/scripts/install_native" > install_native
+  chmod +x install_native
+
+  ./install_native
+}
+
+installDocker() {
+  echo
+  read -rp "We'll launch the process, press ENTER to continue..."
+
+  curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$useGetBranch/scripts/install_docker" > install_docker
+  chmod +x install_docker
+
+  ./install_docker
+}
+
+quitProcess() {
+  echo "🦖 The get.fleek.network process has terminated!"
+  exit 1
 }
 
 # The white space before and after is intentional
@@ -95,38 +212,32 @@ ART
 
   testnetPhaseFinishedWarning
 
-  echo
-  echo "Select how you'd like to run the Fleek Network:"
-  echo
-  echo "1) 🔫 Natively (recommended)"
-  echo "2) 👾 Docker Stack (unstable/experimental)"
+  echo "👋 The following menu provides you access to the installation process of a node, or the diagnostic and utility tools."
   echo
 
-  while read -rp "Type your selection number> " answer; do
-    if [[ $answer -eq 1 ]]; then
-      echo
-      echo "Before we launch the process, just to let you know that the Lightning CLI will be compiled from the Rust 🦀 source code. Depending on your machine specifications this can be quite slow, be patient!"
-      echo
-      read -rp "Let's launch the process, press ENTER to continue..."
+  selected=$(menuTopLevel)
 
-      curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$useGetBranch/scripts/install_native" > install_native
-      chmod +x install_native
+  echo
 
-      ./install_native
+  if [[ "$selected" == "$defaultMenuOptionInstall" ]]; then
+    echo "👉 To install a node, choose between building it natively, or running as a docker container. The native install builds the binary from source-code, while the docker container is an instance of a prebuilt image."
+    echo
 
-      break;
-    elif [[ $answer -eq 2 ]]; then
-      echo
-      read -rp "We'll launch the process, press ENTER to continue..."
+    selected=$(menuInstall)
+  elif [[ "$selected" == "$defaultMenuOptionUtils" ]]; then
+    echo "👉 The tools gives you access to a set of diagnostic processes to help you assess information about your node, e.g. health checks, details, etc."
+    echo
 
-      curl -s "https://raw.githubusercontent.com/fleek-network/get.fleek.network/$useGetBranch/scripts/install_docker" > install_docker
-      chmod +x install_docker
+    selected=$(menuUtils)
+  fi
 
-      ./install_docker
+  echo
 
-      break
-    fi
-
-    echo "💩 Uh oh! We're expecting a yes (Y) or a no (N) answer. Try again..."
-  done
+  if [[ "$selected" == "$defaultMenuOptionHealthCheck" ]]; then
+    echo "todo: healthcheck"
+  elif [[ "$selected" == "$defaultMenuOptionNodeDetails" ]]; then
+    echo "todo: node details"
+  elif [[ "$selected" == "$defaultMenuOptionUpdate" ]]; then
+    echo "todo: update"
+  fi
 )
