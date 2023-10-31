@@ -70,7 +70,7 @@ testnetPhaseFinishedWarning() {
 }
 
 menuTopLevel() {
-  PS3=$'\n 🙏 Please enter your choice: \n'
+  PS3=$'\n🙏 Please enter your choice: \n'
   options=("$defaultMenuOptionInstall" "$defaultMenuOptionUtils" "$defaultMenuOptionQuit")
   selected=""
   select opt in "${options[@]}"; do
@@ -96,7 +96,7 @@ menuTopLevel() {
 }
 
 menuInstall() {
-  PS3=$'\n 🙏 Please enter your choice: \n'
+  PS3=$'\n🙏 Please enter your choice: \n'
   options=("$defaultMenuOptionNative" "$defaultMenuOptionDocker" "$defaultMenuOptionQuit")
 
   select opt in "${options[@]}"; do
@@ -120,7 +120,7 @@ menuInstall() {
 }
 
 menuUtils() {
-  PS3=$'\n 🙏 Please enter your choice: \n'
+  PS3=$'\n🙏 Please enter your choice: \n'
   options=("$defaultMenuOptionHealthCheck" "$defaultMenuOptionNodeDetails" "$defaultMenuOptionUpdate" "$defaultMenuOptionQuit")
   selected=""
 
@@ -174,7 +174,7 @@ installDocker() {
 }
 
 quitProcess() {
-  echo "🦖 The get.fleek.network process has terminated!"
+  printf "\n\n🦖 The get.fleek.network process has terminated!\n\n"
   exit 1
 }
 
@@ -188,7 +188,7 @@ runScriptByName() {
 # The white space before and after is intentional
 cat << "ART"
 
-  ⭐️ Fleek Network Lightning CLI installer ⭐️
+  ⭐️ Get! Fleek Network ⭐️
 
               zeeeeee-
               z$$$$$$"
@@ -219,6 +219,8 @@ cat << "ART"
 ART
 
 (
+  trap quitProcess INT
+
   exec < /dev/tty;
 
   testnetPhaseFinishedWarning
