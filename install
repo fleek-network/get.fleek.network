@@ -205,6 +205,13 @@ ART
 
   exec < /dev/tty;
 
+  if ! lscpu |  grep -q 'GenuineIntel'; then
+    echo "⚠️ WARNING: The Fleek Network node binary is only supported on CPUs that adhere to the x86_64 architecture but mainly supporting GenuineIntel, as there's been reports of failure on AMD. ARM64 is not supported, but efforts have been put to support it. To learn more read the requirements section in https://docs.fleek.network/docs/node/requirements."
+    read -rp "Press ENTER to continue..."
+    echo
+    echo
+  fi
+
   echo "👋 The following menu provides you access to the installation process of a node, or the diagnostic and utility tools."
   echo
 
