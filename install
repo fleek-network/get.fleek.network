@@ -42,6 +42,7 @@ defaultMenuOptionHealthCheck="🚑 Health check"
 defaultMenuOptionNodeDetails="🎮 Node details"
 defaultMenuOptionUpdate="📢 Node Update"
 defaultScriptNameHealthCheck="healthcheck"
+defaultMenuOptionServerDetails="📸 Server details"
 defaultScriptNameNodeDetails="node_details"
 defaultScriptNameUpdate="update"
 defaultScriptNameInstallNative="install_native"
@@ -125,7 +126,7 @@ menuInstall() {
 
 menuUtils() {
   PS3=$'\n🙏 Please enter your choice: \n'
-  options=("$defaultMenuOptionHealthCheck" "$defaultMenuOptionNodeDetails" "$defaultMenuOptionUpdate" "$defaultMenuOptionQuit")
+  options=("$defaultMenuOptionHealthCheck" "$defaultMenuOptionNodeDetails" "$defaultMenuOptionUpdate" "$defaultMenuOptionServerDetails" "$defaultMenuOptionQuit")
   selected=""
 
   select opt in "${options[@]}"; do
@@ -142,6 +143,11 @@ menuUtils() {
               ;;
           "$defaultMenuOptionUpdate")
               selected="$defaultMenuOptionUpdate"
+
+              break
+              ;;
+          "$defaultMenuOptionServerDetails")
+              selected="$defaultMenuOptionServerDetails"
 
               break
               ;;
@@ -253,5 +259,7 @@ ART
     runScriptByName "$defaultScriptNameNodeDetails"
   elif [[ "$selected" == "$defaultMenuOptionUpdate" ]]; then
     runScriptByName "$defaultScriptNameUpdate"
+  elif [[ "$selected" == "$defaultMenuOptionServerDetails" ]]; then
+    runScriptByName "$defaultMenuOptionServerDetails"
   fi
 )

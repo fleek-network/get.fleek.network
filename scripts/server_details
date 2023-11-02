@@ -334,6 +334,5 @@ echo
 echo "👋 If you need help, Copy and paste the details URL ${bold}$pasteUrl${normal} and share in our Discord $defaultDiscordUrl"
 echo "💡 You might have to remove the https from the address if Discord does not allow you to paste in URLs in the support channel"
 echo
-echo
 echo "Learn more by checking our guides at https://docs.fleek.network"
 echo "✨ That's all!"
