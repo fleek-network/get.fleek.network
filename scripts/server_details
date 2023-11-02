@@ -157,7 +157,7 @@ echo
   cat /proc/version
 
   echo "🤖 CPU details"
-  cat /proc/cpuinfo
+  lscpu
 
   echo "🤖 Memory info"
   mem=$(awk '/^MemTotal:/{print $2}' /proc/meminfo);
@@ -331,7 +331,8 @@ fi
 
 echo "✅ The details are available at ${bold}$pasteUrl${normal}"
 echo
-echo "👋 If you need help, Copy and paste the details URL and share in our Discord $defaultDiscordUrl"
+echo "👋 If you need help, Copy and paste the details URL ${bold}$pasteUrl${normal} and share in our Discord $defaultDiscordUrl"
+echo "💡 You might have to remove the https from the address if Discord does not allow you to paste in URLs in the support channel"
 echo
 echo
 echo "Learn more by checking our guides at https://docs.fleek.network"
