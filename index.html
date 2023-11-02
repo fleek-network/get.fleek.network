@@ -41,12 +41,13 @@ defaultMenuOptionDocker="👾 Docker (unstable)"
 defaultMenuOptionHealthCheck="🚑 Health check"
 defaultMenuOptionNodeDetails="🎮 Node details"
 defaultMenuOptionUpdate="📢 Node Update"
-defaultScriptNameHealthCheck="healthcheck"
 defaultMenuOptionServerDetails="📸 Server details"
+defaultScriptNameHealthCheck="healthcheck"
 defaultScriptNameNodeDetails="node_details"
 defaultScriptNameUpdate="update"
 defaultScriptNameInstallNative="install_native"
 defaultScriptNameInstallDocker="install_docker"
+defaultScriptNameServerDetails="server_details"
 
 # Utils
 testnetPhaseFinishedWarning() {
@@ -260,6 +261,6 @@ ART
   elif [[ "$selected" == "$defaultMenuOptionUpdate" ]]; then
     runScriptByName "$defaultScriptNameUpdate"
   elif [[ "$selected" == "$defaultMenuOptionServerDetails" ]]; then
-    runScriptByName "$defaultMenuOptionServerDetails"
+    runScriptByName "$defaultScriptNameServerDetails"
   fi
 )
