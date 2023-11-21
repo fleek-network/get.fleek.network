@@ -22,7 +22,7 @@ All things considered, we advise you to read the source code which is publicly a
 
 👍 Alternatively, you may find the installation script that is provided as a good reference to follow on your own.
 
-If you have any questions or feedback, find us on [Discord](https://discord.gg/fleekxyz).
+If you have any questions or feedback, find us on [Discord](https://discord.gg/fleek).
 
 ### 🤖 Requirements
 

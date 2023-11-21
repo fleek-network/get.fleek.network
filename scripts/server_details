@@ -32,7 +32,7 @@ defaultLightningBasePath="$HOME/.$defaultName"
 defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
 defaultLightningKeystore="$defaultLightningBasePath/keystore"
 defaultDiagnosticFilename="diagnostic.log"
-defaultDiscordUrl="https://discord.gg/fleekxyz"
+defaultDiscordUrl="https://discord.gg/fleek"
 
 # styles
 bold=$(tput bold)
@@ -135,7 +135,7 @@ echo
 echo "★★★★★★★★★ 🌍 Website https://fleek.network"
 echo "★★★★★★★★★ 📚 Documentation https://docs.fleek.network"
 echo "★★★★★★★★★ 💾 Git repository https://github.com/fleek-network/lightning"
-echo "★★★★★★★★★ 🤖 Discord https://discord.gg/fleekxyz"
+echo "★★★★★★★★★ 🤖 Discord https://discord.gg/fleek"
 echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
 echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
 echo
