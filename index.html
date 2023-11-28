@@ -91,6 +91,8 @@ menuTopLevel() {
               ;;
           "$defaultMenuOptionQuit")
               selected="$defaultMenuOptionQuit"
+
+              break
               ;;
           *) echo "👹 Oop! Invalid option $REPLY, try again...";;
       esac
@@ -117,6 +119,8 @@ menuInstall() {
               ;;
           "$defaultMenuOptionQuit")
               selected="$defaultMenuOptionQuit"
+
+              break
               ;;
           *) echo "👹 Oop! Invalid option $REPLY, try again...";;
       esac
@@ -154,6 +158,8 @@ menuUtils() {
               ;;
           "$defaultMenuOptionQuit")
               selected="$defaultMenuOptionQuit"
+
+              break
               ;;
           *) echo "👹 Oop! Invalid option $REPLY, try again...";;
       esac
