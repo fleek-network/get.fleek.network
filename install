@@ -238,6 +238,8 @@ ART
     echo
 
     selected=$(menuUtils)
+  elif [[ "$selected" == "$defaultMenuOptionQuit" ]]; then
+    quitProcess
   fi
 
   echo
