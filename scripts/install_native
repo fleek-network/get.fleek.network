@@ -464,7 +464,8 @@ isOSSupported
   printf "🤖 Build and install the %s CLI\n" "$defaultName"
 
   targetName="release"
-  if ! cargo +stable build --release; then
+  # if ! cargo +stable build --release; then
+  if ! cargo +stable install --locked --path core/cli; then
     printf "👹 Oops! Failed to build and install the %s CLI. If you are experiencing issues, help us improve by letting us know in our Discord %s\n" "$defaultName" "$defaultDiscordUrl"
 
     exit 1
@@ -487,7 +488,7 @@ isOSSupported
     if ! sudo ln -s "$HOME/.cargo/bin/$defaultName" /usr/local/bin/$defaultCLIAlias; then
       printf "👹 Oops! Failed to symlink %s to /usr/local/bin/%s\n" "$HOME/.cargo/bin/$defaultName" "$defaultName"
       echo
-      read -rp "😅 After the installation, if $defaultName CLI command is not available globally, then you need to add $HOME/.cargo/bin/ursa to your system PATH or symlink the binary to /usr/local/bin/$defaultName, as we've failed to do it. Press ENTER to continue..."
+      read -rp "😅 After the installation, if $defaultName CLI command is not available globally, then you need to add $HOME/.cargo/bin/lightning to your system PATH or symlink the binary to /usr/local/bin/$defaultName, as we've failed to do it. Press ENTER to continue..."
     fi
   else
     if ! sudo ln -s "$selectedLightningPath/target/$targetName/$defaultCLIBuildName" /usr/local/bin/$defaultCLIAlias; then
