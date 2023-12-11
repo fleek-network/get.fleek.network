@@ -464,7 +464,6 @@ isOSSupported
   printf "🤖 Build and install the %s CLI\n" "$defaultName"
 
   targetName="release"
-  # if ! cargo +stable build --release; then
   if ! cargo +stable install --locked --path core/cli; then
     printf "👹 Oops! Failed to build and install the %s CLI. If you are experiencing issues, help us improve by letting us know in our Discord %s\n" "$defaultName" "$defaultDiscordUrl"
 
