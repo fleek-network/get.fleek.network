@@ -254,6 +254,16 @@ EOF
   fi
 }
 
+createSymLink() {
+  if ! sudo ln -s "$1/bin/$defaultName" /usr/local/bin/$defaultCLIAlias; then
+    printf "👹 Oops! Failed to symlink %s to /usr/local/bin/%s\n" "$1/bin/$defaultName" "$defaultName"
+    echo
+    read -rp "😅 After the installation, if $defaultName CLI command is not available globally, then you need to add $$1/bin/lightning to your system PATH or symlink the binary to /usr/local/bin/$defaultName, as we've failed to do it. Press ENTER to continue..."
+  else
+    echo "✅ Created the symlink $1/bin/$defaultName -> /usr/local/bin/$defaultCLIAlias"
+  fi
+}
+
 # The white space before and after is intentional
 cat << "ART"
 
@@ -463,7 +473,6 @@ isOSSupported
 
   printf "🤖 Build and install the %s CLI\n" "$defaultName"
 
-  targetName="release"
   if ! cargo +stable install --locked --path core/cli; then
     printf "👹 Oops! Failed to build and install the %s CLI. If you are experiencing issues, help us improve by letting us know in our Discord %s\n" "$defaultName" "$defaultDiscordUrl"
 
@@ -481,20 +490,14 @@ isOSSupported
     fi
   fi
 
-  # TODO: As we're using non `+stable` and not `install`, this location should
-  # be replaced by the /target version
   if [[ -f "$HOME/.cargo/bin/$defaultName" ]]; then
-    if ! sudo ln -s "$HOME/.cargo/bin/$defaultName" /usr/local/bin/$defaultCLIAlias; then
-      printf "👹 Oops! Failed to symlink %s to /usr/local/bin/%s\n" "$HOME/.cargo/bin/$defaultName" "$defaultName"
-      echo
-      read -rp "😅 After the installation, if $defaultName CLI command is not available globally, then you need to add $HOME/.cargo/bin/lightning to your system PATH or symlink the binary to /usr/local/bin/$defaultName, as we've failed to do it. Press ENTER to continue..."
-    fi
+    createSymLink "$HOME/.cargo"
+  elif [[ -f "$CARGO_HOME/bin/$defaultName" ]]; then
+    createSymLink "$CARGO_HOME"
   else
-    if ! sudo ln -s "$selectedLightningPath/target/$targetName/$defaultCLIBuildName" /usr/local/bin/$defaultCLIAlias; then
-      printf "👹 Oops! Failed to symlink %s to /usr/local/bin/$defaultCLIAlias\n" "$selectedLightningPath/target/$targetName/$defaultCLIBuildName"
-      echo
-      read -rp "😅 After the installation, if $defaultName $defaultCLIBuildName CLI command is unavailable globally, then you need to add $selectedLightningPath/$targetName/release/$defaultCLIBuildName to your system PATH or symlink the binary to /usr/local/bin/$defaultCLIAlias, as we've failed to do it. Press ENTER to continue..."
-    fi
+    echo "👹 Oops! The binary file wasn't found in the default location"
+
+    exit 1
   fi
 
   echo
