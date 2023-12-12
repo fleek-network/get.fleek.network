@@ -255,12 +255,12 @@ EOF
 }
 
 createSymLink() {
-  if ! sudo ln -s "$1/bin/$defaultName" /usr/local/bin/$defaultCLIAlias; then
-    printf "👹 Oops! Failed to symlink %s to /usr/local/bin/%s\n" "$1/bin/$defaultName" "$defaultName"
+  if ! sudo ln -s "$1/bin/$defaultCLIBuildName" /usr/local/bin/$defaultCLIAlias; then
+    printf "👹 Oops! Failed to symlink %s to /usr/local/bin/%s\n" "$1/bin/$defaultCLIBuildName" "$defaultCLIAlias"
     echo
-    read -rp "😅 After the installation, if $defaultName CLI command is not available globally, then you need to add $$1/bin/lightning to your system PATH or symlink the binary to /usr/local/bin/$defaultName, as we've failed to do it. Press ENTER to continue..."
+    read -rp "😅 After the installation, if $defaultName CLI command is not available globally, then you need to add $1/bin to your system PATH or symlink the binary to /usr/local/bin/$defaultCLIAlias, as we've failed to do it. Press ENTER to continue..."
   else
-    echo "✅ Created the symlink $1/bin/$defaultName -> /usr/local/bin/$defaultCLIAlias"
+    echo "✅ Created the symlink $1/bin/$defaultCLIBuildName -> /usr/local/bin/$defaultCLIAlias"
   fi
 }
 
@@ -490,9 +490,9 @@ isOSSupported
     fi
   fi
 
-  if [[ -f "$HOME/.cargo/bin/$defaultName" ]]; then
+  if [[ -f "$HOME/.cargo/bin/$defaultCLIBuildName" ]]; then
     createSymLink "$HOME/.cargo"
-  elif [[ -f "$CARGO_HOME/bin/$defaultName" ]]; then
+  elif [[ -f "$CARGO_HOME/bin/$defaultCLIBuildName" ]]; then
     createSymLink "$CARGO_HOME"
   else
     echo "👹 Oops! The binary file wasn't found in the default location"
