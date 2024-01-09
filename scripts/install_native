@@ -481,7 +481,7 @@ isOSSupported
 
   echo
 
-  printf "🤖 Symlink the %s CLI binary to /usr/local/bin. By default rustup should've set the .cargo/bin into your system PATH, in any case we'll attempt to symlink to ensure %s is available globally\n" "$defaultName" "$defaultDiscordUrl"
+  printf "🤖 Symlink the %s CLI binary to /usr/local/bin. By default rustup should've set the .cargo/bin into your system PATH, in any case we'll attempt to create a symlink named %s (shorter) to ensure is easily available globally\n" "$defaultName" "$defaultCLIAlias"
   # Remove previous symlink if one exists
   if [[ -L "/usr/local/bin/$defaultCLIAlias" ]]; then
     # TODO: Symlink not getting removed for some reason
