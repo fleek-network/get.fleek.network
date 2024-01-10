@@ -23,6 +23,18 @@ defaultLightningBasePath="$HOME/.$defaultName"
 defaultLightningConfigFilename="config.toml"
 defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
 defaultTempLogFilePath="/var/tmp"
+defaultMinRustVersion="1.75.0"
+
+# Utils
+isRustVersionGtMinReq() {
+ head=$(printf "$defaultMinRustVersion\n$1\n" | sort -rV | head -n1)
+
+ if [[ "$head" == "$defaultMinRustVersion" ]]; then
+   return 1
+ fi
+
+ return 0
+}
 
 (
   exec < /dev/tty;
@@ -83,6 +95,16 @@ defaultTempLogFilePath="/var/tmp"
     echo
 
     exit 1
+  fi
+
+  if ! isRustVersionGtMinReq "$(cargo version | cut -d " " -f 2)"; then
+    echo "🤖 Rust is going to be updated..."
+
+    if ! rustup update; then
+      echo "👹 Oops! Failed to update rust for some reason..."
+
+      exit 1
+    fi
   fi
 
   if [[ ! -d "$defaultLightningPath" ]]; then
