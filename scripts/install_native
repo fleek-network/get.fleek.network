@@ -69,7 +69,7 @@ defaultLogRotateConfigFile="/etc/logrotate.conf"
 defaultLogRotatePath="/etc/logrotate.d"
 defaultLogRotateLightningConf="/etc/logrotate.d/$defaultName"
 defaultLogRotateLightningLogsPath="/var/log/lightning/*.log"
-defaultMinRustVerReq="1.75.0"
+defaultMinRustVersion="1.75.0"
 
 # App state
 vCPUs=$(nproc --all)
@@ -266,9 +266,9 @@ createSymLink() {
 }
 
 isRustVersionGtMinReq() {
- head=$(printf "$minRustVersion\n$1\n" | sort -rV | head -n1)
+ head=$(printf "$defaultMinRustVersion\n$1\n" | sort -rV | head -n1)
 
- if [[ "$head" == "$minRustVersion" ]]; then
+ if [[ "$head" == "$defaultMinRustVersion" ]]; then
    return 1
  fi
 
