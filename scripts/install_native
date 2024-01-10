@@ -69,6 +69,7 @@ defaultLogRotateConfigFile="/etc/logrotate.conf"
 defaultLogRotatePath="/etc/logrotate.d"
 defaultLogRotateLightningConf="/etc/logrotate.d/$defaultName"
 defaultLogRotateLightningLogsPath="/var/log/lightning/*.log"
+defaultMinRustVerReq="1.75.0"
 
 # App state
 vCPUs=$(nproc --all)
@@ -264,6 +265,16 @@ createSymLink() {
   fi
 }
 
+isRustVersionGtMinReq() {
+ head=$(printf "$minRustVersion\n$1\n" | sort -rV | head -n1)
+
+ if [[ "$head" == "$minRustVersion" ]]; then
+   return 1
+ fi
+
+ return 0
+}
+
 # The white space before and after is intentional
 cat << "ART"
 
@@ -454,9 +465,24 @@ isOSSupported
     printf "✅ Rust is installed!\n"
 
     printf "Cargo version is %s\n" "$(cargo --version)"
-  else
+  elif ! isRustVersionGtMinReq "$(cargo version | cut -d " " -f 2)"; then
+      while read -rp "🤖 Rust requires to be updated! Should the installer proceed and update Rust? (yes/no)" answer; do
+        if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+          echo "🦖 Exited the installation process"
+
+          exit 1
+        elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+          break;
+        fi
+      done
+    fi
+
     printf "🤖 Update Rustup\n"
-    rustup update
+    if ! rustup update; then
+      echo "👹 Oops! Failed to update rust for some reason..."
+
+      exit 1
+    fi
   fi
 
   echo
