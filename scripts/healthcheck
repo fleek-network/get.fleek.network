@@ -21,6 +21,7 @@ defaultLightningBasePath="$HOME/.$defaultName"
 defaultLightningConfigFilename="config.toml"
 defaultLightningConfigPath="$defaultLightningBasePath/$defaultLightningConfigFilename"
 defaultTempLogFilePath="/var/tmp"
+defaultMinRustVersion="1.75.0"
 
 ## State
 basePath="/home/$(whoami)"
@@ -59,6 +60,16 @@ dockerInDockerVerify() {
 
     exit 1
   fi
+}
+
+isRustVersionGtMinReq() {
+  head=$(printf "$minRustVersion\n$1\n" | sort -rV | head -n1)
+
+  if [[ "$head" == "$minRustVersion" ]]; then
+    return 1
+  fi
+
+  return 0
 }
 
 # Log
@@ -176,6 +187,13 @@ healthIssueLog=""
   if [[ -f "$defaultLightningSystemdServicePath" && -f "$defaultLightningSystemdServicePathForDocker" ]]; then
     warningLog+=$'\n'"⚠️ WARNING: Found conflicting Systemd setup, as Native and Docker Systemd are present. If you are using the get.fleek.network tools, the automation might make wrong conclusions about your preferred way of running the node. To avoid confusion you should opt for a single method to run a node, either natively or docker."
     echo
+  fi
+
+  if ! isRustVersionGtMinReq "$(cargo version | cut -d " " -f 2)"; then
+      warningLog+=$'\n'"⚠️ WARNING: Rust cargo version should be >= $defaultMinRustVersion"
+      ((warningCount++))
+  else
+    successLog+=$'\n'"✅ Found Rust cargo version $(cargo version) >= $defaultMinRustVersion (min. required)"
   fi
 
   homeUsernamePaths=$(grep -oE '/home\/([a-zA-Z0-9_\-]+)' "$defaultLightningConfigPath" | cut -d / -f 3)
