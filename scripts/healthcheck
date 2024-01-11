@@ -63,6 +63,10 @@ dockerInDockerVerify() {
 }
 
 isRustVersionGtMinReq() {
+   if [[ "$1" == "$defaultMinRustVersion" ]]; then
+     return 0
+   fi
+
   head=$(printf "$defaultMinRustVersion\n$1\n" | sort -rV | head -n1)
 
   if [[ "$head" == "$defaultMinRustVersion" ]]; then
