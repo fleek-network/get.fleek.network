@@ -229,7 +229,16 @@ moveDirectoryFromTo() {
   echo
 
   targetLightningSourceCodePath="/home/$targetUsername/$defaultBasePath"
-  targetRustReleasePath="$targetLightningSourceCodePath/target/release/$defaultCLIBuildName"
+  
+  if [[ -f "$HOME/.cargo/bin/$defaultCLIBuildName" ]]; then
+    targetRustReleasePath="/home/$targetUsername/.cargo/bin/$defaultCLIBuildName"
+  elif [[ -f "$CARGO_HOME/bin/$defaultCLIBuildName" ]]; then
+    targetRustReleasePath="$CARGO_HOME/bin/$defaultCLIBuildName"
+  else
+    echo "👹 Oops! The binary $defaultCLIBuildName was not found!"
+
+    exit 1
+  fi
 
   if [[ ! -d "$targetLightningSourceCodePath" ]]; then
     if ! sudo mkdir -p "$targetLightningSourceCodePath"; then
@@ -281,7 +290,7 @@ moveDirectoryFromTo() {
     ((warningCount++))    
   fi
 
-  if ! sudo ln -s "$targetLightningSourceCodePath/target/release/$defaultCLIBuildName" "$defaultSymlinkPath"; then
+  if ! sudo ln -s "$targetRustReleasePath" "$defaultSymlinkPath"; then
     echo "⚠️ WARNING: Failed to create symlink $defaultSymlinkPath"
 
     ((warningCount++))
