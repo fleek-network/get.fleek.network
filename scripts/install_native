@@ -677,6 +677,11 @@ WantedBy=multi-user.target
   read -rp "To learn how to stake for Testnet, read the instructions provided in https://docs.fleek.network/docs/node/testnet-onboarding to run successfully. Once happy with the information provided, press ENTER to continue..."
   echo
 
+  echo "🤖 Opt-in to participate in the network as soon as next Epoch starts..."
+  if ! yes | lgtn opt in; then
+    echo "⚠ WARNING: Failed to request to opt-in in network participation for some reason..."
+  fi
+
   echo "🤖 Launch or stop the Network Node by running:"
   echo "sudo systemctl start $defaultName"
   echo "sudo systemctl stop $defaultName"
