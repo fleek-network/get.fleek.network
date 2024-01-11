@@ -470,16 +470,15 @@ isOSSupported
 
     printf "Cargo version is %s\n" "$(cargo --version)"
   elif ! isRustVersionGtMinReq "$(cargo version | cut -d " " -f 2)"; then
-      while read -rp "🤖 Rust requires to be updated! Should the installer proceed and update Rust? (yes/no)" answer; do
-        if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
-          echo "🦖 Exited the installation process"
+    while read -rp "🤖 Rust requires to be updated! Should the installer proceed and update Rust? (yes/no)" answer; do
+      if [[ "$answer" == [nN] || "$answer" == [nN][oO] ]]; then
+        echo "🦖 Exited the installation process"
 
-          exit 1
-        elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
-          break;
-        fi
-      done
-    fi
+        exit 1
+      elif [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+        break;
+      fi
+    done
 
     printf "🤖 Update Rustup\n"
     if ! rustup update; then
