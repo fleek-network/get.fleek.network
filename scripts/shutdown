@@ -1,2 +1,92 @@
 #!/bin/bash
 
+# The white space before and after is intentional
+cat << "ART"
+
+  ⭐️ Fleek Network ⭐️
+
+              zeeeeee-
+              z$$$$$$"
+            d$$$$$$"
+            d$$$$$P
+          d$$$$$P
+          $$$$$$"
+        .$$$$$$"
+      .$$$$$$"
+      4$$$$$$$$$$$$$"
+    z$$$$$$$$$$$$$"
+    """""""3$$$$$"
+          z$$$$P
+          d$$$$"
+        .$$$$$"
+      z$$$$$"
+      z$$$$P
+    d$$$$$$$$$$"
+    *******$$$"
+        .$$$"
+        .$$"
+      4$P"
+      z$"
+    zP
+    z"
+  /
+
+ART
+
+echo
+echo "★★★★★★★★★ 🌍 Website https://fleek.network"
+echo "★★★★★★★★★ 📚 Documentation https://docs.fleek.network"
+echo "★★★★★★★★★ 💾 Git repository https://github.com/fleek-network/lightning"
+echo "★★★★★★★★★ 🤖 Discord https://discord.gg/fleek"
+echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
+echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
+echo
+
+echo "In order to shutdown gracefully, the process conducts a check to determine when it's more appropriate to shutdown the node."
+echo "This helps ensure that node reputations are not penalized, e.g. when actively participating in the network and shutting down prematurely."
+echo
+echo "Thus, for nodes that are actively participating, an opt-out transaction puts the node offline and only shutdown after the epoch ends."
+echo "On the other hand, a non-participating node (that is offline in the timely epoch) can be shut down immediately."
+echo
+echo "To summarize, this tool automates the shutdown process gracefully for the node operator, who would otherwise have to do it manually."
+echo
+
+read -rp "Press ENTER process continue..."
+
+echo
+
+spin() {
+  sp='/-\|'
+  printf ' '
+  while sleep 1; do
+    printf '\b%.1s' "$sp"
+    sp=${sp#?}${sp%???}
+  done
+}
+
+if ! lgtn opt status &> /dev/null; then
+  if ! yes | lgtn opt out &> /dev/null; then
+    echo "👹 Oops! it Failed to opt-out for some reason. Note that the opt-out command was sent before shutting down the node to avoid reputation penalties."
+
+    exit 1
+  fi
+fi
+
+while ! lgtn opt status &> /dev/null; do
+  spin & spinpid=$!
+  
+  sleep 5
+
+  kill "$spinpid"
+done
+
+echo "🤖 The node network participation status is opt-out and is going to shutdown now..."
+
+if ! sudo systemctl stop lightning; then
+  echo "👹 Oops! Failed to stop the Lightning Service for some reason. You're advised to try manually by executing the command: sudo systemctl stop lightning"
+
+  exit 1
+fi
+
+echo "The Lightning Service has shutdown 👍"
+
