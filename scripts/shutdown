@@ -64,23 +64,66 @@ spin() {
   done
 }
 
-if ! lgtn opt status &> /dev/null; then
+lgtn opt status &> /dev/null || statusExitCode=$?
+
+statusExitCode="${statusExitCode:-0}"
+
+if [[ "$statusExitCode" -eq 0 ]]; then
+  echo "The node is participating in the network (online) and we'll now opt-out..."
+
   if ! yes | lgtn opt out &> /dev/null; then
-    echo "👹 Oops! it Failed to opt-out for some reason. Note that the opt-out command was sent before shutting down the node to avoid reputation penalties."
+    echo "👹 Oops! It Failed to opt-out for some reason. Note that the opt-out command is required before shutting down the node to avoid reputation penalties."
+  fi
+elif [[ "$statusExitCode" -eq 210 ]]; then
+  echo "The node is not participating in the network (offline)"
+
+  # TODO: Can shutdown immediately
+  if sudo systemctl status lightning &> /dev/null; then
+    if ! sudo systemctl stop lightning; then
+      echo "Oops! Failed to stop the Lightning Service for some reason. Try to sudo systemctl stop lightning"
+
+      exit 1
+    fi
+
+    exit 0
+  else
+    echo "The Lightning Service is shutdown and the Lightning Service is off 👍"
+
+    exit 0
+  fi
+elif [[ "$statusExitCode" -eq 211 ]]; then
+  echo "The node has opted-in and would be participating once the next epoch starts."
+  echo "We'll now make the transaction request to opt-out..."
+  
+  if ! yes | lgtn opt out &> /dev/null; then
+    echo "👹 Oops! It Failed to opt-out for some reason. Note that the opt-out command is required before shutting down the node to avoid reputation penalties."
 
     exit 1
   fi
+
+  echo "We'll now wait until the current epoch ends for the node network participation state to go offline..."
+elif [[ "$statusExitCode" -eq 212 ]]; then
+  echo "The node has opted-out and we'll shutdown the node once the current epoch ends..."
 fi
 
-while ! lgtn opt status &> /dev/null; do
-  spin & spinpid=$!
-  
-  sleep 5
+# TODO: add check Epoch number diff in comparison from runtime
 
-  kill "$spinpid"
+spin & spinpid=$!
+
+while true; do
+  sleep 3
+   
+  lgtn opt status &> /dev/null || statusExitCode=$?
+
+  if [[ "$statusExitCode" -eq 210 ]]; then    
+    break;
+  fi
 done
 
-echo "🤖 The node network participation status is opt-out and is going to shutdown now..."
+kill "$spinpid"
+
+echo
+echo "🤖 The node network participation state is now offline (opted-out) and can now be shutdown safely..."
 
 if ! sudo systemctl stop lightning; then
   echo "👹 Oops! Failed to stop the Lightning Service for some reason. You're advised to try manually by executing the command: sudo systemctl stop lightning"
@@ -89,4 +132,3 @@ if ! sudo systemctl stop lightning; then
 fi
 
 echo "The Lightning Service has shutdown 👍"
-
