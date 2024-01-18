@@ -20,7 +20,7 @@
 # Found an issue? Please report it here: https://github.com/fleek-network/get.fleek.network
 
 # TODO: Switch to main on release
-defaultBranch="testnet-alpha-1"
+defaultBranch="testnet-internal"
 useBranch=${USE_LIGHTNING_BRANCH="$defaultBranch"}
 useGetBranch=${USE_GET_BRANCH="main"}
 
@@ -42,12 +42,14 @@ defaultMenuOptionHealthCheck="🚑 Health check"
 defaultMenuOptionNodeDetails="🎮 Node details"
 defaultMenuOptionUpdate="📢 Node Update"
 defaultMenuOptionServerDetails="📸 Server details"
+defaultMenuOptionShutdown="💤 Shutdown"
 defaultScriptNameHealthCheck="healthcheck"
 defaultScriptNameNodeDetails="node_details"
 defaultScriptNameUpdate="update"
 defaultScriptNameInstallNative="install_native"
 defaultScriptNameInstallDocker="install_docker"
 defaultScriptNameServerDetails="server_details"
+defaultScriptNameShutdown="shutdown"
 
 # Utils
 testnetPhaseFinishedWarning() {
@@ -131,7 +133,7 @@ menuInstall() {
 
 menuUtils() {
   PS3=$'\n🙏 Please enter your choice: \n'
-  options=("$defaultMenuOptionHealthCheck" "$defaultMenuOptionNodeDetails" "$defaultMenuOptionUpdate" "$defaultMenuOptionServerDetails" "$defaultMenuOptionQuit")
+  options=("$defaultMenuOptionHealthCheck" "$defaultMenuOptionNodeDetails" "$defaultMenuOptionUpdate" "$defaultMenuOptionServerDetails" "$defaultMenuOptionShutdown" "$defaultMenuOptionQuit")
   selected=""
 
   select opt in "${options[@]}"; do
@@ -153,6 +155,11 @@ menuUtils() {
               ;;
           "$defaultMenuOptionServerDetails")
               selected="$defaultMenuOptionServerDetails"
+
+              break
+              ;;
+          "$defaultMenuOptionShutdown")
+              selected="$defaultMenuOptionShutdown"
 
               break
               ;;
@@ -270,5 +277,7 @@ ART
     runScriptByName "$defaultScriptNameUpdate"
   elif [[ "$selected" == "$defaultMenuOptionServerDetails" ]]; then
     runScriptByName "$defaultScriptNameServerDetails"
+  elif [[ "$selected" == "$defaultMenuOptionShutdown" ]]; then
+    runScriptByName "$defaultScriptNameShutdown"
   fi
 )
