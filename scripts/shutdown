@@ -89,6 +89,8 @@ if [[ "$statusExitCode" -eq 0 ]]; then
 elif [[ "$statusExitCode" -eq 210 ]]; then
   echo "The node is not participating in the network (offline)"
 
+  echo
+  
   # TODO: Can shutdown immediately
   if sudo systemctl status lightning &> /dev/null; then
     if ! sudo systemctl stop lightning; then
