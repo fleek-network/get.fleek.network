@@ -101,7 +101,7 @@ elif [[ "$statusExitCode" -eq 210 ]]; then
 
     exit 0
   else
-    echo "The Lightning Service is shutdown and the Lightning Service is off 👍"
+    echo "The Lightning Service is shutdown and the Lightning Service (Systemd) is off 👍"
 
     exit 0
   fi
