@@ -63,4 +63,4 @@ refactor: 💡 A code change that neither fixes a bug or adds a feature
 style: 💄 Markup, white-space, formatting, missing semi-colons...
 ```
 
-Find more about contributing [here](docs/open-source/contributing.md), please!
+Find more about contributing [here](https://docs.fleek.network/docs/Open-source/contributing), please!
