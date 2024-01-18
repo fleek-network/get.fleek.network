@@ -130,7 +130,7 @@ spin() {
   while true; do
     epochTimeLeft=$(lgtn opt status | grep -Ei '[0-9]{2}:[0-9]{2}:[0-9]{2}' | grep -oEi '[0-9]{2}:[0-9]{2}:[0-9]{2}')
 
-    if [[ "$epochTimeLeft" == "" ]]; then
+    if [[ "$epochTimeLeft" == "" || "$epochTimeLeft" == "00:00:00" ]]; then
       break;
     fi
 
