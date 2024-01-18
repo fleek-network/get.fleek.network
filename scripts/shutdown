@@ -55,6 +55,14 @@ read -rp "Press ENTER process continue..."
 
 echo
 
+quitProcess() {
+  printf "\n\n🦖 The node shutdown  process has terminated. Warning, the node shutdown might not have fully completed!\n\n"
+
+  tput cnorm
+
+  exit 1
+}
+
 spin() {
   sp='/-\|'
   printf ' '
@@ -64,16 +72,20 @@ spin() {
   done
 }
 
+trap quitProcess INT
+
 lgtn opt status &> /dev/null || statusExitCode=$?
 
 statusExitCode="${statusExitCode:-0}"
 
 if [[ "$statusExitCode" -eq 0 ]]; then
-  echo "The node is participating in the network (online) and we'll now opt-out..."
+  echo "The node is participating in the network (online) and we will now opt-out..."
 
   if ! yes | lgtn opt out &> /dev/null; then
     echo "👹 Oops! It Failed to opt-out for some reason. Note that the opt-out command is required before shutting down the node to avoid reputation penalties."
   fi
+
+  echo "The node network participation state is going to be offline in the next epoch. We are going to wait for the epoch to end, before shutting down your node, be patient..."
 elif [[ "$statusExitCode" -eq 210 ]]; then
   echo "The node is not participating in the network (offline)"
 
@@ -93,7 +105,7 @@ elif [[ "$statusExitCode" -eq 210 ]]; then
   fi
 elif [[ "$statusExitCode" -eq 211 ]]; then
   echo "The node has opted-in and would be participating once the next epoch starts."
-  echo "We'll now make the transaction request to opt-out..."
+  echo "We will now make the transaction request to opt-out..."
   
   if ! yes | lgtn opt out &> /dev/null; then
     echo "👹 Oops! It Failed to opt-out for some reason. Note that the opt-out command is required before shutting down the node to avoid reputation penalties."
@@ -106,9 +118,26 @@ elif [[ "$statusExitCode" -eq 212 ]]; then
   echo "The node has opted-out and we'll shutdown the node once the current epoch ends..."
 fi
 
-# TODO: add check Epoch number diff in comparison from runtime
+echo 
 
-spin & spinpid=$!
+tput civis
+
+while true; do
+  epochTimeLeft=$(lgtn opt status | grep -Ei '[0-9]{2}:[0-9]{2}:[0-9]{2}' | grep -oEi '[0-9]{2}:[0-9]{2}:[0-9]{2}')
+
+  if [[ "$epochTimeLeft" == "" ]]; then
+    break;
+  fi
+
+  printf '\rTime remaining until shutdown is %s' "$epochTimeLeft"
+  
+  tput el;
+  sleep .2;
+done
+
+tput cnorm
+
+# TODO: add check Epoch number diff in comparison from runtime
 
 while true; do
   sleep 3
@@ -119,8 +148,6 @@ while true; do
     break;
   fi
 done
-
-kill "$spinpid"
 
 echo
 echo "🤖 The node network participation state is now offline (opted-out) and can now be shutdown safely..."
