@@ -277,7 +277,7 @@ ART
     runScriptByName "$defaultScriptNameUpdate"
   elif [[ "$selected" == "$defaultMenuOptionServerDetails" ]]; then
     runScriptByName "$defaultScriptNameServerDetails"
-  elif [[ "$selected" == "$defaultMenuOptionShutdown" ]];
+  elif [[ "$selected" == "$defaultMenuOptionShutdown" ]]; then
     runScriptByName "$defaultScriptNameShutdown"
   fi
 )
