@@ -130,19 +130,21 @@ spin() {
   while true; do
     epochTimeLeft=$(lgtn opt status | grep -Ei '[0-9]{2}:[0-9]{2}:[0-9]{2}' | grep -oEi '[0-9]{2}:[0-9]{2}:[0-9]{2}')
 
-    if [[ "$epochTimeLeft" == "" || "$epochTimeLeft" == "00:00:00" ]]; then
-      break;
-    fi
-
     printf '\rTime remaining until shutdown is %s' "$epochTimeLeft"
   
     tput el;
     sleep .2;
+
+    if [[ "$epochTimeLeft" == "" || "$epochTimeLeft" == "00:00:00" ]]; then
+      break;
+    fi
   done
 
   tput cnorm
 
   # TODO: add check Epoch number diff in comparison from runtime
+
+  echo
 
   spin & spinpid=$!
 
