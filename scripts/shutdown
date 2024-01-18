@@ -144,6 +144,8 @@ spin() {
 
   # TODO: add check Epoch number diff in comparison from runtime
 
+  spin & spinpid=$!
+
   while true; do
     sleep 3
    
@@ -153,6 +155,8 @@ spin() {
       break;
     fi
   done
+
+  kill "$spinpid"
 
   echo
   echo "🤖 The node network participation state is now offline (opted-out) and can now be shutdown safely..."
