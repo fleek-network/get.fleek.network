@@ -42,15 +42,6 @@ echo "★★★★★★★★★ 🐤 Twitter https://twitter.com/fleek_net"
 echo "★★★★★★★★★ 🎨 Ascii art by https://www.asciiart.eu"
 echo
 
-echo "In order to shutdown gracefully, the process conducts a check to determine when it's more appropriate to shutdown the node."
-echo "This helps ensure that node reputations are not penalized, e.g. when actively participating in the network and shutting down prematurely."
-echo
-echo "Thus, for nodes that are actively participating, an opt-out transaction puts the node offline and only shutdown after the epoch ends."
-echo "On the other hand, a non-participating node (that is offline in the timely epoch) can be shut down immediately."
-echo
-echo "To summarize, this tool automates the shutdown process gracefully for the node operator, who would otherwise have to do it manually."
-echo
-
 quitProcess() {
   printf "\n\n🦖 The node shutdown  process has terminated. Warning, the node shutdown might not have fully completed!\n\n"
 
@@ -72,6 +63,15 @@ spin() {
   trap quitProcess INT
 
   exec < /dev/tty;
+
+  echo "In order to shutdown gracefully, the process conducts a check to determine when it's more appropriate to shutdown the node."
+  echo "This helps ensure that node reputations are not penalized, e.g. when actively participating in the network and shutting down prematurely."
+  echo
+  echo "Thus, for nodes that are actively participating, an opt-out transaction puts the node offline and only shutdown after the epoch ends."
+  echo "On the other hand, a non-participating node (that is offline in the timely epoch) can be shut down immediately."
+  echo
+  echo "To summarize, this tool automates the shutdown process gracefully for the node operator, who would otherwise have to do it manually."
+  echo
 
   read -rp "Press ENTER process continue..."
 
