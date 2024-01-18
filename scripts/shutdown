@@ -51,10 +51,6 @@ echo
 echo "To summarize, this tool automates the shutdown process gracefully for the node operator, who would otherwise have to do it manually."
 echo
 
-read -rp "Press ENTER process continue..."
-
-echo
-
 quitProcess() {
   printf "\n\n🦖 The node shutdown  process has terminated. Warning, the node shutdown might not have fully completed!\n\n"
 
@@ -72,92 +68,100 @@ spin() {
   done
 }
 
-trap quitProcess INT
+(
+  trap quitProcess INT
 
-lgtn opt status &> /dev/null || statusExitCode=$?
+  exec < /dev/tty;
 
-statusExitCode="${statusExitCode:-0}"
-
-if [[ "$statusExitCode" -eq 0 ]]; then
-  echo "The node is participating in the network (online) and we will now opt-out..."
-
-  if ! yes | lgtn opt out &> /dev/null; then
-    echo "👹 Oops! It Failed to opt-out for some reason. Note that the opt-out command is required before shutting down the node to avoid reputation penalties."
-  fi
-
-  echo "The node network participation state is going to be offline in the next epoch. We are going to wait for the epoch to end, before shutting down your node, be patient..."
-elif [[ "$statusExitCode" -eq 210 ]]; then
-  echo "The node is not participating in the network (offline)"
+  read -rp "Press ENTER process continue..."
 
   echo
+
+  lgtn opt status &> /dev/null || statusExitCode=$?
+
+  statusExitCode="${statusExitCode:-0}"
+
+  if [[ "$statusExitCode" -eq 0 ]]; then
+    echo "The node is participating in the network (online) and we will now opt-out..."
+
+    if ! yes | lgtn opt out &> /dev/null; then
+      echo "👹 Oops! It Failed to opt-out for some reason. Note that the opt-out command is required before shutting down the node to avoid reputation penalties."
+    fi
+
+    echo "The node network participation state is going to be offline in the next epoch. We are going to wait for the epoch to end, before shutting down your node, be patient..."
+  elif [[ "$statusExitCode" -eq 210 ]]; then
+    echo "The node is not participating in the network (offline)"
+
+    echo
   
-  # TODO: Can shutdown immediately
-  if sudo systemctl status lightning &> /dev/null; then
-    if ! sudo systemctl stop lightning; then
-      echo "Oops! Failed to stop the Lightning Service for some reason. Try to sudo systemctl stop lightning"
+    # TODO: Can shutdown immediately
+    if sudo systemctl status lightning &> /dev/null; then
+      if ! sudo systemctl stop lightning; then
+        echo "Oops! Failed to stop the Lightning Service for some reason. Try to sudo systemctl stop lightning"
+
+        exit 1
+      fi
+
+      exit 0
+    else
+      echo "The Lightning Service is shutdown and the Lightning Service (Systemd) is off 👍"
+
+      exit 0
+    fi
+  elif [[ "$statusExitCode" -eq 211 ]]; then
+    echo "The node has opted-in and would be participating once the next epoch starts."
+    echo "We will now make the transaction request to opt-out..."
+  
+    if ! yes | lgtn opt out &> /dev/null; then
+      echo "👹 Oops! It Failed to opt-out for some reason. Note that the opt-out command is required before shutting down the node to avoid reputation penalties."
 
       exit 1
     fi
 
-    exit 0
-  else
-    echo "The Lightning Service is shutdown and the Lightning Service (Systemd) is off 👍"
-
-    exit 0
+    echo "We'll now wait until the current epoch ends for the node network participation state to go offline..."
+  elif [[ "$statusExitCode" -eq 212 ]]; then
+    echo "The node has opted-out and we'll shutdown the node once the current epoch ends..."
   fi
-elif [[ "$statusExitCode" -eq 211 ]]; then
-  echo "The node has opted-in and would be participating once the next epoch starts."
-  echo "We will now make the transaction request to opt-out..."
+
+  echo 
+
+  tput civis
+
+  while true; do
+    epochTimeLeft=$(lgtn opt status | grep -Ei '[0-9]{2}:[0-9]{2}:[0-9]{2}' | grep -oEi '[0-9]{2}:[0-9]{2}:[0-9]{2}')
+
+    if [[ "$epochTimeLeft" == "" ]]; then
+      break;
+    fi
+
+    printf '\rTime remaining until shutdown is %s' "$epochTimeLeft"
   
-  if ! yes | lgtn opt out &> /dev/null; then
-    echo "👹 Oops! It Failed to opt-out for some reason. Note that the opt-out command is required before shutting down the node to avoid reputation penalties."
+    tput el;
+    sleep .2;
+  done
+
+  tput cnorm
+
+  # TODO: add check Epoch number diff in comparison from runtime
+
+  while true; do
+    sleep 3
+   
+    lgtn opt status &> /dev/null || statusExitCode=$?
+
+    if [[ "$statusExitCode" -eq 210 ]]; then    
+      break;
+    fi
+  done
+
+  echo
+  echo "🤖 The node network participation state is now offline (opted-out) and can now be shutdown safely..."
+
+  if ! sudo systemctl stop lightning; then
+    echo "👹 Oops! Failed to stop the Lightning Service for some reason. You're advised to try manually by executing the command: sudo systemctl stop lightning"
 
     exit 1
   fi
 
-  echo "We'll now wait until the current epoch ends for the node network participation state to go offline..."
-elif [[ "$statusExitCode" -eq 212 ]]; then
-  echo "The node has opted-out and we'll shutdown the node once the current epoch ends..."
-fi
-
-echo 
-
-tput civis
-
-while true; do
-  epochTimeLeft=$(lgtn opt status | grep -Ei '[0-9]{2}:[0-9]{2}:[0-9]{2}' | grep -oEi '[0-9]{2}:[0-9]{2}:[0-9]{2}')
-
-  if [[ "$epochTimeLeft" == "" ]]; then
-    break;
-  fi
-
-  printf '\rTime remaining until shutdown is %s' "$epochTimeLeft"
-  
-  tput el;
-  sleep .2;
-done
-
-tput cnorm
-
-# TODO: add check Epoch number diff in comparison from runtime
-
-while true; do
-  sleep 3
-   
-  lgtn opt status &> /dev/null || statusExitCode=$?
-
-  if [[ "$statusExitCode" -eq 210 ]]; then    
-    break;
-  fi
-done
-
-echo
-echo "🤖 The node network participation state is now offline (opted-out) and can now be shutdown safely..."
-
-if ! sudo systemctl stop lightning; then
-  echo "👹 Oops! Failed to stop the Lightning Service for some reason. You're advised to try manually by executing the command: sudo systemctl stop lightning"
-
-  exit 1
-fi
-
-echo "The Lightning Service has shutdown 👍"
+  echo "The Lightning Service has shutdown 👍"
+)
